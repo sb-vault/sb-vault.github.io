@@ -220,7 +220,7 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .price-wrap input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:9px 130px 9px 12px;outline:none;transition:border-color .2s}
 .price-wrap input:focus{border-color:var(--sunset1)}
 .price-wrap input::placeholder{color:var(--text3)}
-.price-ghost{position:absolute;right:12px;font-size:12px;color:var(--text3);pointer-events:none;white-space:nowrap;opacity:.65}
+.price-ghost{position:absolute;right:12px;font-size:12px;color:var(--text3);pointer-events:none;white-space:nowrap;opacity:.55}
 
 /* ── Autocomplete ─────────────────────────────────────────────────────── */
 .autocomplete-wrap{position:relative}
@@ -559,7 +559,7 @@ const API = 'https://hypixelapi.lucas-alexander-pilu.workers.dev';
 const MCID_CLIENT_ID = 'XIyZSAUOMSHFMdidQPdwGKKgvwisYGiE';
 const MCID_AUTH_URL  = 'https://mc-id.com/api/auth/oauth2/authorize';
 const REDIRECT_URI   = 'https://sb-vault.github.io/';
-const SCOPE          = 'openid profile email connections';
+const SCOPE          = 'openid profile';
 const HEAD_URL       = uuid => `https://mc-heads.net/avatar/${uuid}/28`;
 
 /* ════════════════════════════════════════════════════════════════════

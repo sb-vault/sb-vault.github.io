@@ -35,7 +35,7 @@
 /* ── Base ─────────────────────────────────────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 15%,rgba(255,107,53,.06) 0,transparent 50%),radial-gradient(ellipse at 80% 85%,rgba(247,147,30,.04) 0,transparent 50%);pointer-events:none;z-index:0}
+body::before{content:none}
 .custom-bg-layer{display:none;position:fixed;inset:-40px;background-size:cover;background-position:center;z-index:0;transition:filter .3s}
 body.custom-bg .custom-bg-layer{display:block}
 .container{max-width:1260px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
@@ -43,8 +43,8 @@ a{text-decoration:none;color:inherit}
 button{font-family:'Inter',sans-serif}
 
 /* ── Header ───────────────────────────────────────────────────────────── */
-header{padding:20px 0 16px;border-bottom:1px solid var(--border);margin-bottom:28px;position:sticky;top:0;z-index:100;background:var(--bg);isolation:isolate}
-body.custom-bg header{background:rgba(0,0,0,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+header{padding:20px 0 16px;border-bottom:1px solid var(--border);margin-bottom:28px;position:sticky;top:0;z-index:100;background:var(--bg)}
+body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .header-inner{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .logo h1{font-family:'Cinzel',serif;font-size:22px;font-weight:700;background:linear-gradient(120deg,var(--sunset1),var(--sunset2),var(--sunset3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:.05em}
 .logo p{font-size:11px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
@@ -215,9 +215,12 @@ body.custom-bg header{background:rgba(0,0,0,.6);backdrop-filter:blur(14px);-webk
 .cat-tag-pill.default{background:rgba(150,150,150,.1);color:var(--text3);border-color:var(--border)}
 .cat-tag-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 
-/* ── Price input ──────────────────────────────────────────────────────── */
-.price-preview{font-size:11px;color:var(--text3);margin-top:4px;min-height:16px;font-family:monospace}
-.price-preview.valid{color:var(--green)}
+/* ── Price input with ghost preview ───────────────────────────────────── */
+.price-wrap{position:relative;display:flex;align-items:center}
+.price-wrap input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:9px 130px 9px 12px;outline:none;transition:border-color .2s}
+.price-wrap input:focus{border-color:var(--sunset1)}
+.price-wrap input::placeholder{color:var(--text3)}
+.price-ghost{position:absolute;right:12px;font-size:12px;color:var(--text3);pointer-events:none;white-space:nowrap;opacity:.65}
 
 /* ── Autocomplete ─────────────────────────────────────────────────────── */
 .autocomplete-wrap{position:relative}
@@ -318,7 +321,7 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
       </div>
       <!-- Auth area — swaps between login button and user pill -->
       <div id="authArea">
-        <button class="icon-btn primary" onclick="startLogin()">🎮 Login with Minecraft</button>
+        <button class="icon-btn primary" onclick="startLogin()">Login with Minecraft</button>
       </div>
       <button class="icon-btn" id="settingsBtn" title="Settings">⚙</button>
     </div>
@@ -399,8 +402,10 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
       <div class="field-row">
         <div class="field" style="margin-bottom:0">
           <label>Asking Price</label>
-          <input type="text" id="postPrice" placeholder="e.g. 500m, 1.5b, 10kk" oninput="updatePricePreview()">
-          <div class="price-preview" id="pricePreview"></div>
+          <div class="price-wrap">
+            <input type="text" id="postPrice" placeholder="e.g. 500m, 1.5b, 10kk" oninput="updatePricePreview()">
+            <span class="price-ghost" id="pricePreview"></span>
+          </div>
         </div>
         <div class="field" style="margin-bottom:0">
           <label>Your IGN</label>
@@ -413,11 +418,13 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
         <input type="text" id="postProof" placeholder="https://imgur.com/…">
       </div>
       <!-- Notes -->
-      <div class="field">
-        <label>Notes <span style="color:var(--text3);font-weight:400">(optional)</span></label>
-        <textarea id="postNotes" rows="2" placeholder="Any extra details…"></textarea>
+      <div class="field" style="margin-bottom:8px">
+        <label style="display:flex;justify-content:space-between;align-items:center">
+          Notes <span style="color:var(--text3);font-weight:400">(optional)</span>
+          <span id="notesCounter" style="font-size:11px;color:var(--text3);font-weight:400">0/250</span>
+        </label>
+        <textarea id="postNotes" rows="2" placeholder="Any extra details…" maxlength="250" oninput="document.getElementById('notesCounter').textContent=this.value.length+'/250'"></textarea>
       </div>
-      <p style="font-size:11px;color:var(--text3);line-height:1.7">⚠ The Vault is a community board. Always verify the item before confirming.</p>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('postModal')">Cancel</button>
@@ -437,8 +444,10 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
       <div id="offerItemSummary" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--text2)"></div>
       <div class="field">
         <label>Your Offer</label>
-        <input type="text" id="offerAmount" placeholder="e.g. 450m, 1b…" oninput="updateOfferPreview()">
-        <div class="price-preview" id="offerPreview"></div>
+        <div class="price-wrap">
+          <input type="text" id="offerAmount" placeholder="e.g. 450m, 1b…" oninput="updateOfferPreview()">
+          <span class="price-ghost" id="offerPreview"></span>
+        </div>
       </div>
       <div class="field">
         <label>Your IGN</label>
@@ -594,14 +603,17 @@ async function handleCallback(){
   const params   = new URLSearchParams(window.location.search);
   const code     = params.get('code');
   const retState = params.get('state');
+  const error    = params.get('error');
+  if(error){ toast('Login failed: '+error); window.history.replaceState({},document.title,window.location.pathname); return; }
   if(!code) return;
   const verifier  = sessionStorage.getItem('pkce_verifier');
   const savedState= sessionStorage.getItem('pkce_state');
   sessionStorage.removeItem('pkce_verifier');
   sessionStorage.removeItem('pkce_state');
-  if(retState !== savedState){ toast('Login failed: state mismatch'); return; }
-  // Clean URL
+  if(retState !== savedState){ toast('Login failed: state mismatch. Please try again.'); window.history.replaceState({},document.title,window.location.pathname); return; }
   window.history.replaceState({}, document.title, window.location.pathname);
+  const area=document.getElementById('authArea');
+  area.innerHTML=`<button class="icon-btn primary" disabled style="opacity:.7">Logging in…</button>`;
   try{
     const res = await fetch(`${API}/auth/token`,{
       method:'POST',
@@ -609,19 +621,20 @@ async function handleCallback(){
       body: JSON.stringify({code, code_verifier: verifier}),
     });
     const data = await res.json();
-    if(!data.token){ toast('Login failed: '+( data.error||'unknown error')); return; }
+    if(!data.token){ toast('Login failed: '+(data.error||'unknown error')); setUser(null); return; }
     localStorage.setItem('vault_token', data.token);
     localStorage.setItem('vault_user',  JSON.stringify(data.user));
     setUser(data.user);
     toast(`Welcome, ${data.user.username}!`);
-  }catch(e){ toast('Login failed – check your connection'); }
+    loadStats();
+  }catch(e){ console.error('Login error:',e); toast('Login failed – check your connection'); setUser(null); }
 }
 
 function setUser(user){
   currentUser = user;
   const area = document.getElementById('authArea');
   if(!user){
-    area.innerHTML = `<button class="icon-btn primary" onclick="startLogin()">🎮 Login with Minecraft</button>`;
+    area.innerHTML = `<button class="icon-btn primary" onclick="startLogin()">Login with Minecraft</button>`;
     return;
   }
   area.innerHTML = `
@@ -658,7 +671,6 @@ function loadStoredUser(){
    COLOUR CLASSIFICATION
 ════════════════════════════════════════════════════════════════════ */
 const BLEACHED_HEX = '#a06540';
-const DEFAULT_HEX  = '#000000';
 const PURE_COLOURS = {
   '#993333':'Red','#d87f33':'Orange','#e5e533':'Yellow',
   '#7fcc19':'Green','#667f33':'Dark Green','#6699d8':'Light Blue',
@@ -679,6 +691,66 @@ const FAIRY_HEXES = new Set([
   '#b266ff','#9933ff','#7f00ff','#6600cc','#4c0099','#330066',
 ]);
 
+// Original armour colours — keyed by lowercase armour type fragment
+// Value: object with piece initials (h/c/l/b) mapping to lowercase hex
+// 'full' means all four pieces share that hex
+const ORIGINAL_COLOURS = {
+  'superior dragon':   {c:'#f2df11',l:'#f2df11',b:'#f25d18'},
+  'wise dragon':       {full:'#29f0e9'},
+  'young dragon':      {full:'#dde4f0'},
+  'strong dragon':     {c:'#d91e41',l:'#e09419',b:'#f0d124'},
+  'unstable dragon':   {full:'#b212e3'},
+  'old dragon':        {full:'#f0e6aa'},
+  'protector dragon':  {full:'#99978b'},
+  'tarantula':         {h:'#000000',l:'#000000'},
+  'shark scale':       {full:'#002ca6'},
+  'angler':            {full:'#0b004f'},
+  'squid boots':       {b:'#000000'},
+  'bat person':        {full:'#000000'},
+  'farmer boots':      {b:'#cc5500'},
+  'farm suit':         {full:'#ffff00'},
+  'farm armor':        {full:'#ffd700'},
+  'farm armour':       {full:'#ffd700'},
+  'speedster':         {full:'#e0fcf7'},
+  'cactus':            {full:'#00ff00'},
+  'leaflet':           {full:'#4dcc4d'},
+  "miner's outfit":    {full:'#7a7964'},
+  'miner outfit':      {full:'#7a7964'},
+  'stereo pants':      {l:'#04cfd3'},
+  'mushroom':          {full:'#ff0000'},
+  'guardian':          {c:'#117391'},
+  'creeper pants':     {l:'#7ae82c'},
+  'emerald':           {full:'#00ff00'},
+  'pumpkin':           {full:'#edaa36'},
+  'obsidian':          {c:'#000000'},
+  'lapis':             {full:'#0000ff'},
+  'cheap tuxedo':      {c:'#383838',l:'#c7c7c7',b:'#383838'},
+  'fancy tuxedo':      {c:'#332a2a',l:'#d4d4d4',b:'#332a2a'},
+  'elegant tuxedo':    {c:'#191919',l:'#fefdfc',b:'#191919'},
+};
+
+// Map piece name to single-char key
+const PIECE_KEY = {Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'};
+
+// Check if a hex matches the original colour for a specific piece of a specific armour type
+function isDefaultColour(armourType, pieceName, hex){
+  if(!armourType||!pieceName||!hex)return false;
+  const h=normHex(hex);
+  const al=armourType.toLowerCase();
+  // Find matching entry — check if armour type string contains the key
+  for(const [key,colours] of Object.entries(ORIGINAL_COLOURS)){
+    if(!al.includes(key))continue;
+    if(colours.full){
+      return normHex(colours.full)===h;
+    }
+    const pk=PIECE_KEY[pieceName];
+    if(pk&&colours[pk]){
+      return normHex(colours[pk])===h;
+    }
+  }
+  return false;
+}
+
 function normHex(h){
   if(!h)return'';
   h=h.trim().toLowerCase();
@@ -686,10 +758,15 @@ function normHex(h){
   if(/^#[0-9a-f]{3}$/.test(h))h='#'+h[1]+h[1]+h[2]+h[2]+h[3]+h[3];
   return h;
 }
-function classifyHex(hex){
+
+// armourType is now passed in so we can check piece-specific defaults
+function classifyHex(hex, armourType, pieceName){
   const h=normHex(hex);
   if(!h||!/^#[0-9a-f]{6}$/.test(h))return null;
-  if(h===DEFAULT_HEX) return{cat:'default',label:'Default Armour',colour:'#888'};
+  // Check piece-specific default FIRST (before any other classification)
+  if(armourType&&pieceName&&isDefaultColour(armourType,pieceName,h)){
+    return{cat:'default',label:'Default Armour',colour:'#888'};
+  }
   if(h===BLEACHED_HEX)return{cat:'bleached',label:'Bleached',colour:'#c8906a'};
   if(CRYSTAL_HEXES.has(h))return{cat:'crystal',label:'Crystal Dyed',colour:'#44ffee'};
   if(FAIRY_HEXES.has(h))  return{cat:'fairy',  label:'Fairy Dyed',  colour:'#ff66b2'};
@@ -697,9 +774,12 @@ function classifyHex(hex){
   if(pure)return{cat:'pure',label:`Pure ${pure}`,colour:h==='#ffffff'?'#aaa':h};
   return{cat:'exotic',label:'Exotic',colour:'#ff6b35'};
 }
-function classifyPieces(pieces){
+function classifyPieces(pieces, armourType){
   const seen=new Map();
-  pieces.forEach(p=>{const c=classifyHex(p.hex);if(c&&!seen.has(c.cat))seen.set(c.cat,c);});
+  pieces.forEach(p=>{
+    const c=classifyHex(p.hex, armourType, p.piece);
+    if(c&&!seen.has(c.cat))seen.set(c.cat,c);
+  });
   return[...seen.values()];
 }
 
@@ -837,7 +917,8 @@ function renderPieceInputs(){
     // Events
     hexIn.addEventListener('input',()=>{
       const hex='#'+hexIn.value;
-      const cls=classifyHex(hex);
+      const armourType=document.getElementById('armourTypeInput').value.trim();
+      const cls=classifyHex(hex, armourType, piece);
       if(cls){
         catTag.textContent=cls.label;catTag.style.color=cls.colour;catTag.style.borderColor=cls.colour+'44';
       }else{catTag.textContent='—';catTag.style.color='';catTag.style.borderColor='';}
@@ -850,8 +931,9 @@ function renderPieceInputs(){
             const row2=inp.closest('.piece-row');
             const c2=row2.querySelector('.piece-preview');
             const t2=row2.querySelector('.piece-cat-tag');
+            const cls2=classifyHex(hex, armourType, row2.dataset.piece);
             drawLeatherPreview(c2,row2.dataset.piece,hex);
-            if(cls){t2.textContent=cls.label;t2.style.color=cls.colour;t2.style.borderColor=cls.colour+'44';}
+            if(cls2){t2.textContent=cls2.label;t2.style.color=cls2.colour;t2.style.borderColor=cls2.colour+'44';}
             else{t2.textContent='—';t2.style.color='';t2.style.borderColor='';}
           }
         });
@@ -867,9 +949,10 @@ function renderPieceInputs(){
 function updateOverallCat(){
   const rows=[...document.querySelectorAll('#pieceInputs .piece-row')];
   const pieces=rows.map(r=>({piece:r.dataset.piece,hex:'#'+(r.querySelector('.hex-input').value||'')})).filter(p=>p.hex.length>1);
+  const armourType=document.getElementById('armourTypeInput').value.trim();
   const display=document.getElementById('autoCatDisplay');
   if(!pieces.length){display.innerHTML='<span style="color:var(--text3);font-size:12px">Select pieces and enter hex codes</span>';return;}
-  const results=classifyPieces(pieces);
+  const results=classifyPieces(pieces, armourType);
   if(!results.length){display.innerHTML='<span style="color:var(--text3);font-size:12px">Enter a valid hex code</span>';return;}
   display.innerHTML=results.map(r=>`<span class="cat-tag-pill ${r.cat}"><span class="cat-tag-dot" style="background:${r.colour}"></span>${r.label}</span>`).join('');
 }
@@ -903,18 +986,12 @@ function fmtRaw(n){
   return n.toLocaleString('en-GB')+' coins';
 }
 function updatePricePreview(){
-  const raw=document.getElementById('postPrice').value;
-  const n=parsePrice(raw);
-  const el=document.getElementById('pricePreview');
-  if(n===null){el.textContent='';el.className='price-preview';return;}
-  el.textContent='= '+fmtRaw(n);el.className='price-preview valid';
+  const n=parsePrice(document.getElementById('postPrice').value);
+  document.getElementById('pricePreview').textContent=n?'= '+fmtRaw(n):'';
 }
 function updateOfferPreview(){
-  const raw=document.getElementById('offerAmount').value;
-  const n=parsePrice(raw);
-  const el=document.getElementById('offerPreview');
-  if(n===null){el.textContent='';el.className='price-preview';return;}
-  el.textContent='= '+fmtRaw(n);el.className='price-preview valid';
+  const n=parsePrice(document.getElementById('offerAmount').value);
+  document.getElementById('offerPreview').textContent=n?'= '+fmtRaw(n):'';
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -1132,7 +1209,7 @@ window.submitListing=async function(){
   if(!price||price<=0){toast('Please enter a valid price (e.g. 500m, 1.5b).');return;}
   if(!ign){toast('Please enter your IGN.');return;}
 
-  const catResults=classifyPieces(pieces);
+  const catResults=classifyPieces(pieces, armourType);
   const primaryCat=catResults[0]||{cat:'exotic',label:'Exotic'};
   const catLabel=catResults.map(r=>r.label).join(' + ');
 
@@ -1140,11 +1217,14 @@ window.submitListing=async function(){
   btn.disabled=true;btn.textContent='Posting…';
 
   const token=getToken();
+  const headers={'Content-Type':'application/json'};
+  if(token) headers['Authorization']=`Bearer ${token}`;
+
   try{
     const res=await fetch(`${API}/listings`,{
       method:'POST',
-      headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},
-      body:JSON.stringify({armourType,setName,pieces,cat:primaryCat.cat,catLabel,price,proof:proof||'',notes:notes||''}),
+      headers,
+      body:JSON.stringify({armourType,setName,pieces,cat:primaryCat.cat,catLabel,price,proof:proof||'',notes:notes||'',ign}),
     });
     const data=await res.json();
     if(!res.ok){toast(data.error||'Failed to post.');return;}
@@ -1162,6 +1242,7 @@ function resetPostForm(){
   document.getElementById('postPrice').value='';
   document.getElementById('postProof').value='';
   document.getElementById('postNotes').value='';
+  const nc=document.getElementById('notesCounter');if(nc)nc.textContent='0/250';
   document.getElementById('pricePreview').textContent='';
   if(!currentUser)document.getElementById('postIGN').value='';
   selectedPieces.clear();fullSetMode=false;

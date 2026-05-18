@@ -365,68 +365,81 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
       <div class="modal-title">Post a Listing</div>
       <button class="icon-btn" onclick="closeModal('postModal')" style="font-size:13px;width:32px;height:32px;padding:0">✕</button>
     </div>
-    <div class="modal-body">
-      <!-- Armour Type -->
-      <div class="field">
-        <label>Armour Type</label>
-        <div class="autocomplete-wrap">
-          <input type="text" id="armourTypeInput" class="autocomplete-input" placeholder="e.g. Superior Dragon Armour, Tarantula…" autocomplete="off" oninput="acUpdate()" onkeydown="acKey(event)" onfocus="acUpdate()">
-          <div class="autocomplete-list" id="acList"></div>
+    <div id="postModalBody" class="modal-body">
+      <!-- Login wall (shown when not logged in) -->
+      <div id="postAuthWall" style="display:none;text-align:center;padding:32px 16px">
+        <div style="font-size:40px;margin-bottom:16px">🔒</div>
+        <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">Verification Required</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:20px">You need to verify your Minecraft account to post a listing. This ensures all listings are tied to a real, verified IGN.</p>
+        <button class="btn btn-primary" onclick="closeModal('postModal');startLogin()" style="width:100%">Login with Minecraft</button>
+      </div>
+      <!-- Actual form (shown when logged in) -->
+      <div id="postFormContent">
+        <!-- Posting as -->
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:16px">
+          <img id="postUserAvatar" style="width:28px;height:28px;border-radius:50%;image-rendering:pixelated;border:1px solid var(--border)" src="" alt="">
+          <div>
+            <div style="font-size:11px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase">Posting as</div>
+            <div id="postUserName" style="font-size:13px;font-weight:600;color:var(--text)"></div>
+          </div>
+          <div style="margin-left:auto;font-size:11px;padding:2px 8px;border-radius:5px;background:rgba(78,203,113,.1);border:1px solid rgba(78,203,113,.2);color:var(--green)">✓ Verified</div>
         </div>
-      </div>
-      <!-- Set Name -->
-      <div class="field">
-        <label>Set Name <span style="color:var(--text3);font-weight:400">(dye name or custom label)</span></label>
-        <input type="text" id="postSetName" placeholder="e.g. Fairy Purple, Cold Opal, Bleached…">
-      </div>
-      <!-- Piece selector -->
-      <div class="field">
-        <label>Armour Piece(s)</label>
-        <div class="piece-selector" id="pieceSelector">
-          <div class="piece-toggle full-set" data-piece="fullset" onclick="togglePiece('fullset',this)">Full Set</div>
-          <div class="piece-toggle" data-piece="Helmet" onclick="togglePiece('Helmet',this)">Helmet</div>
-          <div class="piece-toggle" data-piece="Chestplate" onclick="togglePiece('Chestplate',this)">Chestplate</div>
-          <div class="piece-toggle" data-piece="Leggings" onclick="togglePiece('Leggings',this)">Leggings</div>
-          <div class="piece-toggle" data-piece="Boots" onclick="togglePiece('Boots',this)">Boots</div>
+        <!-- Armour Type -->
+        <div class="field">
+          <label>Armour Type</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="armourTypeInput" class="autocomplete-input" placeholder="e.g. Superior Dragon Armour, Tarantula…" autocomplete="off" oninput="acUpdate()" onkeydown="acKey(event)" onfocus="acUpdate()">
+            <div class="autocomplete-list" id="acList"></div>
+          </div>
         </div>
-        <div class="piece-inputs" id="pieceInputs"></div>
-      </div>
-      <!-- Detected category -->
-      <div class="field">
-        <label>Detected Category</label>
-        <div class="auto-cat-display" id="autoCatDisplay">
-          <span style="color:var(--text3);font-size:12px">Select pieces and enter hex codes</span>
+        <!-- Set Name -->
+        <div class="field">
+          <label>Set Name <span style="color:var(--text3);font-weight:400">(dye name or custom label)</span></label>
+          <input type="text" id="postSetName" placeholder="e.g. Fairy Purple, Cold Opal, Bleached…">
         </div>
-      </div>
-      <!-- Price & IGN -->
-      <div class="field-row">
-        <div class="field" style="margin-bottom:0">
+        <!-- Piece selector -->
+        <div class="field">
+          <label>Armour Piece(s)</label>
+          <div class="piece-selector" id="pieceSelector">
+            <div class="piece-toggle full-set" data-piece="fullset" onclick="togglePiece('fullset',this)">Full Set</div>
+            <div class="piece-toggle" data-piece="Helmet" onclick="togglePiece('Helmet',this)">Helmet</div>
+            <div class="piece-toggle" data-piece="Chestplate" onclick="togglePiece('Chestplate',this)">Chestplate</div>
+            <div class="piece-toggle" data-piece="Leggings" onclick="togglePiece('Leggings',this)">Leggings</div>
+            <div class="piece-toggle" data-piece="Boots" onclick="togglePiece('Boots',this)">Boots</div>
+          </div>
+          <div class="piece-inputs" id="pieceInputs"></div>
+        </div>
+        <!-- Detected category -->
+        <div class="field">
+          <label>Detected Category</label>
+          <div class="auto-cat-display" id="autoCatDisplay">
+            <span style="color:var(--text3);font-size:12px">Select pieces and enter hex codes</span>
+          </div>
+        </div>
+        <!-- Price -->
+        <div class="field" style="margin-top:4px">
           <label>Asking Price</label>
           <div class="price-wrap">
             <input type="text" id="postPrice" placeholder="e.g. 500m, 1.5b, 10kk" oninput="updatePricePreview()">
             <span class="price-ghost" id="pricePreview"></span>
           </div>
         </div>
-        <div class="field" style="margin-bottom:0">
-          <label>Your IGN</label>
-          <input type="text" id="postIGN" placeholder="Minecraft username">
+        <!-- Proof -->
+        <div class="field" style="margin-top:16px">
+          <label>Screenshot / Proof URL <span style="color:var(--text3);font-weight:400">(recommended)</span></label>
+          <input type="text" id="postProof" placeholder="https://imgur.com/…">
+        </div>
+        <!-- Notes -->
+        <div class="field" style="margin-bottom:8px">
+          <label style="display:flex;justify-content:space-between;align-items:center">
+            Notes <span style="color:var(--text3);font-weight:400">(optional)</span>
+            <span id="notesCounter" style="font-size:11px;color:var(--text3);font-weight:400">0/250</span>
+          </label>
+          <textarea id="postNotes" rows="2" placeholder="Any extra details…" maxlength="250" oninput="document.getElementById('notesCounter').textContent=this.value.length+'/250'"></textarea>
         </div>
       </div>
-      <!-- Proof -->
-      <div class="field" style="margin-top:16px">
-        <label>Screenshot / Proof URL <span style="color:var(--text3);font-weight:400">(recommended)</span></label>
-        <input type="text" id="postProof" placeholder="https://imgur.com/…">
-      </div>
-      <!-- Notes -->
-      <div class="field" style="margin-bottom:8px">
-        <label style="display:flex;justify-content:space-between;align-items:center">
-          Notes <span style="color:var(--text3);font-weight:400">(optional)</span>
-          <span id="notesCounter" style="font-size:11px;color:var(--text3);font-weight:400">0/250</span>
-        </label>
-        <textarea id="postNotes" rows="2" placeholder="Any extra details…" maxlength="250" oninput="document.getElementById('notesCounter').textContent=this.value.length+'/250'"></textarea>
-      </div>
     </div>
-    <div class="modal-foot">
+    <div class="modal-foot" id="postModalFoot">
       <button class="btn btn-ghost" onclick="closeModal('postModal')">Cancel</button>
       <button class="btn btn-primary" id="postSubmitBtn" onclick="submitListing()">Post Listing</button>
     </div>
@@ -476,7 +489,7 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
     <div class="hero-title">The Vault</div>
     <p class="hero-sub">The dedicated marketplace for Hypixel SkyBlock's rarest cosmetics. Post your items, browse live listings, and connect with collectors.</p>
     <div class="hero-actions">
-      <button class="icon-btn primary" onclick="openModal('postModal')" style="height:38px;font-size:13px">+ Post a Listing</button>
+      <button class="icon-btn primary" onclick="openPostModal()" style="height:38px;font-size:13px">+ Post a Listing</button>
       <button class="icon-btn" onclick="switchTab('how')" style="height:38px;font-size:13px">How it works →</button>
     </div>
   </div>
@@ -600,34 +613,61 @@ async function startLogin(){
 }
 
 async function handleCallback(){
-  const params   = new URLSearchParams(window.location.search);
-  const code     = params.get('code');
-  const retState = params.get('state');
-  const error    = params.get('error');
-  if(error){ toast('Login failed: '+error); window.history.replaceState({},document.title,window.location.pathname); return; }
-  if(!code) return;
-  const verifier  = sessionStorage.getItem('pkce_verifier');
-  const savedState= sessionStorage.getItem('pkce_state');
+  const params    = new URLSearchParams(window.location.search);
+  const code      = params.get('code');
+  const retState  = params.get('state');
+  const error     = params.get('error');
+
+  // Nothing to handle — not a callback
+  if(!code && !error) return;
+
+  // Clean URL immediately so refresh doesn't re-trigger
+  window.history.replaceState({}, document.title, window.location.pathname);
+
+  if(error){
+    toast('Login failed: ' + error);
+    return;
+  }
+
+  const verifier   = sessionStorage.getItem('pkce_verifier');
+  const savedState = sessionStorage.getItem('pkce_state');
   sessionStorage.removeItem('pkce_verifier');
   sessionStorage.removeItem('pkce_state');
-  if(retState !== savedState){ toast('Login failed: state mismatch. Please try again.'); window.history.replaceState({},document.title,window.location.pathname); return; }
-  window.history.replaceState({}, document.title, window.location.pathname);
-  const area=document.getElementById('authArea');
-  area.innerHTML=`<button class="icon-btn primary" disabled style="opacity:.7">Logging in…</button>`;
+
+  if(!verifier){
+    toast('Login failed: session expired, please try again.');
+    return;
+  }
+  if(retState !== savedState){
+    toast('Login failed: state mismatch, please try again.');
+    return;
+  }
+
+  const area = document.getElementById('authArea');
+  area.innerHTML = `<button class="icon-btn primary" disabled style="opacity:.7">Logging in…</button>`;
+
   try{
-    const res = await fetch(`${API}/auth/token`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({code, code_verifier: verifier}),
+    const res  = await fetch(`${API}/auth/token`, {
+      method:  'POST',
+      headers: {'Content-Type':'application/json'},
+      body:    JSON.stringify({code, code_verifier: verifier}),
     });
     const data = await res.json();
-    if(!data.token){ toast('Login failed: '+(data.error||'unknown error')); setUser(null); return; }
+    if(!data.token){
+      toast('Login failed: ' + (data.error || 'unknown error'));
+      setUser(null);
+      return;
+    }
     localStorage.setItem('vault_token', data.token);
     localStorage.setItem('vault_user',  JSON.stringify(data.user));
     setUser(data.user);
     toast(`Welcome, ${data.user.username}!`);
     loadStats();
-  }catch(e){ console.error('Login error:',e); toast('Login failed – check your connection'); setUser(null); }
+  } catch(e){
+    console.error('Login error:', e);
+    toast('Login failed – check your connection');
+    setUser(null);
+  }
 }
 
 function setUser(user){
@@ -642,13 +682,10 @@ function setUser(user){
       <img class="user-avatar" src="${HEAD_URL(user.uuid)}" alt="${esc(user.username)}">
       <span class="user-ign">${esc(user.username)}</span>
       <div class="user-dropdown">
-        <button class="user-dd-item" onclick="openModal('postModal')">+ Post Listing</button>
+        <button class="user-dd-item" onclick="openPostModal()">+ Post Listing</button>
         <button class="user-dd-item danger" onclick="logout()">Log out</button>
       </div>
     </div>`;
-  // Auto-fill IGN in post form
-  const ignEl = document.getElementById('postIGN');
-  if(ignEl){ ignEl.value = user.username; ignEl.readOnly = true; }
 }
 
 async function logout(){
@@ -1194,12 +1231,37 @@ function renderCardCanvases(){
 /* ════════════════════════════════════════════════════════════════════
    POST LISTING
 ════════════════════════════════════════════════════════════════════ */
+window.openPostModal=function(){
+  openModal('postModal');
+  const wall=document.getElementById('postAuthWall');
+  const form=document.getElementById('postFormContent');
+  const foot=document.getElementById('postModalFoot');
+  if(!currentUser){
+    // Show login wall, hide form and submit button
+    wall.style.display='block';
+    form.style.display='none';
+    foot.style.display='none';
+  }else{
+    // Show form, hide wall
+    wall.style.display='none';
+    form.style.display='block';
+    foot.style.display='flex';
+    // Populate verified user badge
+    const av=document.getElementById('postUserAvatar');
+    const nm=document.getElementById('postUserName');
+    if(av)av.src=HEAD_URL(currentUser.uuid);
+    if(nm)nm.textContent=currentUser.username;
+  }
+};
+
 window.submitListing=async function(){
+  if(!currentUser){ toast('You must be logged in to post a listing.'); return; }
+
   const armourType=document.getElementById('armourTypeInput').value.trim();
   const setName=document.getElementById('postSetName').value.trim();
   const priceRaw=document.getElementById('postPrice').value.trim();
   const price=parsePrice(priceRaw);
-  const ign=document.getElementById('postIGN').value.trim();
+  const ign=currentUser.username;
   const proof=document.getElementById('postProof').value.trim();
   const notes=document.getElementById('postNotes').value.trim();
   const pieces=getPieceData();
@@ -1207,7 +1269,6 @@ window.submitListing=async function(){
   if(!armourType){toast('Please select an armour type.');return;}
   if(!pieces.length){toast('Please select at least one armour piece.');return;}
   if(!price||price<=0){toast('Please enter a valid price (e.g. 500m, 1.5b).');return;}
-  if(!ign){toast('Please enter your IGN.');return;}
 
   const catResults=classifyPieces(pieces, armourType);
   const primaryCat=catResults[0]||{cat:'exotic',label:'Exotic'};
@@ -1243,8 +1304,7 @@ function resetPostForm(){
   document.getElementById('postProof').value='';
   document.getElementById('postNotes').value='';
   const nc=document.getElementById('notesCounter');if(nc)nc.textContent='0/250';
-  document.getElementById('pricePreview').textContent='';
-  if(!currentUser)document.getElementById('postIGN').value='';
+  const pp=document.getElementById('pricePreview');if(pp)pp.textContent='';
   selectedPieces.clear();fullSetMode=false;
   document.querySelectorAll('#pieceSelector .piece-toggle').forEach(t=>t.classList.remove('selected'));
   document.getElementById('pieceInputs').innerHTML='';

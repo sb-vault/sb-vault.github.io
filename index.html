@@ -63,17 +63,71 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .icon-btn.danger:hover{background:rgba(232,85,85,.2);border-color:var(--red);color:var(--red)}
 
 /* ── User pill (logged in state) ──────────────────────────────────────── */
-.user-pill{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:border-color .2s;position:relative}
-.user-pill:hover{border-color:var(--sunset1)}
+.user-pill{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:border-color .2s;position:relative;user-select:none}
+.user-pill.open{border-color:var(--sunset1)}
 .user-avatar{width:28px;height:28px;border-radius:50%;image-rendering:pixelated;border:1px solid var(--border)}
 .user-ign{font-size:13px;font-weight:600;color:var(--text)}
 .user-dropdown{position:absolute;right:0;top:calc(100% + 8px);background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px;width:180px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:200;display:none}
-.user-pill:hover .user-dropdown,.user-pill:focus-within .user-dropdown{display:block}
+.user-pill.open .user-dropdown{display:block;animation:fadeIn .15s ease}
 .user-dd-item{display:block;padding:8px 12px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:background .15s;border:none;background:transparent;width:100%;text-align:left;font-family:'Inter',sans-serif}
 .user-dd-item:hover{background:var(--bg3);color:var(--text)}
 .user-dd-item.danger{color:var(--red)}
 
-/* ── Hero ─────────────────────────────────────────────────────────────── */
+/* ── Chat button ──────────────────────────────────────────────────────── */
+.chat-btn-wrap{position:relative}
+.chat-badge{position:absolute;top:-5px;right:-5px;background:var(--sunset1);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;display:none;pointer-events:none}
+.chat-badge.visible{display:block}
+
+/* ── Chat panel ───────────────────────────────────────────────────────── */
+.chat-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none}
+.chat-overlay.open{display:block;animation:fadeIn .2s ease}
+.chat-panel{position:fixed;right:0;top:0;bottom:0;width:780px;max-width:96vw;background:var(--bg2);border-left:1px solid var(--border);z-index:301;display:flex;box-shadow:-8px 0 40px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.chat-panel.open{transform:translateX(0)}
+.chat-list-panel{width:260px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column}
+.chat-list-head{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.chat-list-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--text)}
+.chat-list-scroll{flex:1;overflow-y:auto}
+.chat-list-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.chat-list-item:hover{background:var(--bg3)}
+.chat-list-item.active{background:var(--bg3);border-left:3px solid var(--sunset1)}
+.chat-list-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-list-preview{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-list-time{font-size:10px;color:var(--text3);margin-top:2px}
+.chat-empty-list{padding:40px 16px;text-align:center;color:var(--text3);font-size:13px;line-height:1.6}
+.chat-main{flex:1;display:flex;flex-direction:column;min-width:0}
+.chat-main-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.chat-main-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--text)}
+.chat-main-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.offer-pin{margin:12px 16px 0;padding:10px 14px;background:rgba(240,192,96,.06);border:1px solid rgba(240,192,96,.25);border-radius:10px;border-left:3px solid var(--gold)}
+.offer-pin-label{font-size:10px;color:var(--gold);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.offer-pin-amount{font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--gold)}
+.offer-pin-msg{font-size:12px;color:var(--text2);margin-top:2px}
+.chat-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.msg-row{display:flex;gap:8px;align-items:flex-end}
+.msg-row.mine{flex-direction:row-reverse}
+.msg-avatar{width:22px;height:22px;border-radius:50%;image-rendering:pixelated;border:1px solid var(--border);flex-shrink:0}
+.msg-bubble{max-width:65%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.5;word-break:break-word}
+.msg-bubble.theirs{background:var(--bg3);color:var(--text);border-bottom-left-radius:4px}
+.msg-bubble.mine{background:linear-gradient(135deg,var(--sunset1),var(--sunset2));color:#fff;border-bottom-right-radius:4px}
+.msg-time{font-size:10px;color:var(--text3);padding:0 4px;white-space:nowrap}
+.msg-img{max-width:220px;max-height:220px;border-radius:10px;cursor:pointer;display:block;margin-top:4px;border:1px solid var(--border)}
+.msg-offer{background:rgba(240,192,96,.08);border:1px solid rgba(240,192,96,.25);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--gold);font-weight:600;align-self:center;text-align:center;max-width:80%}
+.chat-input-area{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end}
+.chat-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:8px 12px;outline:none;resize:none;max-height:100px;min-height:36px;transition:border-color .2s;line-height:1.5}
+.chat-input:focus{border-color:var(--sunset1)}
+.chat-input::placeholder{color:var(--text3)}
+.chat-send-btn,.chat-img-btn{height:36px;width:36px;border-radius:9px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:opacity .2s}
+.chat-send-btn{background:linear-gradient(135deg,var(--sunset1),var(--sunset2));color:#fff}
+.chat-send-btn:hover{opacity:.85}
+.chat-img-btn{border:1px solid var(--border);background:var(--bg3);color:var(--text2)}
+.chat-img-btn:hover{border-color:var(--sunset1);color:var(--sunset1)}
+.chat-no-select{padding:60px 24px;text-align:center;color:var(--text3);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:13px}
+
+/* ── Card piece previews ──────────────────────────────────────────────── */
+.card-pieces-row{display:flex;align-items:flex-end;gap:8px;padding:6px 0 2px}
+.card-piece-wrap{display:flex;flex-direction:column;align-items:center;gap:3px}
+.card-piece-canvas{image-rendering:pixelated;border-radius:4px;border:1px solid var(--border);background:var(--bg3)}
+.card-piece-label{font-size:9px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase}
 .hero-banner{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:32px 36px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:24px;overflow:hidden;position:relative}
 .hero-banner::before{content:'';position:absolute;right:-80px;top:-80px;width:360px;height:360px;background:radial-gradient(ellipse,rgba(255,107,53,.08) 0,transparent 70%);pointer-events:none}
 .hero-title{font-family:'Cinzel',serif;font-size:clamp(22px,3.5vw,38px);font-weight:700;background:linear-gradient(135deg,var(--sunset1),var(--sunset2),var(--sunset3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.15;margin-bottom:10px}
@@ -82,7 +136,7 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 
 /* ── Stat pills ───────────────────────────────────────────────────────── */
 .stat-pills{display:flex;gap:10px;flex-shrink:0;flex-wrap:wrap}
-.stat-pill{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:12px 20px;text-align:center;min-width:90px}
+.stat-pill{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:12px 0;text-align:center;width:100px;flex-shrink:0}
 .stat-pill-num{font-family:'Cinzel',serif;font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--sunset1),var(--sunset2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
 .stat-pill-lbl{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
 
@@ -322,6 +376,11 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
       <!-- Auth area — swaps between login button and user pill -->
       <div id="authArea">
         <button class="icon-btn primary" onclick="startLogin()">Login with Minecraft</button>
+      </div>
+      <div class="chat-btn-wrap" id="chatBtnWrap" style="display:none">
+        <button class="icon-btn" id="chatBtn" onclick="openChatPanel()" title="Messages">💬
+          <span class="chat-badge" id="chatBadge"></span>
+        </button>
       </div>
       <button class="icon-btn" id="settingsBtn" title="Settings">⚙</button>
     </div>
@@ -564,6 +623,23 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
 <footer>The Vault · sb-vault.github.io · Not affiliated with Hypixel · Open source</footer>
 <div class="neu-credit">Item data sourced from the <a href="https://github.com/NotEnoughUpdates/NotEnoughUpdates-REPO" target="_blank">NotEnoughUpdates REPO</a> – an open-source community project.</div>
 
+<!-- ── Chat overlay + panel ────────────────────────────────────────────── -->
+<div class="chat-overlay" id="chatOverlay" onclick="closeChatPanel()"></div>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-list-panel">
+    <div class="chat-list-head">
+      <span class="chat-list-title">Messages</span>
+      <button class="icon-btn" onclick="closeChatPanel()" style="width:28px;height:28px;padding:0;font-size:13px">✕</button>
+    </div>
+    <div class="chat-list-scroll" id="chatListScroll">
+      <div class="chat-empty-list">No conversations yet.<br>Make an offer to start chatting.</div>
+    </div>
+  </div>
+  <div class="chat-main" id="chatMain">
+    <div class="chat-no-select"><div style="font-size:36px;opacity:.4">💬</div><div>Select a conversation</div></div>
+  </div>
+</div>
+
 <script>
 /* ════════════════════════════════════════════════════════════════════
    CONFIG
@@ -673,12 +749,14 @@ async function handleCallback(){
 function setUser(user){
   currentUser = user;
   const area = document.getElementById('authArea');
+  const chatWrap = document.getElementById('chatBtnWrap');
   if(!user){
     area.innerHTML = `<button class="icon-btn primary" onclick="startLogin()">Login with Minecraft</button>`;
+    if(chatWrap) chatWrap.style.display='none';
     return;
   }
   area.innerHTML = `
-    <div class="user-pill" tabindex="0">
+    <div class="user-pill" id="userPill" onclick="toggleUserPill(event)">
       <img class="user-avatar" src="${HEAD_URL(user.uuid)}" alt="${esc(user.username)}">
       <span class="user-ign">${esc(user.username)}</span>
       <div class="user-dropdown">
@@ -686,7 +764,22 @@ function setUser(user){
         <button class="user-dd-item danger" onclick="logout()">Log out</button>
       </div>
     </div>`;
+  if(chatWrap) chatWrap.style.display='flex';
+  loadChatList();
+  pollChats();
 }
+
+window.toggleUserPill=function(e){
+  e.stopPropagation();
+  const pill=document.getElementById('userPill');
+  if(pill) pill.classList.toggle('open');
+};
+
+// Close user pill on outside click
+document.addEventListener('click',()=>{
+  const pill=document.getElementById('userPill');
+  if(pill) pill.classList.remove('open');
+});
 
 async function logout(){
   const token = localStorage.getItem('vault_token');
@@ -1180,16 +1273,19 @@ function card(l){
     ?`<button class="card-btn done" onclick="event.stopPropagation();markDone('${esc(l.id)}')" title="Mark sold">✓</button><button class="card-btn del" onclick="event.stopPropagation();delListing('${esc(l.id)}')" title="Delete">✕</button>`
     :'';
 
-  // Piece canvases — rendered after card is inserted via data attributes
+  // Piece-specific canvas sizes matching Minecraft texture aspect ratios
   const pieces=l.pieces||[];
-  const pieceCanvases=pieces.map((p,i)=>`
-    <div class="card-piece-wrap">
-      <canvas class="card-piece-canvas" width="32" height="40"
-        style="width:32px;height:40px"
+  const PIECE_SIZES={Helmet:{w:36,h:36},Chestplate:{w:36,h:40},Leggings:{w:36,h:46},Boots:{w:36,h:32}};
+  const pieceCanvases=pieces.map((p,i)=>{
+    const sz=PIECE_SIZES[p.piece]||{w:36,h:36};
+    return`<div class="card-piece-wrap">
+      <canvas class="card-piece-canvas" width="${sz.w*2}" height="${sz.h*2}"
+        style="width:${sz.w}px;height:${sz.h}px"
         data-piece="${esc(p.piece)}" data-hex="${esc(p.hex)}"
         id="cc-${esc(l.id)}-${i}"></canvas>
       <span class="card-piece-label">${esc(p.piece.slice(0,4))}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   return`<div class="listing-card" onclick="openOffer('${esc(l.id)}')" style="${isSold?'opacity:.55;pointer-events:none':''}">
   <div class="card-stripe ${cat}"></div>
@@ -1505,8 +1601,264 @@ window.closeSettings=function(){document.getElementById('settingsOverlay').class
 document.getElementById('settingsBtn').addEventListener('click',window.openSettings);
 
 /* ════════════════════════════════════════════════════════════════════
-   INIT — observe DOM changes to draw canvases after grid renders
+   CHAT SYSTEM
 ════════════════════════════════════════════════════════════════════ */
+let chatPollingInterval = null;
+let activeChatId = null;
+let chatList = [];
+
+window.openChatPanel = function(){
+  document.getElementById('chatOverlay').classList.add('open');
+  document.getElementById('chatPanel').classList.add('open');
+  loadChatList();
+};
+
+window.closeChatPanel = function(){
+  document.getElementById('chatOverlay').classList.remove('open');
+  document.getElementById('chatPanel').classList.remove('open');
+};
+
+async function loadChatList(){
+  if(!currentUser) return;
+  try{
+    const res = await fetch(`${API}/chats`, {
+      headers: {Authorization: `Bearer ${getToken()}`}
+    });
+    const data = await res.json();
+    chatList = data.chats || [];
+    renderChatList();
+    updateChatBadge();
+  }catch(e){}
+}
+
+function renderChatList(){
+  const el = document.getElementById('chatListScroll');
+  if(!chatList.length){
+    el.innerHTML='<div class="chat-empty-list">No conversations yet.<br>Make an offer to start chatting.</div>';
+    return;
+  }
+  el.innerHTML = chatList.map(c=>{
+    const isSeller = c.seller_uuid === currentUser?.uuid;
+    const otherName = isSeller ? c.buyer_ign : (c.seller_ign||'Seller');
+    const title = c.armour_type || 'Item';
+    const preview = c.last_message
+      ? (c.last_message.startsWith('__offer__') ? '💰 Offer pinned' : c.last_message)
+      : '💰 ' + fmtC(c.offer_amount);
+    const timeStr = c.last_ts ? ago(c.last_ts) : ago(c.created_at);
+    return`<div class="chat-list-item${activeChatId===c.id?' active':''}" onclick="openChat('${c.id}')">
+      <div class="chat-list-name">${esc(otherName)} — ${esc(title)}</div>
+      <div class="chat-list-preview">${esc(preview)}</div>
+      <div class="chat-list-time">${timeStr}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateChatBadge(){
+  const badge = document.getElementById('chatBadge');
+  if(!badge) return;
+  if(chatList.length > 0){
+    badge.textContent = chatList.length > 9 ? '9+' : chatList.length;
+    badge.classList.add('visible');
+  } else {
+    badge.classList.remove('visible');
+  }
+}
+
+window.openChat = async function(chatId){
+  activeChatId = chatId;
+  renderChatList(); // update active state
+  const main = document.getElementById('chatMain');
+  main.innerHTML = '<div class="chat-loading"><div class="spinner" style="margin:40px auto"></div></div>';
+  try{
+    const res = await fetch(`${API}/chats/${chatId}`, {
+      headers: {Authorization: `Bearer ${getToken()}`}
+    });
+    const data = await res.json();
+    renderChatView(data.chat, data.messages || []);
+  }catch(e){
+    main.innerHTML='<div class="chat-no-select">Failed to load chat.</div>';
+  }
+};
+
+function renderChatView(chat, messages){
+  if(!chat) return;
+  const isSeller = chat.seller_uuid === currentUser?.uuid;
+  const otherName = isSeller ? chat.buyer_ign : (chat.seller_ign||'Seller');
+  const offerMsg = chat.offer_message ? `<div class="offer-pin-msg">${esc(chat.offer_message)}</div>` : '';
+  const pieces = chat.pieces ? JSON.parse(chat.pieces) : [];
+
+  const msgsHtml = messages.map(m=>{
+    const isMe = m.sender_uuid === currentUser?.uuid;
+    const cls = isMe ? 'mine' : 'theirs';
+    // Check if it's the pinned offer message
+    if(m.content && m.content.startsWith('__offer__')){
+      const parts = m.content.split(':');
+      const amt = parts[1]||'';
+      const msg = parts.slice(2).join(':');
+      return`<div class="msg-offer">💰 Offer: ${fmtC(amt)} coins${msg?` — ${esc(msg)}`:''}
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">${ago(m.ts)}</div></div>`;
+    }
+    const avatar = `https://mc-heads.net/avatar/${esc(m.sender_uuid||'steve')}/22`;
+    const imgHtml = m.image_url ? `<img class="msg-img" src="${esc(m.image_url)}" onclick="window.open('${esc(m.image_url)}','_blank')" alt="Image">` : '';
+    const textHtml = m.content ? `<div>${esc(m.content)}</div>` : '';
+    return`<div class="msg-row ${cls}">
+      <img class="msg-avatar" src="${avatar}" alt="${esc(m.sender_ign)}">
+      <div>
+        <div class="msg-bubble ${cls}">${textHtml}${imgHtml}</div>
+        <div class="msg-time">${ago(m.ts)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const imgBtnHtml = isSeller
+    ? `<button class="chat-img-btn" onclick="triggerImageUpload()" title="Send image">🖼</button>`
+    : '';
+
+  document.getElementById('chatMain').innerHTML = `
+    <div class="chat-main-head">
+      <div>
+        <div class="chat-main-title">${esc(otherName)}</div>
+        <div class="chat-main-sub">${esc(chat.armour_type||'')}${chat.set_name?' – '+esc(chat.set_name):''}</div>
+      </div>
+      <button class="icon-btn" style="margin-left:auto" onclick="closeChatPanel()">✕</button>
+    </div>
+    <div class="offer-pin">
+      <div class="offer-pin-label">📌 Pinned Offer</div>
+      <div class="offer-pin-amount">${fmtC(chat.offer_amount)} coins</div>
+      ${offerMsg}
+    </div>
+    <div class="chat-messages" id="chatMsgs">${msgsHtml}</div>
+    <div class="chat-input-area">
+      ${imgBtnHtml}
+      <textarea class="chat-input" id="chatInputField" placeholder="Type a message…" rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+      <button class="chat-send-btn" onclick="sendChatMessage()">↑</button>
+    </div>
+    <input type="file" id="chatImageInput" accept="image/*" style="display:none" onchange="handleImageUpload(event)">`;
+
+  // Scroll to bottom
+  const msgs = document.getElementById('chatMsgs');
+  if(msgs) msgs.scrollTop = msgs.scrollHeight;
+}
+
+window.sendChatMessage = async function(){
+  const input = document.getElementById('chatInputField');
+  if(!input||!activeChatId) return;
+  const content = input.value.trim();
+  if(!content) return;
+  input.value = '';
+  input.style.height = 'auto';
+  try{
+    await fetch(`${API}/chats/${activeChatId}/messages`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', Authorization: `Bearer ${getToken()}`},
+      body: JSON.stringify({content}),
+    });
+    openChat(activeChatId); // reload messages
+  }catch(e){ toast('Failed to send message.'); }
+};
+
+window.triggerImageUpload = function(){
+  document.getElementById('chatImageInput')?.click();
+};
+
+window.handleImageUpload = async function(event){
+  const file = event.target.files[0];
+  if(!file||!activeChatId) return;
+
+  // Resize to max 720p client-side
+  const resized = await resizeImage(file, 1280, 720);
+  const formData = new FormData();
+  formData.append('file', resized, file.name);
+
+  try{
+    const uploadRes = await fetch(`${API}/images/upload`, {
+      method: 'POST',
+      headers: {Authorization: `Bearer ${getToken()}`},
+      body: formData,
+    });
+    const uploadData = await uploadRes.json();
+    if(!uploadData.url){ toast('Image upload failed.'); return; }
+
+    await fetch(`${API}/chats/${activeChatId}/messages`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', Authorization: `Bearer ${getToken()}`},
+      body: JSON.stringify({image_url: uploadData.url}),
+    });
+    openChat(activeChatId);
+  }catch(e){ toast('Failed to upload image.'); }
+  event.target.value = '';
+};
+
+// Resize image to max dimensions using canvas
+function resizeImage(file, maxW, maxH){
+  return new Promise(resolve=>{
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      URL.revokeObjectURL(url);
+      let {width:w, height:h} = img;
+      if(w>maxW||h>maxH){
+        const ratio = Math.min(maxW/w, maxH/h);
+        w = Math.round(w*ratio);
+        h = Math.round(h*ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      canvas.toBlob(blob=>resolve(new File([blob], file.name, {type:'image/jpeg'})), 'image/jpeg', 0.85);
+    };
+    img.src = url;
+  });
+}
+
+// Auto-create chat when offer is submitted
+const _origSubmitOffer = window.submitOffer;
+window.submitOffer = async function(){
+  // We'll intercept the offer response to get the chatId
+  const ign = document.getElementById('offerIGN').value.trim();
+  const amtRaw = document.getElementById('offerAmount').value.trim();
+  const amount = parsePrice(amtRaw);
+  const message = document.getElementById('offerMessage').value.trim();
+  if(!ign){toast('Please enter your IGN.');return;}
+  if(!amount){toast('Please enter a valid offer amount.');return;}
+
+  const btn=document.getElementById('offerSubmitBtn');
+  btn.disabled=true;btn.textContent='Sending…';
+  const token=getToken();
+  try{
+    const res=await fetch(`${API}/offers`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},
+      body:JSON.stringify({listingId:activeListingId,buyerIgn:ign,amount,message}),
+    });
+    const data=await res.json();
+    if(!res.ok){toast(data.error||'Failed to send.');return;}
+    closeModal('offerModal');
+    const seller=activeListingData?.ign||'the seller';
+    toast(`Offer sent! Contact ${seller} in-game to arrange the trade.`);
+    ['offerIGN','offerAmount','offerMessage'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.value='';
+    });
+    const pp=document.getElementById('offerPreview');if(pp)pp.textContent='';
+    // If logged in, open the chat that was created
+    if(currentUser && data.chatId){
+      await loadChatList();
+      openChatPanel();
+      openChat(data.chatId);
+    }
+  }catch(e){toast('Failed to send offer.');}
+  finally{btn.disabled=false;btn.textContent='Send Offer';}
+};
+
+function pollChats(){
+  if(chatPollingInterval) clearInterval(chatPollingInterval);
+  chatPollingInterval = setInterval(()=>{
+    loadChatList();
+    if(activeChatId) openChat(activeChatId);
+  }, 15_000);
+}
 const gridObserver=new MutationObserver(()=>renderCardCanvases());
 gridObserver.observe(document.getElementById('listingsGrid'),{childList:true});
 gridObserver.observe(document.getElementById('completedGrid'),{childList:true});

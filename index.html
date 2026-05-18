@@ -81,7 +81,7 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 /* ── Chat panel ───────────────────────────────────────────────────────── */
 .chat-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none}
 .chat-overlay.open{display:block;animation:fadeIn .2s ease}
-.chat-panel{position:fixed;right:0;top:0;bottom:0;width:780px;max-width:96vw;background:var(--bg2);border-left:1px solid var(--border);z-index:301;display:flex;box-shadow:-8px 0 40px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.chat-panel{position:fixed;right:0;top:0;bottom:0;width:1020px;max-width:97vw;background:var(--bg2);border-left:1px solid var(--border);z-index:301;display:flex;box-shadow:-8px 0 40px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
 .chat-panel.open{transform:translateX(0)}
 .chat-list-panel{width:260px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column}
 .chat-list-head{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
@@ -124,10 +124,11 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .chat-no-select{padding:60px 24px;text-align:center;color:var(--text3);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:13px}
 
 /* ── Card piece previews ──────────────────────────────────────────────── */
-.card-pieces-row{display:flex;align-items:flex-end;gap:8px;padding:6px 0 2px}
-.card-piece-wrap{display:flex;flex-direction:column;align-items:center;gap:3px}
+.card-pieces-row{display:flex;align-items:flex-end;gap:0;padding:8px 0 4px;width:100%;justify-content:space-evenly}
+.card-piece-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
 .card-piece-canvas{image-rendering:pixelated;border-radius:4px;border:1px solid var(--border);background:var(--bg3)}
-.card-piece-label{font-size:9px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase}
+.card-piece-name{font-size:9px;color:var(--text2);letter-spacing:.03em;text-transform:uppercase;font-weight:500}
+.card-piece-tag{font-size:9px;padding:1px 6px;border-radius:4px;border:1px solid;white-space:nowrap;font-weight:600;letter-spacing:.03em}
 .hero-banner{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:32px 36px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:24px;overflow:hidden;position:relative}
 .hero-banner::before{content:'';position:absolute;right:-80px;top:-80px;width:360px;height:360px;background:radial-gradient(ellipse,rgba(255,107,53,.08) 0,transparent 70%);pointer-events:none}
 .hero-title{font-family:'Cinzel',serif;font-size:clamp(22px,3.5vw,38px);font-weight:700;background:linear-gradient(135deg,var(--sunset1),var(--sunset2),var(--sunset3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.15;margin-bottom:10px}
@@ -184,12 +185,6 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .cat-badge.bleached{background:rgba(160,101,64,.15);color:#c8906a;border:1px solid rgba(160,101,64,.3)}
 .cat-badge.pure{background:rgba(150,150,150,.12);color:var(--text2);border:1px solid var(--border)}
 .cat-badge.default{background:rgba(150,150,150,.1);color:var(--text3);border:1px solid var(--border)}
-
-/* ── Card piece previews ──────────────────────────────────────────────── */
-.card-pieces-row{display:flex;align-items:flex-end;gap:6px;padding:6px 0 2px}
-.card-piece-wrap{display:flex;flex-direction:column;align-items:center;gap:3px}
-.card-piece-canvas{image-rendering:pixelated;border-radius:4px;border:1px solid var(--border);background:var(--bg3)}
-.card-piece-label{font-size:9px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase}
 
 .card-footer{padding:10px 16px 14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto}
 .price-block{display:flex;flex-direction:column}
@@ -378,7 +373,7 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
         <button class="icon-btn primary" onclick="startLogin()">Login with Minecraft</button>
       </div>
       <div class="chat-btn-wrap" id="chatBtnWrap" style="display:none">
-        <button class="icon-btn" id="chatBtn" onclick="openChatPanel()" title="Messages">💬
+        <button class="icon-btn" id="chatBtn" onclick="openChatPanel()" title="Messages">Chat
           <span class="chat-badge" id="chatBadge"></span>
         </button>
       </div>
@@ -412,6 +407,24 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
       <div class="srow"><div class="srow-lbl">Blur</div><input type="range" id="setBgBlur" min="0" max="20" value="8" style="width:130px" oninput="applyCustomBg()"></div>
       <div class="srow"><div class="srow-lbl">Brightness</div><input type="range" id="setBgBright" min="10" max="80" value="35" style="width:130px" oninput="applyCustomBg()"></div>
       <button onclick="clearCustomBg()" style="padding:6px 14px;background:rgba(232,85,85,.1);border:1px solid rgba(232,85,85,.3);border-radius:7px;color:#e85555;font-size:12px;cursor:pointer;margin-top:4px">Clear Background</button>
+    </div>
+    <div>
+      <div class="stitle">Timezone</div>
+      <select id="tzSelect" onchange="setTimezone(this.value)" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 10px;outline:none">
+        <option value="local">Local (auto-detect)</option>
+        <option value="UTC">UTC</option>
+        <option value="Europe/London">London (GMT/BST)</option>
+        <option value="Europe/Paris">Paris (CET/CEST)</option>
+        <option value="Europe/Berlin">Berlin (CET/CEST)</option>
+        <option value="America/New_York">New York (ET)</option>
+        <option value="America/Chicago">Chicago (CT)</option>
+        <option value="America/Denver">Denver (MT)</option>
+        <option value="America/Los_Angeles">Los Angeles (PT)</option>
+        <option value="America/Toronto">Toronto (ET)</option>
+        <option value="Australia/Sydney">Sydney (AEDT)</option>
+        <option value="Asia/Tokyo">Tokyo (JST)</option>
+        <option value="Asia/Singapore">Singapore (SGT)</option>
+      </select>
     </div>
     <button onclick="resetAll()" style="padding:9px;background:rgba(232,85,85,.1);border:1px solid rgba(232,85,85,.3);border-radius:8px;color:#e85555;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;width:100%">Reset Settings</button>
   </div>
@@ -447,7 +460,8 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
         <div class="field">
           <label>Armour Type</label>
           <div class="autocomplete-wrap">
-            <input type="text" id="armourTypeInput" class="autocomplete-input" placeholder="e.g. Superior Dragon Armour, Tarantula…" autocomplete="off" oninput="acUpdate()" onkeydown="acKey(event)" onfocus="acUpdate()">
+            <input type="text" id="armourTypeInput" class="autocomplete-input" placeholder="e.g. Superior Dragon Armour, Tarantula…" autocomplete="off" oninput="acUpdate();checkArmourNameLen()" onkeydown="acKey(event)" onfocus="acUpdate()">
+          <div id="armourNameLen" style="font-size:11px;color:var(--text3);margin-top:4px;text-align:right"></div>
             <div class="autocomplete-list" id="acList"></div>
           </div>
         </div>
@@ -626,15 +640,24 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
 <!-- ── Chat overlay + panel ────────────────────────────────────────────── -->
 <div class="chat-overlay" id="chatOverlay" onclick="closeChatPanel()"></div>
 <div class="chat-panel" id="chatPanel">
+  <!-- Column 1: All conversations -->
   <div class="chat-list-panel">
     <div class="chat-list-head">
-      <span class="chat-list-title">Messages</span>
+      <span class="chat-list-title">All Chats</span>
       <button class="icon-btn" onclick="closeChatPanel()" style="width:28px;height:28px;padding:0;font-size:13px">✕</button>
     </div>
     <div class="chat-list-scroll" id="chatListScroll">
       <div class="chat-empty-list">No conversations yet.<br>Make an offer to start chatting.</div>
     </div>
   </div>
+  <!-- Column 2: Chats for a specific listing (shown when listing selected) -->
+  <div class="chat-list-panel" id="listingChatsPanel" style="display:none;border-right:1px solid var(--border)">
+    <div class="chat-list-head">
+      <span class="chat-list-title" id="listingChatsTitle">Listing Chats</span>
+    </div>
+    <div class="chat-list-scroll" id="listingChatsList"></div>
+  </div>
+  <!-- Column 3: Active chat -->
   <div class="chat-main" id="chatMain">
     <div class="chat-no-select"><div style="font-size:36px;opacity:.4">💬</div><div>Select a conversation</div></div>
   </div>
@@ -898,8 +921,8 @@ function classifyHex(hex, armourType, pieceName){
     return{cat:'default',label:'Default Armour',colour:'#888'};
   }
   if(h===BLEACHED_HEX)return{cat:'bleached',label:'Bleached',colour:'#c8906a'};
-  if(CRYSTAL_HEXES.has(h))return{cat:'crystal',label:'Crystal Dyed',colour:'#44ffee'};
-  if(FAIRY_HEXES.has(h))  return{cat:'fairy',  label:'Fairy Dyed',  colour:'#ff66b2'};
+  if(CRYSTAL_HEXES.has(h))return{cat:'crystal',label:'Crystal',colour:'#44ffee'};
+  if(FAIRY_HEXES.has(h))  return{cat:'fairy',  label:'Fairy',  colour:'#ff66b2'};
   const pure=PURE_COLOURS[h];
   if(pure)return{cat:'pure',label:`Pure ${pure}`,colour:h==='#ffffff'?'#aaa':h};
   return{cat:'exotic',label:'Exotic',colour:'#ff6b35'};
@@ -1156,6 +1179,15 @@ const ARMOUR_SETS=[
   'Creeper Pants','Squid Boots','Farmer Boots','Obsidian Chestplate',
 ];
 let acFiltered=[],acIdx=-1;
+window.checkArmourNameLen=function(){
+  const val=document.getElementById('armourTypeInput').value||'';
+  const el=document.getElementById('armourNameLen');
+  if(!el)return;
+  const len=val.length;
+  if(len>36){el.textContent=`Name will be truncated to 36 chars`;el.style.color='var(--red)';}
+  else if(len>28){el.textContent=`${len}/36`;el.style.color='var(--text3)';}
+  else{el.textContent='';}
+};
 window.acUpdate=function(){
   const val=(document.getElementById('armourTypeInput').value||'').toLowerCase();
   const list=document.getElementById('acList');
@@ -1256,12 +1288,26 @@ function fmtC(n){
   if(n>=1e3)return Math.round(n/1e3)+'K';
   return n.toLocaleString('en-GB');
 }
+
+/* ── Timezone system ──────────────────────────────────────────────────── */
+let userTimezone = localStorage.getItem('vaultTz') || 'local';
+window.setTimezone = function(tz){
+  userTimezone=tz;
+  localStorage.setItem('vaultTz',tz);
+  document.querySelectorAll('[data-ts]').forEach(el=>{ el.textContent=ago(Number(el.dataset.ts)); });
+};
+function getTz(){ return userTimezone==='local'?Intl.DateTimeFormat().resolvedOptions().timeZone:userTimezone; }
 function ago(ts){
   const d=Date.now()-ts,m=Math.floor(d/60000);
-  if(m<1)return'just now';if(m<60)return m+'m ago';
-  const h=Math.floor(m/60);if(h<24)return h+'h ago';
-  return Math.floor(h/24)+'d ago';
+  if(m<1)return'just now';
+  if(m<60)return m+'m ago';
+  const h=Math.floor(m/60);
+  if(h<24)return h+'h ago';
+  try{
+    return new Intl.DateTimeFormat('en-GB',{timeZone:getTz(),month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(ts));
+  }catch(e){return Math.floor(h/24)+'d ago';}
 }
+function loadTzSetting(){ const s=document.getElementById('tzSelect');if(s)s.value=userTimezone; }
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function empty(icon,title,sub){return`<div class="empty-state"><div class="empty-icon">${icon}</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div></div>`;}
 
@@ -1273,29 +1319,44 @@ function card(l){
     ?`<button class="card-btn done" onclick="event.stopPropagation();markDone('${esc(l.id)}')" title="Mark sold">✓</button><button class="card-btn del" onclick="event.stopPropagation();delListing('${esc(l.id)}')" title="Delete">✕</button>`
     :'';
 
-  // Piece-specific canvas sizes matching Minecraft texture aspect ratios
+  // Piece-specific canvas sizes — bigger, fills card width
   const pieces=l.pieces||[];
-  const PIECE_SIZES={Helmet:{w:36,h:36},Chestplate:{w:36,h:40},Leggings:{w:36,h:46},Boots:{w:36,h:32}};
+  const PIECE_SIZES={Helmet:{w:52,h:52},Chestplate:{w:52,h:58},Leggings:{w:52,h:66},Boots:{w:52,h:46}};
+
+  // Build per-piece category tags
+  const armourType=l.armour_type||'';
   const pieceCanvases=pieces.map((p,i)=>{
-    const sz=PIECE_SIZES[p.piece]||{w:36,h:36};
+    const sz=PIECE_SIZES[p.piece]||{w:52,h:52};
+    const cls=classifyHex(p.hex, armourType, p.piece);
+    const tagStyle=cls?`color:${cls.colour};border-color:${cls.colour}44;background:${cls.colour}15`:'color:var(--text3);border-color:var(--border)';
+    const tagLabel=cls?cls.label:'—';
     return`<div class="card-piece-wrap">
       <canvas class="card-piece-canvas" width="${sz.w*2}" height="${sz.h*2}"
         style="width:${sz.w}px;height:${sz.h}px"
         data-piece="${esc(p.piece)}" data-hex="${esc(p.hex)}"
         id="cc-${esc(l.id)}-${i}"></canvas>
-      <span class="card-piece-label">${esc(p.piece.slice(0,4))}</span>
+      <span class="card-piece-name">${esc(p.piece)}</span>
+      <span class="card-piece-tag" style="${tagStyle}">${tagLabel}</span>
     </div>`;
   }).join('');
 
+  // Multi-colour stripe from all piece categories
+  const pieceColours=pieces.map(p=>{const c=classifyHex(p.hex,armourType,p.piece);return c?c.colour:'#888';});
+  const stripeGrad=pieceColours.length>1
+    ?`background:linear-gradient(90deg,${pieceColours.map((c,i)=>`${c} ${Math.round(i/pieceColours.length*100)}%,${c} ${Math.round((i+1)/pieceColours.length*100)}%`).join(',')})`
+    :`background:${pieceColours[0]||'var(--border)'}`;
+
+  // 36 char name limit
+  const displayName=armourType.length>36?armourType.slice(0,34)+'…':armourType;
+
   return`<div class="listing-card" onclick="openOffer('${esc(l.id)}')" style="${isSold?'opacity:.55;pointer-events:none':''}">
-  <div class="card-stripe ${cat}"></div>
+  <div class="card-stripe" style="${stripeGrad}"></div>
   <div class="card-body">
     <div class="card-top">
-      <div>
-        <div class="card-name">${esc(l.armour_type||'')}</div>
+      <div style="min-width:0">
+        <div class="card-name">${esc(displayName)}</div>
         ${l.set_name?`<div class="card-setname">${esc(l.set_name)}</div>`:''}
       </div>
-      <div class="cat-badge ${cat}">${esc(l.cat_label||cat)}</div>
     </div>
     ${pieceCanvases?`<div class="card-pieces-row">${pieceCanvases}</div>`:''}
   </div>
@@ -1303,7 +1364,7 @@ function card(l){
     <img class="seller-avatar" src="https://mc-heads.net/avatar/${esc(l.uuid||'steve')}/22" alt="${esc(l.ign)}">
     <span class="seller-name">${esc(l.ign)}</span>
     ${l.proof?'<span class="proof-badge">✓ Proof</span>':''}
-    <span class="seller-time">${ago(l.ts||Date.now())}</span>
+    <span class="seller-time" data-ts="${l.ts||Date.now()}">${ago(l.ts||Date.now())}</span>
   </div>
   <div class="card-footer">
     <div class="price-block">
@@ -1446,8 +1507,7 @@ window.submitOffer=async function(){
     const data=await res.json();
     if(!res.ok){toast(data.error||'Failed to send.');return;}
     closeModal('offerModal');
-    const seller=activeListingData?.ign||'the seller';
-    toast(`Offer sent! Contact ${seller} in-game to arrange the trade.`);
+    toast('Offer sent!');
     document.getElementById('offerIGN').value='';
     document.getElementById('offerAmount').value='';
     document.getElementById('offerMessage').value='';
@@ -1637,21 +1697,46 @@ function renderChatList(){
     el.innerHTML='<div class="chat-empty-list">No conversations yet.<br>Make an offer to start chatting.</div>';
     return;
   }
-  el.innerHTML = chatList.map(c=>{
-    const isSeller = c.seller_uuid === currentUser?.uuid;
-    const otherName = isSeller ? c.buyer_ign : (c.seller_ign||'Seller');
-    const title = c.armour_type || 'Item';
-    const preview = c.last_message
-      ? (c.last_message.startsWith('__offer__') ? '💰 Offer pinned' : c.last_message)
-      : '💰 ' + fmtC(c.offer_amount);
-    const timeStr = c.last_ts ? ago(c.last_ts) : ago(c.created_at);
-    return`<div class="chat-list-item${activeChatId===c.id?' active':''}" onclick="openChat('${c.id}')">
-      <div class="chat-list-name">${esc(otherName)} — ${esc(title)}</div>
-      <div class="chat-list-preview">${esc(preview)}</div>
+
+  // Group by listing
+  const byListing = new Map();
+  chatList.forEach(c=>{
+    if(!byListing.has(c.listing_id)) byListing.set(c.listing_id,{title:c.armour_type||'Item',chats:[]});
+    byListing.get(c.listing_id).chats.push(c);
+  });
+
+  el.innerHTML = [...byListing.entries()].map(([lid,{title,chats}])=>{
+    const latest = chats.reduce((a,b)=>(b.last_ts||b.created_at)>(a.last_ts||a.created_at)?b:a);
+    const timeStr = ago(latest.last_ts||latest.created_at);
+    return`<div class="chat-list-item" onclick="openListingChats('${lid}','${esc(title)}')">
+      <div class="chat-list-name">${esc(title)}</div>
+      <div class="chat-list-preview">${chats.length} conversation${chats.length!==1?'s':''}</div>
       <div class="chat-list-time">${timeStr}</div>
     </div>`;
   }).join('');
 }
+
+window.openListingChats = function(listingId, title){
+  const panel = document.getElementById('listingChatsPanel');
+  const list = document.getElementById('listingChatsList');
+  const titleEl = document.getElementById('listingChatsTitle');
+  panel.style.display='flex';
+  if(titleEl) titleEl.textContent = title.length>20?title.slice(0,18)+'…':title;
+
+  const chats = chatList.filter(c=>c.listing_id===listingId);
+  list.innerHTML = chats.map(c=>{
+    const isSeller = c.seller_uuid === currentUser?.uuid;
+    const otherName = isSeller ? c.buyer_ign : (c.seller_ign||'Seller');
+    const preview = c.last_message
+      ? (c.last_message.startsWith('__offer__') ? '💰 Offer' : c.last_message)
+      : '💰 '+fmtC(c.offer_amount);
+    return`<div class="chat-list-item${activeChatId===c.id?' active':''}" onclick="openChat('${c.id}')">
+      <div class="chat-list-name">${esc(otherName)}</div>
+      <div class="chat-list-preview">${esc(preview)}</div>
+      <div class="chat-list-time">${ago(c.last_ts||c.created_at)}</div>
+    </div>`;
+  }).join('');
+};
 
 function updateChatBadge(){
   const badge = document.getElementById('chatBadge');
@@ -1666,7 +1751,13 @@ function updateChatBadge(){
 
 window.openChat = async function(chatId){
   activeChatId = chatId;
-  renderChatList(); // update active state
+  renderChatList();
+  // Refresh listing chats panel active state if open
+  const lp = document.getElementById('listingChatsPanel');
+  if(lp && lp.style.display!=='none'){
+    const chat = chatList.find(c=>c.id===chatId);
+    if(chat) openListingChats(chat.listing_id, chat.armour_type||'Item');
+  }
   const main = document.getElementById('chatMain');
   main.innerHTML = '<div class="chat-loading"><div class="spinner" style="margin:40px auto"></div></div>';
   try{
@@ -1836,8 +1927,7 @@ window.submitOffer = async function(){
     const data=await res.json();
     if(!res.ok){toast(data.error||'Failed to send.');return;}
     closeModal('offerModal');
-    const seller=activeListingData?.ign||'the seller';
-    toast(`Offer sent! Contact ${seller} in-game to arrange the trade.`);
+    toast('Offer sent!');
     ['offerIGN','offerAmount','offerMessage'].forEach(id=>{
       const el=document.getElementById(id);if(el)el.value='';
     });
@@ -1866,6 +1956,7 @@ gridObserver.observe(document.getElementById('completedGrid'),{childList:true});
 buildThemeGrid();
 loadTh();
 buildThemeGrid();
+loadTzSetting();
 loadStoredUser();
 handleCallback();   // handles MC-ID redirect if ?code= is in URL
 loadListings();

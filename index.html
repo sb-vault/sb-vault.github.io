@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -63,9 +63,9 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .icon-btn.danger:hover{background:rgba(232,85,85,.2);border-color:var(--red);color:var(--red)}
 
 /* ── User pill (logged in state) ──────────────────────────────────────── */
-.user-pill{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:border-color .2s;position:relative;user-select:none}
+.user-pill{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .2s;position:relative;user-select:none}
 .user-pill:hover,.user-pill.open{border-color:var(--sunset1)}
-.user-avatar{width:28px;height:28px;border-radius:50%;image-rendering:pixelated;border:1px solid var(--border)}
+.user-avatar{width:30px;height:30px;border-radius:6px;image-rendering:pixelated;border:1px solid var(--border)}
 .user-ign{font-size:13px;font-weight:600;color:var(--text)}
 .user-dropdown{position:absolute;right:0;top:calc(100% + 8px);background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px;width:180px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:200;display:none}
 .user-pill.open .user-dropdown{display:block;animation:fadeIn .15s ease}
@@ -75,8 +75,8 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 
 /* ── Chat button ──────────────────────────────────────────────────────── */
 .chat-btn-wrap{position:relative}
-.chat-badge{position:absolute;top:-5px;right:-5px;background:var(--sunset1);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;display:none;pointer-events:none}
-.chat-badge.visible{display:block}
+.chat-badge{position:absolute;top:-6px;right:-6px;background:var(--sunset1);color:#fff;border-radius:50%;font-size:10px;font-weight:700;width:18px;height:18px;display:none;align-items:center;justify-content:center;pointer-events:none;min-width:18px;padding:0 4px;border-radius:10px;width:auto}
+.chat-badge.visible{display:flex}
 
 /* ── Chat panel ───────────────────────────────────────────────────────── */
 .chat-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none}
@@ -105,11 +105,11 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .chat-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
 .msg-row{display:flex;gap:8px;align-items:flex-end}
 .msg-row.mine{flex-direction:row-reverse}
-.msg-avatar{width:22px;height:22px;border-radius:50%;image-rendering:pixelated;border:1px solid var(--border);flex-shrink:0}
+.msg-avatar{width:26px;height:26px;border-radius:6px;image-rendering:pixelated;border:1px solid var(--border);flex-shrink:0}
 .msg-bubble{max-width:65%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.5;word-break:break-word}
 .msg-bubble.theirs{background:var(--bg3);color:var(--text);border-bottom-left-radius:4px}
 .msg-bubble.mine{background:linear-gradient(135deg,var(--sunset1),var(--sunset2));color:#fff;border-bottom-right-radius:4px}
-.msg-time{font-size:10px;color:var(--text3);padding:0 4px;white-space:nowrap}
+.msg-time{font-size:10px;color:var(--text3);padding:4px 4px 0;white-space:nowrap;display:block}
 .msg-img{max-width:220px;max-height:220px;border-radius:10px;cursor:pointer;display:block;margin-top:4px;border:1px solid var(--border)}
 .msg-offer{background:rgba(240,192,96,.08);border:1px solid rgba(240,192,96,.25);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--gold);font-weight:600;align-self:center;text-align:center;max-width:80%}
 .chat-input-area{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end}
@@ -200,7 +200,7 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .card-btn.done{background:rgba(78,203,113,.12);border:1px solid rgba(78,203,113,.25);color:var(--green)}
 .card-btn.done:hover{background:rgba(78,203,113,.22)}
 .seller-strip{padding:0 16px 12px;display:flex;align-items:center;gap:8px}
-.seller-avatar{width:22px;height:22px;border-radius:50%;image-rendering:pixelated;flex-shrink:0;border:1px solid var(--border)}
+.seller-avatar{width:24px;height:24px;border-radius:5px;image-rendering:pixelated;flex-shrink:0;border:1px solid var(--border)}
 .seller-name{font-size:11px;font-weight:600;color:var(--text2)}
 .seller-time{font-size:10px;color:var(--text3);margin-left:auto}
 .proof-badge{font-size:10px;padding:2px 7px;border-radius:5px;background:rgba(78,203,113,.1);border:1px solid rgba(78,203,113,.2);color:var(--green)}
@@ -378,7 +378,7 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
           <span class="chat-badge" id="chatBadge"></span>
         </button>
       </div>
-      <button class="icon-btn" id="settingsBtn" title="Settings" style="font-size:18px;width:38px;height:38px;padding:0">⚙</button>
+      <button class="icon-btn" id="settingsBtn" title="Settings" style="font-size:22px;width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;line-height:1">⚙</button>
     </div>
   </div>
 </header>
@@ -394,8 +394,8 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
       <div class="stitle">Theme</div>
       <div style="display:flex;gap:8px;margin-bottom:12px">
         <div class="pill-toggle">
-          <button class="pill-btn active" id="tmDark" onclick="setThemeMode('dark')">Dark</button>
-          <button class="pill-btn" id="tmLight" onclick="setThemeMode('light')">Light</button>
+          <button class="pill-btn active" id="tmLight" onclick="setThemeMode('light')">Light</button>
+          <button class="pill-btn" id="tmDark" onclick="setThemeMode('dark')">Dark</button>
         </div>
       </div>
       <div class="theme-grid" id="themeGrid"></div>
@@ -468,8 +468,8 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
         </div>
         <!-- Set Name -->
         <div class="field">
-          <label style="display:flex;justify-content:space-between">Set Name <span style="color:var(--text3);font-weight:400">(dye name or custom label)</span><span id="setNameCounter" style="font-size:11px;color:var(--text3);font-weight:400"></span></label>
-          <input type="text" id="postSetName" placeholder="e.g. Fairy Purple, Cold Opal, Bleached…" maxlength="50" oninput="const l=this.value.length;document.getElementById('setNameCounter').textContent=l>40?l+'/50':''"></div>
+          <label style="display:flex;justify-content:space-between">Set Name<span id="setNameCounter" style="font-size:11px;color:var(--text3);font-weight:400"></span></label>
+          <input type="text" id="postSetName" placeholder="e.g. pure black old, white lapis, purple angler fade" maxlength="50" oninput="const l=this.value.length;document.getElementById('setNameCounter').textContent=l>40?l+'/50':''"></div>
         <!-- Piece selector -->
         <div class="field">
           <label>Armour Piece(s)</label>
@@ -493,7 +493,7 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
         <div class="field" style="margin-top:4px">
           <label>Asking Price</label>
           <div class="price-wrap">
-            <input type="text" id="postPrice" placeholder="e.g. 500m, 1.5b, 10kk" oninput="sanitisePrice(this);updatePricePreview()" onkeydown="filterPriceKey(event)">
+            <input type="text" id="postPrice" placeholder="e.g. 500m, 1.5b, 10k" oninput="sanitisePrice(this);updatePricePreview()" onkeydown="filterPriceKey(event)">
             <span class="price-ghost" id="pricePreview"></span>
           </div>
         </div>
@@ -556,29 +556,57 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
 <!-- ── Hero ────────────────────────────────────────────────────────────── -->
 <div class="hero-banner">
   <div>
-    <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:12px">
-      <span class="live-dot"></span>
-      <span style="font-size:10px;color:var(--sunset1);letter-spacing:.08em;text-transform:uppercase;font-weight:600">Exotic · Crystal · Fairy</span>
+    <div style="display:inline-flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+      <div style="display:inline-flex;align-items:center;gap:6px">
+        <span class="live-dot"></span>
+        <span style="font-size:10px;color:var(--sunset1);letter-spacing:.08em;text-transform:uppercase;font-weight:600">Exotic · Crystal · Fairy · Bleached</span>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:6px">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;flex-shrink:0"></span>
+        <span style="font-size:10px;color:var(--red);letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.7">Glitched · Seymour</span>
+      </div>
     </div>
     <div class="hero-title">The Vault</div>
     <p class="hero-sub">The dedicated marketplace for Hypixel SkyBlock's rarest cosmetics. Post your items, browse live listings, and connect with collectors.</p>
     <div class="hero-actions">
       <button class="icon-btn primary" onclick="openPostModal()" style="height:38px;font-size:13px">+ Post a Listing</button>
-      <button class="icon-btn" onclick="switchTab('how')" style="height:38px;font-size:13px">How it works →</button>
+      <button class="icon-btn" onclick="openHowItWorks()" style="height:38px;font-size:13px">How it works →</button>
     </div>
   </div>
   <div class="stat-pills">
     <div class="stat-pill"><div class="stat-pill-num" id="statListings">—</div><div class="stat-pill-lbl">Active</div></div>
     <div class="stat-pill"><div class="stat-pill-num" id="statUsers">—</div><div class="stat-pill-lbl">Users</div></div>
     <div class="stat-pill"><div class="stat-pill-num" id="statSold">—</div><div class="stat-pill-lbl">Completed</div></div>
+    <div class="stat-pill"><div class="stat-pill-num" id="statMessages">—</div><div class="stat-pill-lbl">Messages</div></div>
+  </div>
+</div>
+
+<!-- ── How It Works Modal ──────────────────────────────────────────────── -->
+<div class="modal-overlay" id="howModal" onclick="if(event.target===this)closeModal('howModal')">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-head">
+      <div class="modal-title">How The Vault Works</div>
+      <button class="icon-btn" onclick="closeModal('howModal')" style="font-size:13px;width:32px;height:32px;padding:0">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="how-grid" style="margin-bottom:20px">
+        <div class="how-card"><div class="how-num">01</div><div class="how-title">Verify Your Account</div><div class="how-desc">Click "Login with Minecraft" — you'll be taken to MC-ID to verify your Minecraft account once. No password needed.</div></div>
+        <div class="how-card"><div class="how-num">02</div><div class="how-title">Post a Listing</div><div class="how-desc">Pick your armour type, select pieces, enter hex colour codes. The category is detected automatically from the colour.</div></div>
+        <div class="how-card"><div class="how-num">03</div><div class="how-title">Browse &amp; Offer</div><div class="how-desc">Browse active listings, filter by category. Hit "Offer" to start a chat with the seller and negotiate.</div></div>
+        <div class="how-card"><div class="how-num">04</div><div class="how-title">Trade &amp; Complete</div><div class="how-desc">Reach out via Hypixel IGN, agree on a trade, execute in-game, then mark the listing complete.</div></div>
+      </div>
+      <div style="background:rgba(232,85,85,.05);border:1px solid rgba(232,85,85,.2);border-radius:12px;padding:16px 18px">
+        <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px">⚠ Safety Notice</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">The Vault is a community board – we do not hold funds or mediate disputes. Always verify the item before confirming.</p>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- ── Tabs ────────────────────────────────────────────────────────────── -->
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('browse')" data-tab="browse">Browse</button>
+  <button class="tab active" onclick="switchTab('browse')" data-tab="browse">Active</button>
   <button class="tab" onclick="switchTab('completed')" data-tab="completed">Completed</button>
-  <button class="tab" onclick="switchTab('how')" data-tab="how">How It Works</button>
 </div>
 
 <!-- ── Browse ──────────────────────────────────────────────────────────── -->
@@ -590,12 +618,12 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
         <input type="text" id="searchInput" placeholder="Search armour, dye or IGN…" oninput="renderListings()">
       </div>
       <div class="filter-chip-group" id="catChips">
-        <div class="chip active" onclick="setFilter('all',this)">All</div>
-        <div class="chip" onclick="setFilter('exotic',this)">Exotic</div>
-        <div class="chip" onclick="setFilter('crystal',this)">Crystal</div>
-        <div class="chip" onclick="setFilter('fairy',this)">Fairy</div>
-        <div class="chip" onclick="setFilter('pure',this)">Pure</div>
-        <div class="chip" onclick="setFilter('bleached',this)">Bleached</div>
+        <div class="chip active" data-cat="all" onclick="setFilter('all',this)">All</div>
+        <div class="chip" data-cat="exotic" onclick="setFilter('exotic',this)">Exotic</div>
+        <div class="chip" data-cat="crystal" onclick="setFilter('crystal',this)">Crystal</div>
+        <div class="chip" data-cat="fairy" onclick="setFilter('fairy',this)">Fairy</div>
+        <div class="chip" data-cat="pure" onclick="setFilter('pure',this)">Pure</div>
+        <div class="chip" data-cat="bleached" onclick="setFilter('bleached',this)">Bleached</div>
       </div>
     </div>
     <select class="sort-select" id="sortSelect" onchange="loadListings()">
@@ -606,7 +634,7 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
     </select>
   </div>
   <div class="section-hdr">
-    <div class="section-title">Listings</div>
+    <div class="section-title">Active Listings</div>
     <div class="section-rule"></div>
     <div class="section-count" id="listingCount"></div>
   </div>
@@ -615,23 +643,30 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
 
 <!-- ── Completed ───────────────────────────────────────────────────────── -->
 <div class="tab-content" id="tab-completed">
+  <div class="filter-bar">
+    <div class="filter-bar-left">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="completedSearch" placeholder="Search completed trades…" oninput="loadCompleted()">
+      </div>
+      <div class="filter-chip-group" id="completedCatChips">
+        <div class="chip active" data-cat="all" onclick="setCompletedFilter('all',this)">All</div>
+        <div class="chip" data-cat="exotic" onclick="setCompletedFilter('exotic',this)">Exotic</div>
+        <div class="chip" data-cat="crystal" onclick="setCompletedFilter('crystal',this)">Crystal</div>
+        <div class="chip" data-cat="fairy" onclick="setCompletedFilter('fairy',this)">Fairy</div>
+        <div class="chip" data-cat="pure" onclick="setCompletedFilter('pure',this)">Pure</div>
+        <div class="chip" data-cat="bleached" onclick="setCompletedFilter('bleached',this)">Bleached</div>
+      </div>
+    </div>
+    <select class="sort-select" id="completedSort" onchange="loadCompleted()">
+      <option value="newest">Newest first</option>
+      <option value="oldest">Oldest first</option>
+      <option value="price-asc">Price: Low → High</option>
+      <option value="price-desc">Price: High → Low</option>
+    </select>
+  </div>
   <div class="section-hdr"><div class="section-title">Completed Trades</div><div class="section-rule"></div></div>
   <div class="listings-grid" id="completedGrid"><div class="loading-state"><div class="spinner"></div>Loading…</div></div>
-</div>
-
-<!-- ── How It Works ────────────────────────────────────────────────────── -->
-<div class="tab-content" id="tab-how">
-  <div class="section-hdr"><div class="section-title">How The Vault Works</div><div class="section-rule"></div></div>
-  <div class="how-grid">
-    <div class="how-card"><div class="how-num">01</div><div class="how-title">Verify Your Account</div><div class="how-desc">Click "Login with Minecraft" — you'll be taken to MC-ID to verify your Minecraft account once. No password needed, just your Minecraft login.</div></div>
-    <div class="how-card"><div class="how-num">02</div><div class="how-title">Post a Listing</div><div class="how-desc">Pick your armour type, select which pieces you're selling, enter each piece's hex colour code. The category is detected automatically.</div></div>
-    <div class="how-card"><div class="how-num">03</div><div class="how-title">Browse &amp; Offer</div><div class="how-desc">Browse active listings and filter by category. Hit "Make Offer" to leave your IGN and offer amount.</div></div>
-    <div class="how-card"><div class="how-num">04</div><div class="how-title">Trade &amp; Complete</div><div class="how-desc">Reach out via Hypixel IGN, agree on a trade, then mark the listing complete. It moves to Completed and builds real price history.</div></div>
-  </div>
-  <div style="background:var(--bg2);border:1px solid rgba(232,85,85,.3);border-radius:16px;padding:20px 24px;margin-bottom:28px">
-    <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#e85555;margin-bottom:8px">⚠ Safety Notice</div>
-    <p style="font-size:13px;color:var(--text2);line-height:1.7">The Vault is a community board – we do not hold funds or mediate disputes. Always verify the item before confirming.</p>
-  </div>
 </div>
 
 </div>
@@ -682,7 +717,7 @@ const MCID_CLIENT_ID = 'XIyZSAUOMSHFMdidQPdwGKKgvwisYGiE';
 const MCID_AUTH_URL  = 'https://mc-id.com/api/auth/oauth2/authorize';
 const REDIRECT_URI   = 'https://sb-vault.github.io/';
 const SCOPE          = 'openid profile';
-const HEAD_URL       = uuid => `https://mc-heads.net/avatar/${uuid}/28`;
+const HEAD_URL = uuid => `https://mc-heads.net/avatar/${uuid}/32`;
 
 /* ════════════════════════════════════════════════════════════════════
    AUTH — MC-ID PKCE FLOW
@@ -1043,11 +1078,13 @@ function renderPieceInputs(){
     const row=document.createElement('div');
     row.className='piece-row';row.dataset.piece=piece;
 
-    // Canvas
+    // Canvas — piece-specific proportions
+    const FORM_SIZES={Helmet:{w:64,h:58},Chestplate:{w:64,h:62},Leggings:{w:52,h:72},Boots:{w:68,h:44}};
+    const fsz=FORM_SIZES[piece]||{w:64,h:64};
     const canvas=document.createElement('canvas');
-    canvas.width=64;canvas.height=64;
+    canvas.width=fsz.w*2;canvas.height=fsz.h*2;
     canvas.className='piece-preview';
-    canvas.style.cssText='width:64px;height:64px;flex-shrink:0';
+    canvas.style.cssText=`width:${fsz.w}px;height:${fsz.h}px;flex-shrink:0`;
     row.appendChild(canvas);
 
     // Right column
@@ -1157,8 +1194,7 @@ function validateProofUrl(inp){
 function parsePrice(raw){
   if(!raw)return null;
   const s=raw.trim().toLowerCase();
-  // replace kk → m shorthand
-  const norm=s.replace(/kk/g,'m');
+  const norm=s;
   const match=norm.match(/^(\d+(?:\.\d+)?)\s*(k|m|b)?$/);
   if(!match)return null;
   const n=parseFloat(match[1]);
@@ -1274,13 +1310,27 @@ async function loadListings(){
   }
 }
 
+let completedFilterCat='all';
+window.setCompletedFilter=function(val,el){
+  completedFilterCat=val;
+  document.querySelectorAll('#completedCatChips .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  loadCompleted();
+};
+
 async function loadCompleted(){
+  const q=(document.getElementById('completedSearch')?.value||'').trim();
+  const sort=document.getElementById('completedSort')?.value||'newest';
+  const params=new URLSearchParams({status:'sold',sort});
+  if(completedFilterCat!=='all')params.set('cat',completedFilterCat);
+  if(q)params.set('q',q);
   try{
-    const res=await fetch(`${API}/listings?status=sold&sort=newest`);
+    const res=await fetch(`${API}/listings?${params}`);
     const data=await res.json();
     const items=data.listings||[];
     document.getElementById('completedGrid').innerHTML=
       items.length?items.map(l=>card(l)).join(''):empty('✅','No completed trades yet','Trades appear here once marked complete.');
+    setTimeout(renderCardCanvases,50);
   }catch(e){}
 }
 
@@ -1291,8 +1341,12 @@ async function loadStats(){
     document.getElementById('statListings').textContent=d.active??'—';
     document.getElementById('statUsers').textContent=d.users??'—';
     document.getElementById('statSold').textContent=d.sold??'—';
+    const msgEl=document.getElementById('statMessages');
+    if(msgEl)msgEl.textContent=d.messages??'—';
   }catch(e){}
 }
+
+window.openHowItWorks=function(){ openModal('howModal'); };
 
 window.setFilter=function(val,el){
   filterCat=val;
@@ -1355,7 +1409,7 @@ function card(l){
 
   // Piece-specific canvas sizes — bigger, fills card width
   const pieces=l.pieces||[];
-  const PIECE_SIZES={Helmet:{w:52,h:52},Chestplate:{w:52,h:58},Leggings:{w:52,h:66},Boots:{w:52,h:46}};
+  const PIECE_SIZES={Helmet:{w:70,h:64},Chestplate:{w:70,h:68},Leggings:{w:56,h:80},Boots:{w:76,h:48}};
 
   // Build per-piece category tags
   const armourType=l.armour_type||'';
@@ -1462,6 +1516,7 @@ window.submitListing=async function(){
   if(!armourType){toast('Please select an armour type.');return;}
   if(!pieces.length){toast('Please select at least one armour piece.');return;}
   if(!price||price<=0){toast('Please enter a valid price (e.g. 500m, 1.5b).');return;}
+  if(proof&&!proof.startsWith('http')){toast('Proof must be a valid URL (https://…).');return;}
 
   const catResults=classifyPieces(pieces, armourType);
   const primaryCat=catResults[0]||{cat:'exotic',label:'Exotic'};
@@ -1556,6 +1611,28 @@ window.submitOffer=async function(){
 /* ════════════════════════════════════════════════════════════════════
    OWNER ACTIONS
 ════════════════════════════════════════════════════════════════════ */
+window.archiveChat=async function(chatId){
+  if(!confirm('Archive this conversation? You can view archived chats later.'))return;
+  const token=getToken();
+  try{
+    await fetch(`${API}/chats/${chatId}/archive`,{method:'PUT',headers:{Authorization:`Bearer ${token}`}});
+    activeChatId=null;
+    document.getElementById('chatMain').innerHTML='<div class="chat-no-select"><div style="font-size:36px;opacity:.4">💬</div><div>Select a conversation</div></div>';
+    loadChatList();
+    toast('Chat archived.');
+  }catch(e){toast('Could not archive chat.');}
+};
+
+window.markChatSold=async function(listingId){
+  if(!confirm('Mark the listing as sold? This cannot be undone.'))return;
+  const token=getToken();
+  try{
+    await fetch(`${API}/listings/${listingId}/sold`,{method:'PUT',headers:{Authorization:`Bearer ${token}`}});
+    loadListings();loadStats();
+    toast('Listing marked as sold!');
+  }catch(e){toast('Could not mark as sold.');}
+};
+
 window.markDone=async function(id){
   if(!confirm('Mark this listing as completed / sold?'))return;
   const token=getToken();
@@ -1648,7 +1725,7 @@ const THEMES=[
   {id:'forest',name:'Forest',bg:'#060e06',bg2:'#0a160a',a1:'#60d060',a2:'#30a030',light:false,presetBg:'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1920&q=80',presetBlur:8,presetBright:28},
   {id:'sunset-bg',name:'Sunset',bg:'#100808',bg2:'#180e0a',a1:'#ff8844',a2:'#ffcc44',light:false,presetBg:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',presetBlur:6,presetBright:30},
 ];
-let currentTheme='dark',themeMode='dark';
+let currentTheme='light',themeMode='light';
 function buildThemeGrid(){
   const filtered=THEMES.filter(t=>t.light===(themeMode==='light')&&!t.presetBg);
   const preset=THEMES.filter(t=>t.presetBg);
@@ -1767,8 +1844,8 @@ function renderChatList(){
       const isSeller = c.seller_uuid===currentUser?.uuid;
       const otherName = isSeller?c.buyer_ign:(c.seller_ign||'Seller');
       const preview = c.last_message
-        ?(c.last_message.startsWith('__offer__')?'💰 Offer':c.last_message)
-        :'💰 '+fmtC(c.offer_amount);
+        ?(c.last_message.startsWith('__offer__')?'Offer pinned':c.last_message)
+        :'Offer: '+fmtC(c.offer_amount);
       return`<div class="chat-list-item${activeChatId===c.id?' active':''}" onclick="openChat('${c.id}')">
         <div class="chat-list-name">${esc(otherName)}</div>
         <div class="chat-list-preview">${esc(c.armour_type||'')} · ${esc(preview)}</div>
@@ -1790,8 +1867,8 @@ window.openListingChats = function(listingId, title){
     const isSeller = c.seller_uuid === currentUser?.uuid;
     const otherName = isSeller ? c.buyer_ign : (c.seller_ign||'Seller');
     const preview = c.last_message
-      ? (c.last_message.startsWith('__offer__') ? '💰 Offer' : c.last_message)
-      : '💰 '+fmtC(c.offer_amount);
+      ? (c.last_message.startsWith('__offer__') ? 'Offer pinned' : c.last_message)
+      : 'Offer: '+fmtC(c.offer_amount);
     return`<div class="chat-list-item${activeChatId===c.id?' active':''}" onclick="openChat('${c.id}')">
       <div class="chat-list-name">${esc(otherName)}</div>
       <div class="chat-list-preview">${esc(preview)}</div>
@@ -1848,7 +1925,7 @@ function renderChatView(chat, messages){
       const parts = m.content.split(':');
       const amt = parts[1]||'';
       const msg = parts.slice(2).join(':');
-      return`<div class="msg-offer">💰 Offer: ${fmtC(amt)} coins${msg?` — ${esc(msg)}`:''}
+      return`<div class="msg-offer">Offer: ${fmtC(amt)} coins${msg?` — ${esc(msg)}`:''}
       <div style="font-size:10px;color:var(--text3);margin-top:2px">${ago(m.ts)}</div></div>`;
     }
     const avatar = `https://mc-heads.net/avatar/${esc(m.sender_uuid||'steve')}/22`;
@@ -1864,7 +1941,7 @@ function renderChatView(chat, messages){
   }).join('');
 
   const imgBtnHtml = isSeller
-    ? `<button class="chat-img-btn" onclick="triggerImageUpload()" title="Send image">🖼</button>`
+    ? `<button class="chat-img-btn" onclick="triggerImageUpload()" title="Send image" style="font-size:20px;font-weight:300">+</button>`
     : '';
 
   document.getElementById('chatMain').innerHTML = `
@@ -1873,12 +1950,16 @@ function renderChatView(chat, messages){
         <div class="chat-main-title">${esc(otherName)}</div>
         <div class="chat-main-sub">${esc(chat.armour_type||'')}${chat.set_name?' – '+esc(chat.set_name):''}</div>
       </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:10px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase">Your local time</div>
-        <div id="chatClock" style="font-size:12px;color:var(--text2);font-family:monospace"></div>
+      <div style="text-align:right;flex-shrink:0;margin-right:8px">
+        <div style="font-size:10px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase">Your time</div>
+        <div id="chatClock" style="font-size:12px;color:var(--text2);font-family:monospace;font-weight:600"></div>
         <div style="font-size:10px;color:var(--text3);margin-top:1px" id="chatTzLabel"></div>
       </div>
-      <button class="icon-btn" onclick="closeChatPanel()" style="width:30px;height:30px;padding:0;font-size:13px;flex-shrink:0">✕</button>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        ${isSeller?`<button class="icon-btn" style="background:rgba(78,203,113,.1);border-color:rgba(78,203,113,.3);color:var(--green);font-size:12px;height:30px;padding:0 10px" onclick="markChatSold('${chat.listing_id}')" title="Mark listing as sold">Mark Sold</button>`:''}
+        <button class="icon-btn" style="background:rgba(232,85,85,.1);border-color:rgba(232,85,85,.3);color:var(--red);font-size:12px;height:30px;padding:0 10px" onclick="archiveChat('${chat.id}')" title="Archive chat">Archive</button>
+        <button class="icon-btn" onclick="closeChatPanel()" style="width:30px;height:30px;padding:0;font-size:13px;flex-shrink:0">✕</button>
+      </div>
     </div>
     <div class="offer-pin">
       <div class="offer-pin-label">📌 Pinned Offer</div>
@@ -1891,7 +1972,7 @@ function renderChatView(chat, messages){
       <textarea class="chat-input" id="chatInputField" placeholder="Type a message…" rows="1"
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"
         oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
-      <button class="chat-send-btn" onclick="sendChatMessage()">↑</button>
+      <button class="chat-send-btn" onclick="sendChatMessage()" style="width:auto;padding:0 14px;font-size:13px;font-weight:600">Send</button>
     </div>
     <input type="file" id="chatImageInput" accept="image/*" style="display:none" onchange="handleImageUpload(event)">`;
 

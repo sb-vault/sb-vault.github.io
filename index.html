@@ -64,7 +64,7 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 
 /* ── User pill (logged in state) ──────────────────────────────────────── */
 .user-pill{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:border-color .2s;position:relative;user-select:none}
-.user-pill.open{border-color:var(--sunset1)}
+.user-pill:hover,.user-pill.open{border-color:var(--sunset1)}
 .user-avatar{width:28px;height:28px;border-radius:50%;image-rendering:pixelated;border:1px solid var(--border)}
 .user-ign{font-size:13px;font-weight:600;color:var(--text)}
 .user-dropdown{position:absolute;right:0;top:calc(100% + 8px);background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px;width:180px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:200;display:none}
@@ -124,11 +124,12 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .chat-no-select{padding:60px 24px;text-align:center;color:var(--text3);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:13px}
 
 /* ── Card piece previews ──────────────────────────────────────────────── */
-.card-pieces-row{display:flex;align-items:flex-end;gap:0;padding:8px 0 4px;width:100%;justify-content:space-evenly}
-.card-piece-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
-.card-piece-canvas{image-rendering:pixelated;border-radius:4px;border:1px solid var(--border);background:var(--bg3)}
-.card-piece-name{font-size:9px;color:var(--text2);letter-spacing:.03em;text-transform:uppercase;font-weight:500}
-.card-piece-tag{font-size:9px;padding:1px 6px;border-radius:4px;border:1px solid;white-space:nowrap;font-weight:600;letter-spacing:.03em}
+.card-pieces-row{display:flex;align-items:stretch;gap:6px;padding:10px 0 6px;width:100%}
+.card-piece-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 4px 8px;min-height:120px}
+.card-piece-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;width:100%}
+.card-piece-canvas{image-rendering:pixelated;display:block;max-width:100%}
+.card-piece-name{font-size:9px;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+.card-piece-tag{font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid;white-space:nowrap;font-weight:600;letter-spacing:.03em}
 .hero-banner{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:32px 36px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:24px;overflow:hidden;position:relative}
 .hero-banner::before{content:'';position:absolute;right:-80px;top:-80px;width:360px;height:360px;background:radial-gradient(ellipse,rgba(255,107,53,.08) 0,transparent 70%);pointer-events:none}
 .hero-title{font-family:'Cinzel',serif;font-size:clamp(22px,3.5vw,38px);font-weight:700;background:linear-gradient(135deg,var(--sunset1),var(--sunset2),var(--sunset3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.15;margin-bottom:10px}
@@ -377,7 +378,7 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
           <span class="chat-badge" id="chatBadge"></span>
         </button>
       </div>
-      <button class="icon-btn" id="settingsBtn" title="Settings">⚙</button>
+      <button class="icon-btn" id="settingsBtn" title="Settings" style="font-size:18px;width:38px;height:38px;padding:0">⚙</button>
     </div>
   </div>
 </header>
@@ -467,9 +468,8 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
         </div>
         <!-- Set Name -->
         <div class="field">
-          <label>Set Name <span style="color:var(--text3);font-weight:400">(dye name or custom label)</span></label>
-          <input type="text" id="postSetName" placeholder="e.g. Fairy Purple, Cold Opal, Bleached…">
-        </div>
+          <label style="display:flex;justify-content:space-between">Set Name <span style="color:var(--text3);font-weight:400">(dye name or custom label)</span><span id="setNameCounter" style="font-size:11px;color:var(--text3);font-weight:400"></span></label>
+          <input type="text" id="postSetName" placeholder="e.g. Fairy Purple, Cold Opal, Bleached…" maxlength="50" oninput="const l=this.value.length;document.getElementById('setNameCounter').textContent=l>40?l+'/50':''"></div>
         <!-- Piece selector -->
         <div class="field">
           <label>Armour Piece(s)</label>
@@ -493,14 +493,15 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
         <div class="field" style="margin-top:4px">
           <label>Asking Price</label>
           <div class="price-wrap">
-            <input type="text" id="postPrice" placeholder="e.g. 500m, 1.5b, 10kk" oninput="updatePricePreview()">
+            <input type="text" id="postPrice" placeholder="e.g. 500m, 1.5b, 10kk" oninput="sanitisePrice(this);updatePricePreview()" onkeydown="filterPriceKey(event)">
             <span class="price-ghost" id="pricePreview"></span>
           </div>
         </div>
         <!-- Proof -->
         <div class="field" style="margin-top:16px">
           <label>Screenshot / Proof URL <span style="color:var(--text3);font-weight:400">(recommended)</span></label>
-          <input type="text" id="postProof" placeholder="https://imgur.com/…">
+          <input type="text" id="postProof" placeholder="https://imgur.com/…" oninput="validateProofUrl(this)">
+          <div id="proofErr" style="font-size:11px;color:var(--red);margin-top:3px;display:none">Must be a valid URL (https://…)</div>
         </div>
         <!-- Notes -->
         <div class="field" style="margin-bottom:8px">
@@ -642,9 +643,18 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
 <div class="chat-panel" id="chatPanel">
   <!-- Column 1: All conversations -->
   <div class="chat-list-panel">
-    <div class="chat-list-head">
-      <span class="chat-list-title">All Chats</span>
-      <button class="icon-btn" onclick="closeChatPanel()" style="width:28px;height:28px;padding:0;font-size:13px">✕</button>
+    <div class="chat-list-head" style="flex-direction:column;align-items:stretch;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="chat-list-title">All Chats</span>
+        <button class="icon-btn" onclick="closeChatPanel()" style="width:28px;height:28px;padding:0;font-size:13px">✕</button>
+      </div>
+      <input type="text" id="chatSearch" placeholder="Search username…" oninput="renderChatList()"
+        style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:6px 10px;outline:none">
+      <select id="chatSort" onchange="renderChatList()"
+        style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-family:'Inter',sans-serif;font-size:12px;padding:6px 10px;outline:none;cursor:pointer">
+        <option value="recent">Most recent</option>
+        <option value="listing">By listing</option>
+      </select>
     </div>
     <div class="chat-list-scroll" id="chatListScroll">
       <div class="chat-empty-list">No conversations yet.<br>Make an offer to start chatting.</div>
@@ -1120,6 +1130,30 @@ function getPieceData(){
 /* ════════════════════════════════════════════════════════════════════
    PRICE PARSER — supports k, m, b, kk
 ════════════════════════════════════════════════════════════════════ */
+function sanitisePrice(inp){
+  // Allow digits, decimal point, k/m/b at end only
+  let v=inp.value.replace(/[^0-9.kmb]/gi,'');
+  // only one decimal
+  const parts=v.split('.');if(parts.length>2)v=parts[0]+'.'+parts.slice(1).join('');
+  // suffix only at end, only one
+  const suffix=v.match(/[kmb]/gi);
+  if(suffix&&suffix.length>0){
+    const si=v.search(/[kmb]/i);
+    v=v.slice(0,si).replace(/[kmb]/gi,'')+v[si];
+  }
+  inp.value=v;
+}
+function filterPriceKey(e){
+  const allowed=['0','1','2','3','4','5','6','7','8','9','.','k','K','m','M','b','B','Backspace','Delete','ArrowLeft','ArrowRight','Tab'];
+  if(!allowed.includes(e.key)&&!e.metaKey&&!e.ctrlKey)e.preventDefault();
+}
+function validateProofUrl(inp){
+  const err=document.getElementById('proofErr');
+  if(!err)return;
+  if(!inp.value){err.style.display='none';return;}
+  const ok=inp.value.startsWith('https://')||inp.value.startsWith('http://');
+  err.style.display=ok?'none':'block';
+}
 function parsePrice(raw){
   if(!raw)return null;
   const s=raw.trim().toLowerCase();
@@ -1331,10 +1365,12 @@ function card(l){
     const tagStyle=cls?`color:${cls.colour};border-color:${cls.colour}44;background:${cls.colour}15`:'color:var(--text3);border-color:var(--border)';
     const tagLabel=cls?cls.label:'—';
     return`<div class="card-piece-wrap">
-      <canvas class="card-piece-canvas" width="${sz.w*2}" height="${sz.h*2}"
-        style="width:${sz.w}px;height:${sz.h}px"
-        data-piece="${esc(p.piece)}" data-hex="${esc(p.hex)}"
-        id="cc-${esc(l.id)}-${i}"></canvas>
+      <div class="card-piece-canvas-wrap">
+        <canvas class="card-piece-canvas" width="${sz.w*2}" height="${sz.h*2}"
+          style="width:${sz.w}px;height:${sz.h}px"
+          data-piece="${esc(p.piece)}" data-hex="${esc(p.hex)}"
+          id="cc-${esc(l.id)}-${i}"></canvas>
+      </div>
       <span class="card-piece-name">${esc(p.piece)}</span>
       <span class="card-piece-tag" style="${tagStyle}">${tagLabel}</span>
     </div>`;
@@ -1371,7 +1407,7 @@ function card(l){
       <div class="price-amount">${fmtC(l.price)}</div>
       <div class="price-label">Asking</div>
     </div>
-    <div class="card-actions">${ownerBtns}<button class="card-btn offer" onclick="event.stopPropagation();openOffer('${esc(l.id)}')">Offer</button></div>
+    <div class="card-actions">${ownerBtns}${!isMine?`<button class="card-btn offer" onclick="event.stopPropagation();openOffer('${esc(l.id)}')">Offer</button>`:''}</div>
   </div>
 </div>`;
 }
@@ -1477,6 +1513,7 @@ let activeListingData=null;
 window.openOffer=function(id){
   const l=allListings.find(x=>x.id===id);
   if(!l)return;
+  if(currentUser&&currentUser.uuid===l.uuid){toast('This is your own listing.');return;}
   activeListingId=id;activeListingData=l;
   document.getElementById('offerItemSummary').innerHTML=
     `<strong style="color:var(--text)">${esc(l.armour_type||'')}</strong>${l.set_name?` – ${esc(l.set_name)}`:''}<br>
@@ -1693,27 +1730,52 @@ async function loadChatList(){
 
 function renderChatList(){
   const el = document.getElementById('chatListScroll');
-  if(!chatList.length){
+  const q = (document.getElementById('chatSearch')?.value||'').toLowerCase();
+  const sort = document.getElementById('chatSort')?.value||'recent';
+
+  let list = chatList.filter(c=>{
+    if(!q) return true;
+    const isSeller = c.seller_uuid===currentUser?.uuid;
+    const other = isSeller?c.buyer_ign:(c.seller_ign||'');
+    return other.toLowerCase().includes(q)||(c.armour_type||'').toLowerCase().includes(q);
+  });
+
+  if(!list.length){
     el.innerHTML='<div class="chat-empty-list">No conversations yet.<br>Make an offer to start chatting.</div>';
     return;
   }
 
-  // Group by listing
-  const byListing = new Map();
-  chatList.forEach(c=>{
-    if(!byListing.has(c.listing_id)) byListing.set(c.listing_id,{title:c.armour_type||'Item',chats:[]});
-    byListing.get(c.listing_id).chats.push(c);
-  });
-
-  el.innerHTML = [...byListing.entries()].map(([lid,{title,chats}])=>{
-    const latest = chats.reduce((a,b)=>(b.last_ts||b.created_at)>(a.last_ts||a.created_at)?b:a);
-    const timeStr = ago(latest.last_ts||latest.created_at);
-    return`<div class="chat-list-item" onclick="openListingChats('${lid}','${esc(title)}')">
-      <div class="chat-list-name">${esc(title)}</div>
-      <div class="chat-list-preview">${chats.length} conversation${chats.length!==1?'s':''}</div>
-      <div class="chat-list-time">${timeStr}</div>
-    </div>`;
-  }).join('');
+  if(sort==='listing'){
+    // Group by listing
+    const byListing = new Map();
+    list.forEach(c=>{
+      if(!byListing.has(c.listing_id)) byListing.set(c.listing_id,{title:c.armour_type||'Item',chats:[]});
+      byListing.get(c.listing_id).chats.push(c);
+    });
+    el.innerHTML = [...byListing.entries()].map(([lid,{title,chats}])=>{
+      const latest = chats.reduce((a,b)=>(b.last_ts||b.created_at)>(a.last_ts||a.created_at)?b:a);
+      return`<div class="chat-list-item" onclick="openListingChats('${lid}','${esc(title)}')">
+        <div class="chat-list-name">${esc(title.length>26?title.slice(0,24)+'…':title)}</div>
+        <div class="chat-list-preview">${chats.length} conversation${chats.length!==1?'s':''}</div>
+        <div class="chat-list-time">${ago(latest.last_ts||latest.created_at)}</div>
+      </div>`;
+    }).join('');
+  } else {
+    // Most recent first — flat list
+    list.sort((a,b)=>(b.last_ts||b.created_at)-(a.last_ts||a.created_at));
+    el.innerHTML = list.map(c=>{
+      const isSeller = c.seller_uuid===currentUser?.uuid;
+      const otherName = isSeller?c.buyer_ign:(c.seller_ign||'Seller');
+      const preview = c.last_message
+        ?(c.last_message.startsWith('__offer__')?'💰 Offer':c.last_message)
+        :'💰 '+fmtC(c.offer_amount);
+      return`<div class="chat-list-item${activeChatId===c.id?' active':''}" onclick="openChat('${c.id}')">
+        <div class="chat-list-name">${esc(otherName)}</div>
+        <div class="chat-list-preview">${esc(c.armour_type||'')} · ${esc(preview)}</div>
+        <div class="chat-list-time">${ago(c.last_ts||c.created_at)}</div>
+      </div>`;
+    }).join('');
+  }
 }
 
 window.openListingChats = function(listingId, title){
@@ -1807,11 +1869,16 @@ function renderChatView(chat, messages){
 
   document.getElementById('chatMain').innerHTML = `
     <div class="chat-main-head">
-      <div>
+      <div style="flex:1;min-width:0">
         <div class="chat-main-title">${esc(otherName)}</div>
         <div class="chat-main-sub">${esc(chat.armour_type||'')}${chat.set_name?' – '+esc(chat.set_name):''}</div>
       </div>
-      <button class="icon-btn" style="margin-left:auto" onclick="closeChatPanel()">✕</button>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:10px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase">Your local time</div>
+        <div id="chatClock" style="font-size:12px;color:var(--text2);font-family:monospace"></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px" id="chatTzLabel"></div>
+      </div>
+      <button class="icon-btn" onclick="closeChatPanel()" style="width:30px;height:30px;padding:0;font-size:13px;flex-shrink:0">✕</button>
     </div>
     <div class="offer-pin">
       <div class="offer-pin-label">📌 Pinned Offer</div>
@@ -1831,6 +1898,26 @@ function renderChatView(chat, messages){
   // Scroll to bottom
   const msgs = document.getElementById('chatMsgs');
   if(msgs) msgs.scrollTop = msgs.scrollHeight;
+
+  // Start live clock
+  startChatClock();
+}
+
+let chatClockInterval = null;
+function startChatClock(){
+  if(chatClockInterval) clearInterval(chatClockInterval);
+  const tick=()=>{
+    const cl=document.getElementById('chatClock');
+    const lb=document.getElementById('chatTzLabel');
+    if(!cl) return clearInterval(chatClockInterval);
+    const tz=getTz();
+    try{
+      cl.textContent=new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(new Date());
+      lb.textContent=tz==='local'?Intl.DateTimeFormat().resolvedOptions().timeZone:tz;
+    }catch(e){}
+  };
+  tick();
+  chatClockInterval=setInterval(tick,1000);
 }
 
 window.sendChatMessage = async function(){

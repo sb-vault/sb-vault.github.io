@@ -81,8 +81,45 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 /* ── Chat panel ───────────────────────────────────────────────────────── */
 .chat-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none}
 .chat-overlay.open{display:block;animation:fadeIn .2s ease}
-.chat-panel{position:fixed;right:0;top:0;bottom:0;width:1020px;max-width:97vw;background:var(--bg2);border-left:1px solid var(--border);z-index:301;display:flex;box-shadow:-8px 0 40px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.chat-panel{position:fixed;right:0;top:0;bottom:0;width:1020px;max-width:97vw;background:var(--bg2);border-left:1px solid var(--border);z-index:301;display:flex;box-shadow:-8px 0 40px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);will-change:transform;contain:layout}
 .chat-panel.open{transform:translateX(0)}
+
+/* ── Listing detail panel ─────────────────────────────────────────────── */
+.listing-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none}
+.listing-overlay.open{display:block;animation:fadeIn .2s ease}
+.listing-panel{position:fixed;right:0;top:0;bottom:0;width:820px;max-width:96vw;background:var(--bg2);border-left:1px solid var(--border);z-index:301;display:flex;box-shadow:-8px 0 40px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);will-change:transform}
+.listing-panel.open{transform:translateX(0)}
+/* Left column — armour pieces */
+.lp-pieces{width:200px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px 16px;background:var(--bg3);overflow-y:auto}
+.lp-piece-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
+.lp-piece-canvas{image-rendering:pixelated;display:block}
+.lp-piece-name{font-size:10px;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.lp-piece-tag{font-size:10px;padding:2px 8px;border-radius:5px;border:1px solid;font-weight:600}
+/* Right column — listing info */
+.lp-info{flex:1;display:flex;flex-direction:column;overflow-y:auto}
+.lp-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:sticky;top:0;background:var(--bg2);z-index:1}
+.lp-title{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--text);line-height:1.2}
+.lp-setname{font-size:13px;color:var(--text2);margin-top:4px}
+.lp-body{padding:20px 24px;flex:1;display:flex;flex-direction:column;gap:16px}
+.lp-seller-row{display:flex;align-items:center;gap:10px}
+.lp-price{font-family:'Cinzel',serif;font-size:32px;font-weight:700;color:var(--gold)}
+.lp-price-lbl{font-size:11px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+.lp-actions{display:flex;gap:10px;flex-wrap:wrap}
+.lp-btn{height:42px;padding:0 24px;border-radius:12px;border:none;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.lp-btn.primary{background:linear-gradient(120deg,var(--sunset1),var(--sunset2));color:#fff}
+.lp-btn.primary:hover{opacity:.88}
+.lp-btn.ghost{background:var(--bg3);border:1px solid var(--border);color:var(--text2)}
+.lp-btn.ghost:hover{border-color:var(--sunset1);color:var(--sunset1)}
+.lp-btn.report{background:rgba(232,85,85,.08);border:1px solid rgba(232,85,85,.25);color:var(--red)}
+.lp-btn.report:hover{background:rgba(232,85,85,.15)}
+.lp-section{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.lp-section-title{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.lp-proof-img{max-width:100%;border-radius:8px;border:1px solid var(--border);margin-top:8px;cursor:pointer}
+
+/* ── Report modal ─────────────────────────────────────────────────────── */
+.report-reason-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.report-reason-btn{padding:8px 12px;border-radius:9px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;text-align:left}
+.report-reason-btn:hover,.report-reason-btn.selected{border-color:var(--red);background:rgba(232,85,85,.08);color:var(--red)}
 .chat-list-panel{width:260px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column}
 .chat-list-head{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .chat-list-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--text)}
@@ -102,7 +139,7 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .offer-pin-label{font-size:10px;color:var(--gold);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
 .offer-pin-amount{font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--gold)}
 .offer-pin-msg{font-size:12px;color:var(--text2);margin-top:2px}
-.chat-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.chat-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain}
 .msg-row{display:flex;gap:8px;align-items:flex-end}
 .msg-row.mine{flex-direction:row-reverse}
 .msg-avatar{width:26px;height:26px;border-radius:6px;image-rendering:pixelated;border:1px solid var(--border);flex-shrink:0}
@@ -401,6 +438,7 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
       <div class="theme-grid" id="themeGrid"></div>
       <div class="stitle" style="margin-top:12px">With Background</div>
       <div class="theme-grid" id="themeGridPreset"></div>
+      <div class="stitle" id="customThemesGridLabel" style="margin-top:12px;display:none">Custom</div>
     </div>
     <div>
       <div class="stitle">Custom Background</div>
@@ -426,6 +464,11 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
         <option value="Asia/Tokyo">Tokyo (JST)</option>
         <option value="Asia/Singapore">Singapore (SGT)</option>
       </select>
+    </div>
+    <div>
+      <div class="stitle">Custom Themes</div>
+      <div id="customThemesList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+      <button onclick="openCustomThemeBuilder()" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;transition:border-color .2s" onmouseover="this.style.borderColor='var(--sunset1)'" onmouseout="this.style.borderColor='var(--border)'">+ Create Custom Theme</button>
     </div>
     <button onclick="resetAll()" style="padding:9px;background:rgba(232,85,85,.1);border:1px solid rgba(232,85,85,.3);border-radius:8px;color:#e85555;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;width:100%">Reset Settings</button>
   </div>
@@ -461,7 +504,7 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
         <div class="field">
           <label>Armour Type</label>
           <div class="autocomplete-wrap">
-            <input type="text" id="armourTypeInput" class="autocomplete-input" placeholder="e.g. Superior Dragon Armour, Tarantula…" autocomplete="off" oninput="acUpdate();checkArmourNameLen()" onkeydown="acKey(event)" onfocus="acUpdate()">
+            <input type="text" id="armourTypeInput" class="autocomplete-input" placeholder="e.g. Superior Dragon Armour, Tarantula…" autocomplete="off" oninput="acUpdate();checkArmourNameLen();onArmourTypeChange()" onkeydown="acKey(event)" onfocus="acUpdate()">
           <div id="armourNameLen" style="font-size:11px;color:var(--text3);margin-top:4px;text-align:right"></div>
             <div class="autocomplete-list" id="acList"></div>
           </div>
@@ -673,7 +716,108 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
 <footer>The Vault · sb-vault.github.io · Not affiliated with Hypixel · Open source</footer>
 <div class="neu-credit">Item data sourced from the <a href="https://github.com/NotEnoughUpdates/NotEnoughUpdates-REPO" target="_blank">NotEnoughUpdates REPO</a> – an open-source community project.</div>
 
-<!-- ── Chat overlay + panel ────────────────────────────────────────────── -->
+<!-- ── Custom Theme Builder ─────────────────────────────────────────────── -->
+<div class="modal-overlay" id="themeBuilderModal" onclick="if(event.target===this)closeModal('themeBuilderModal')">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <div class="modal-title" id="themeBuilderTitle">Create Custom Theme</div>
+      <button class="icon-btn" onclick="closeModal('themeBuilderModal')" style="font-size:13px;width:32px;height:32px;padding:0">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Theme Name</label>
+        <input type="text" id="ctName" placeholder="e.g. My Theme" maxlength="24">
+      </div>
+      <div class="field-row">
+        <div class="field" style="margin-bottom:0">
+          <label>Background</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="color" id="ctBg" value="#0a0c10" style="height:36px;width:48px;padding:2px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg3)">
+            <span style="font-size:12px;color:var(--text2)">Base background</span>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>Surface</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="color" id="ctBg2" value="#111318" style="height:36px;width:48px;padding:2px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg3)">
+            <span style="font-size:12px;color:var(--text2)">Cards / modals</span>
+          </div>
+        </div>
+      </div>
+      <div class="field-row" style="margin-top:12px">
+        <div class="field" style="margin-bottom:0">
+          <label>Accent 1</label>
+          <input type="color" id="ctA1" value="#ff6b35" style="height:36px;width:100%;padding:2px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg3)">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>Accent 2</label>
+          <input type="color" id="ctA2" value="#f7931e" style="height:36px;width:100%;padding:2px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg3)">
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>Text colour</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="color" id="ctText" value="#e8eaf0" style="height:36px;width:48px;padding:2px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg3)">
+          <span style="font-size:12px;color:var(--text2)">Main text</span>
+        </div>
+      </div>
+      <!-- Live preview -->
+      <div id="ctPreview" style="margin-top:14px;padding:14px;border-radius:12px;border:1px solid var(--border)">
+        <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;margin-bottom:6px" id="ctPrevTitle">The Vault</div>
+        <div style="font-size:12px;margin-bottom:10px" id="ctPrevSub">Preview of your custom theme</div>
+        <div style="display:flex;gap:8px">
+          <div style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;color:#fff" id="ctPrevBtn">Button</div>
+          <div style="padding:5px 12px;border-radius:8px;font-size:12px;border:1px solid" id="ctPrevOutline">Outline</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('themeBuilderModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCustomTheme()">Save Theme</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Listing detail panel ─────────────────────────────────────────────── -->
+<div class="listing-overlay" id="listingOverlay" onclick="closeListingPanel()"></div>
+<div class="listing-panel" id="listingPanel">
+  <div class="lp-pieces" id="lpPieces"></div>
+  <div class="lp-info" id="lpInfo">
+    <div style="padding:80px 24px;text-align:center;color:var(--text3)">Loading…</div>
+  </div>
+</div>
+
+<!-- ── Report modal ─────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="reportModal" onclick="if(event.target===this)closeModal('reportModal')">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <div class="modal-title">Report</div>
+      <button class="icon-btn" onclick="closeModal('reportModal')" style="font-size:13px;width:32px;height:32px;padding:0">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Reason</label>
+        <div class="report-reason-grid" id="reportReasonGrid">
+          <button class="report-reason-btn" onclick="selectReportReason(this,'Scam')">Scam / Fraud</button>
+          <button class="report-reason-btn" onclick="selectReportReason(this,'Fake listing')">Fake Listing</button>
+          <button class="report-reason-btn" onclick="selectReportReason(this,'Harassment')">Harassment</button>
+          <button class="report-reason-btn" onclick="selectReportReason(this,'Inappropriate')">Inappropriate</button>
+          <button class="report-reason-btn" onclick="selectReportReason(this,'Other')">Other</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Additional details <span style="color:var(--text3);font-weight:400">(optional)</span></label>
+        <textarea id="reportNotes" rows="3" placeholder="Describe what happened…" maxlength="500"></textarea>
+      </div>
+      <p style="font-size:11px;color:var(--text3);line-height:1.7">Reports are reviewed by the site admin. False reports may result in account suspension.</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('reportModal')">Cancel</button>
+      <button class="btn btn-primary" id="reportSubmitBtn" onclick="submitReport()" style="background:linear-gradient(120deg,var(--red),#c83030)">Submit Report</button>
+    </div>
+  </div>
+</div>
+
 <div class="chat-overlay" id="chatOverlay" onclick="closeChatPanel()"></div>
 <div class="chat-panel" id="chatPanel">
   <!-- Column 1: All conversations -->
@@ -807,6 +951,7 @@ async function handleCallback(){
     setUser(data.user);
     toast(`Welcome, ${data.user.username}!`);
     loadStats();
+    loadPreferencesFromServer();
   } catch(e){
     console.error('Login error:', e);
     toast('Login failed – check your connection');
@@ -975,6 +1120,7 @@ function classifyHex(hex, armourType, pieceName){
 function classifyPieces(pieces, armourType){
   const seen=new Map();
   pieces.forEach(p=>{
+    if(p.dyeable===false) return; // non-leather pieces aren't classified by dye
     const c=classifyHex(p.hex, armourType, p.piece);
     if(c&&!seen.has(c.cat))seen.set(c.cat,c);
   });
@@ -982,39 +1128,256 @@ function classifyPieces(pieces, armourType){
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   LEATHER ARMOUR CANVAS PREVIEW
+   ARMOUR RENDERING — leather tint + skull textures + default colours
 ════════════════════════════════════════════════════════════════════ */
-const BASE_URL='https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.4/assets/minecraft/textures/item/';
-const PIECE_TEX={
-  'Helmet':'leather_helmet','Chestplate':'leather_chestplate',
-  'Leggings':'leather_leggings','Boots':'leather_boots',
+const MC_TEX = 'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.4/assets/minecraft/textures/item/';
+const MC_SKIN = 'https://textures.minecraft.net/texture/';
+
+// Default leather textures (dyeable)
+const PIECE_TEX = {
+  Helmet:'leather_helmet', Chestplate:'leather_chestplate',
+  Leggings:'leather_leggings', Boots:'leather_boots',
 };
-const imgCache={};
+
+// Material types per armour set per piece
+// 'leather' = dyeable (default), 'chainmail', 'iron', 'gold', 'diamond', 'netherite'
+// Key = lowercase armour type substring — checked with .includes()
+// Value = {h, c, l, b} piece keys
+const ARMOUR_MATERIALS = {
+  // ── Vanilla sets ───────────────────────────────────────────────────
+  'gold armor':           {h:'gold',    c:'gold',     l:'gold',     b:'gold'},
+  'gold armour':          {h:'gold',    c:'gold',     l:'gold',     b:'gold'},
+  'chainmail armor':      {h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},
+  'chainmail armour':     {h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},
+  'iron armor':           {h:'iron',    c:'iron',     l:'iron',     b:'iron'},
+  'iron armour':          {h:'iron',    c:'iron',     l:'iron',     b:'iron'},
+  'diamond armor':        {h:'diamond', c:'diamond',  l:'diamond',  b:'diamond'},
+  'diamond armour':       {h:'diamond', c:'diamond',  l:'diamond',  b:'diamond'},
+
+  // ── Diamond-based sets ─────────────────────────────────────────────
+  'hardened diamond':     {h:'diamond', c:'diamond',  l:'diamond',  b:'diamond'},
+  'perfect armor':        {h:'diamond', c:'diamond',  l:'diamond',  b:'diamond'},
+  'perfect armour':       {h:'diamond', c:'diamond',  l:'diamond',  b:'diamond'},
+  'golem armor':          {h:'iron',    c:'iron',     l:'iron',     b:'iron'},
+  'golem armour':         {h:'iron',    c:'iron',     l:'iron',     b:'iron'},
+
+  // ── Chainmail sets ─────────────────────────────────────────────────
+  'flamebreaker':         {h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},
+  'sorrow armor':         {h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},
+  'sorrow armour':        {h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},
+  'ember ash armor':      {h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},
+  'ember ash armour':     {h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},
+  'heat armor':           {h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},
+  'heat armour':          {h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},
+
+  // ── Mixed: leather helmet + chainmail body ─────────────────────────
+  'ember armor':          {h:'leather', c:'chainmail',l:'chainmail',b:'chainmail'},
+  'ember armour':         {h:'leather', c:'chainmail',l:'chainmail',b:'chainmail'},
+  'rekindled ember':      {h:'leather', c:'chainmail',l:'chainmail',b:'chainmail'},
+  'ender armor':          {h:'leather', c:'chainmail',l:'chainmail',b:'chainmail'},
+  'ender armour':         {h:'leather', c:'chainmail',l:'chainmail',b:'chainmail'},
+
+  // ── Mixed: diamond helmet + leather body ───────────────────────────
+  'angler armor':         {h:'diamond', c:'leather',  l:'leather',  b:'leather'},
+  'angler armour':        {h:'diamond', c:'leather',  l:'leather',  b:'leather'},
+  'salmon armor':         {h:'diamond', c:'leather',  l:'leather',  b:'leather'},
+  'salmon armour':        {h:'diamond', c:'leather',  l:'leather',  b:'leather'},
+  'mineral armor':        {h:'diamond', c:'leather',  l:'leather',  b:'leather'},
+  'mineral armour':       {h:'diamond', c:'leather',  l:'leather',  b:'leather'},
+
+  // ── Mixed: squire (iron H+L, leather rest) ─────────────────────────
+  'squire armor':         {h:'iron',    c:'leather',  l:'iron',     b:'leather'},
+  'squire armour':        {h:'iron',    c:'leather',  l:'iron',     b:'leather'},
+
+  // ── Mixed: mercenary (chainmail L only) ───────────────────────────
+  'mercenary armor':      {h:'leather', c:'leather',  l:'chainmail',b:'leather'},
+  'mercenary armour':     {h:'leather', c:'leather',  l:'chainmail',b:'leather'},
+
+  // ── Special individual pieces ──────────────────────────────────────
+  'spring boots':         {h:'leather', c:'leather',  l:'leather',  b:'chainmail'},
+  'guardian chestplate':  {h:'leather', c:'chainmail',l:'leather',  b:'leather'},
+};
+
+// All other sets not listed above are LEATHER (dyeable) — this covers:
+// All dragon armour, all slayer armour (tarantula, revenant, sven, voidgloom, inferno),
+// All crimson/terror/aurora/fervor/hollow, all dungeon armour (necron/goldor/storm/maxor/wither),
+// Farm suit/armour, pumpkin, cactus, leaflet, speedster, spooky, snow suit,
+// Fairy armour, lapis, emerald, cheap/fancy/elegant tuxedo, bat person, shark scale,
+// Mastiff, zombie/monster hunter (all leather with specific dye colours),
+// Glacite, divan, frozen blaze, berserker, thunder, etc.
+
+// Non-leather texture map per material type and piece
+const MATERIAL_TEX = {
+  chainmail: {Helmet:'chainmail_helmet',Chestplate:'chainmail_chestplate',Leggings:'chainmail_leggings',Boots:'chainmail_boots'},
+  iron:      {Helmet:'iron_helmet',     Chestplate:'iron_chestplate',     Leggings:'iron_leggings',     Boots:'iron_boots'},
+  gold:      {Helmet:'golden_helmet',   Chestplate:'golden_chestplate',   Leggings:'golden_leggings',   Boots:'golden_boots'},
+  diamond:   {Helmet:'diamond_helmet',  Chestplate:'diamond_chestplate',  Leggings:'diamond_leggings',  Boots:'diamond_boots'},
+  netherite: {Helmet:'netherite_helmet',Chestplate:'netherite_chestplate',Leggings:'netherite_leggings',Boots:'netherite_boots'},
+};
+
+// Get material type for a specific piece of an armour type
+function getPieceMaterial(armourType, piece){
+  const key = armourType.toLowerCase();
+  const pKey = {Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'}[piece]||'h';
+  for(const [k,v] of Object.entries(ARMOUR_MATERIALS)){
+    if(key.includes(k)) return v[pKey]||'leather';
+  }
+  return 'leather';
+}
+
+// Whether a piece is dyeable (leather)
+function isPieceDyeable(armourType, piece){
+  return getPieceMaterial(armourType, piece) === 'leather';
+}
+
+// Skull texture hashes for helmets that are player heads
+// Format: lowercase armour type substring → texture hash
+const SKULL_HELMETS = {
+  'superior dragon': '39fda5f0632be46afd76ae24496675e913023985b093baa38e9a8fda6290d',
+  'wise dragon':     '36e8d7ca71ed9131d2928080526fd1de64ce301c4eb62c5a60b7cc7f94a31',
+  'young dragon':    'dda2c3ad7595717cae00e75e6f225bc324660eaace3d64650ef7306e81b12',
+  'old dragon':      '905034acd3bce3525a70d96a18b31e370e2596c378592e04bcd4a6f8436fa',
+  'unstable dragon': '3da69b913270ec472369121abe2a085a5504427e77a9fc1b4602e5b979c71',
+  'strong dragon':   '317971774363f47b4b3a572dc2945a4b751a4e9ebb058529bb94df90a79af',
+  'protector dragon':'2036dd42f70a31df64320e7453e9b7adad5cdd096941fd9feb09afec4dae7',
+  'holy dragon':     '5cf26d03e3f7a107e7cd3d4a76f214a4a4f036ef4bc2a70c35a513a60ed',
+  'tarantula':       'fc9747f5ddb405b009792eb6179a1ac637e975532443bd3186fdfed11f6d9',
+  'shark scale':     '4ea4e976a71b247f1a1b1a37fdf34cb14d169fdced0c76fe8dbe330314c01',
+  'bat person':      '1ea0f45e9f751b04b618370b81a7067bec0476debd7143b6395b253121bf8',
+  'sorrow':          'fab16af6a7518ed4aaf286975ee11d3698b387e733d8e2ca91b4ab75b34b8',
+  'necron':          '2eb2233f4b224bc0ed06d6a9a79f5a365cc628f6b8b602994415384a40320',
+  'goldor':          '8d5dc9ff118d65d2fd79c31f247087a1398a73a58ddca50bed64151843354',
+  'storm':           '2902d5624027666bdc752580d4df5a50f5788d9425b8ad716e1bbadab62ae',
+  'maxor':           'f907a14df7213f4654c4cd827face38ac8ab5f0c18719f142024caaba5e',
+  'angler':          '5b756d4a44c37ffe487ca1215a4320e70f116f34e5db790e345dfc6a2a472',
+  'wither':          'd9675d489b8d6544f9e5d0ff70bcea6016070b63514b082a8ff41ed0aaee2',
+  'goldor':          '8d5dc9ff118d65d2fd79c31f247087a1398a73a58ddca50bed64151843354',
+};
+
+// Default colours per armour type + piece (hex)
+// These pre-fill when an armour type is selected
+const ARMOUR_DEFAULTS = {
+  'superior dragon':   {h:'#f2df11',c:'#f2df11',l:'#f2df11',b:'#f25d18'},
+  'wise dragon':       {h:'#29f0e9',c:'#29f0e9',l:'#29f0e9',b:'#29f0e9'},
+  'young dragon':      {h:'#dde4f0',c:'#dde4f0',l:'#dde4f0',b:'#dde4f0'},
+  'old dragon':        {h:'#f0e6aa',c:'#f0e6aa',l:'#f0e6aa',b:'#f0e6aa'},
+  'unstable dragon':   {h:'#b212e3',c:'#b212e3',l:'#b212e3',b:'#b212e3'},
+  'strong dragon':     {h:'#d91e41',c:'#d91e41',l:'#e09419',b:'#f0d124'},
+  'protector dragon':  {h:'#99978b',c:'#99978b',l:'#99978b',b:'#99978b'},
+  'holy dragon':       {h:'#ffffff',c:'#ffffff',l:'#ffffff',b:'#ffffff'},
+  'tarantula':         {h:'#000000',c:'#3d1d1d',l:'#000000',b:'#3d1d1d'},
+  'shark scale':       {h:'#002ca6',c:'#002ca6',l:'#002ca6',b:'#002ca6'},
+  'bat person':        {h:'#000000',c:'#000000',l:'#000000',b:'#000000'},
+  'angler':            {h:'#0b004f',c:'#0b004f',l:'#0b004f',b:'#0b004f'},
+  'sorrow':            {h:'#2d0a4e',c:'#2d0a4e',l:'#2d0a4e',b:'#2d0a4e'},
+  'necron':            {h:'#1a1a1a',c:'#1a1a1a',l:'#1a1a1a',b:'#1a1a1a'},
+  'farm suit':         {h:'#ffff00',c:'#ffff00',l:'#ffff00',b:'#ffff00'},
+  'farm armor':        {h:'#ffd700',c:'#ffd700',l:'#ffd700',b:'#ffd700'},
+  'lapis':             {h:'#0000ff',c:'#0000ff',l:'#0000ff',b:'#0000ff'},
+  'emerald':           {h:'#00ff00',c:'#00ff00',l:'#00ff00',b:'#00ff00'},
+  'pumpkin':           {h:'#edaa36',c:'#edaa36',l:'#edaa36',b:'#edaa36'},
+  'cactus':            {h:'#00ff00',c:'#00ff00',l:'#00ff00',b:'#00ff00'},
+  'cheap tuxedo':      {h:'#f0f0f0',c:'#383838',l:'#c7c7c7',b:'#383838'},
+  'fancy tuxedo':      {h:'#f5f5f5',c:'#332a2a',l:'#d4d4d4',b:'#332a2a'},
+  'elegant tuxedo':    {h:'#fefdfc',c:'#191919',l:'#fefdfc',b:'#191919'},
+  'speedster':         {h:'#e0fcf7',c:'#e0fcf7',l:'#e0fcf7',b:'#e0fcf7'},
+  'mushroom':          {h:'#ff0000',c:'#ff0000',l:'#ff0000',b:'#ff0000'},
+};
+
+// Returns default hex for a piece of a given armour type
+function getDefaultHex(armourType, piece){
+  const key = armourType.toLowerCase();
+  const pKey = {Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'}[piece]||'h';
+  for(const [k,v] of Object.entries(ARMOUR_DEFAULTS)){
+    if(key.includes(k)) return v[pKey]||BLEACHED_HEX;
+  }
+  return BLEACHED_HEX;
+}
+
+// Returns skull texture hash if this armour type's helmet is a skull
+function getSkullHash(armourType){
+  const key = armourType.toLowerCase();
+  for(const [k,hash] of Object.entries(SKULL_HELMETS)){
+    if(key.includes(k)) return hash;
+  }
+  return null;
+}
+
+const imgCache = {};
 function loadImg(url){
-  if(imgCache[url])return Promise.resolve(imgCache[url]);
+  if(imgCache[url]) return Promise.resolve(imgCache[url]);
   return new Promise(res=>{
-    const img=new Image();img.crossOrigin='anonymous';
-    img.onload=()=>{imgCache[url]=img;res(img);};
-    img.onerror=()=>res(null);
-    img.src=url;
+    const img = new Image(); img.crossOrigin='anonymous';
+    img.onload = ()=>{ imgCache[url]=img; res(img); };
+    img.onerror = ()=>res(null);
+    img.src = url;
   });
 }
-async function drawLeatherPreview(canvas,piece,hex){
-  const ctx=canvas.getContext('2d');
+
+// Draw a skull head texture on a canvas (shows face only)
+async function drawSkullPreview(canvas, hash){
+  const ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  const tex=PIECE_TEX[piece]||'leather_helmet';
-  const [baseImg,overlayImg]=await Promise.all([
-    loadImg(BASE_URL+tex+'.png'),
-    loadImg(BASE_URL+tex+'_overlay.png'),
+  const url = MC_SKIN + hash;
+  const skin = await loadImg(url);
+  if(!skin){ ctx.fillStyle='#888'; ctx.fillRect(0,0,canvas.width,canvas.height); return; }
+  // Minecraft skin layout: face is at 8,8 → 16,16 (8×8 pixels within 64×64 skin)
+  const sw=skin.naturalWidth||64, sh=skin.naturalHeight||64;
+  const scale=sw/64;
+  // Draw base face layer (8,8 to 16,16)
+  const faceX=8*scale, faceY=8*scale, faceS=8*scale;
+  // Draw hat layer (40,8 to 48,16)
+  const hatX=40*scale, hatY=8*scale, hatS=8*scale;
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(skin, faceX,faceY,faceS,faceS, 0,0,canvas.width,canvas.height);
+  ctx.drawImage(skin, hatX,hatY,hatS,hatS, 0,0,canvas.width,canvas.height);
+}
+
+async function drawLeatherPreview(canvas, piece, hex, armourType){
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Check if skull helmet
+  if(piece==='Helmet' && armourType){
+    const hash = getSkullHash(armourType);
+    if(hash){ await drawSkullPreview(canvas, hash); return; }
+  }
+
+  // Check material type
+  const material = armourType ? getPieceMaterial(armourType, piece) : 'leather';
+
+  if(material !== 'leather'){
+    // Non-leather: just draw the fixed texture, no tinting
+    const texName = MATERIAL_TEX[material]?.[piece];
+    if(texName){
+      const img = await loadImg(MC_TEX + texName + '.png');
+      if(img){
+        ctx.imageSmoothingEnabled=false;
+        ctx.drawImage(img, 0,0,canvas.width,canvas.height);
+      }else{
+        // Fallback colour block
+        const fallbackColours={chainmail:'#a0a8b0',iron:'#d8d8d8',gold:'#f5c542',diamond:'#5deafe',netherite:'#5a4a5a'};
+        ctx.fillStyle=fallbackColours[material]||'#888';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+      }
+    }
+    return;
+  }
+
+  // Leather — tinted rendering
+  const tex = PIECE_TEX[piece]||'leather_helmet';
+  const [baseImg, overlayImg] = await Promise.all([
+    loadImg(MC_TEX+tex+'.png'),
+    loadImg(MC_TEX+tex+'_overlay.png'),
   ]);
-  const h=normHex(hex)||BLEACHED_HEX;
+  const h = normHex(hex)||BLEACHED_HEX;
   const tR=parseInt(h.slice(1,3),16);
   const tG=parseInt(h.slice(3,5),16);
   const tB=parseInt(h.slice(5,7),16);
   if(baseImg){
     const off=document.createElement('canvas');
-    off.width=baseImg.naturalWidth||16;off.height=baseImg.naturalHeight||16;
-    const oc=off.getContext('2d');oc.drawImage(baseImg,0,0);
+    off.width=baseImg.naturalWidth||16; off.height=baseImg.naturalHeight||16;
+    const oc=off.getContext('2d'); oc.drawImage(baseImg,0,0);
     const id=oc.getImageData(0,0,off.width,off.height);
     for(let i=0;i<id.data.length;i+=4){
       id.data[i]  =Math.round(id.data[i]  *tR/255);
@@ -1024,9 +1387,9 @@ async function drawLeatherPreview(canvas,piece,hex){
     oc.putImageData(id,0,0);
     ctx.imageSmoothingEnabled=false;
     ctx.drawImage(off,0,0,canvas.width,canvas.height);
-    if(overlayImg)ctx.drawImage(overlayImg,0,0,canvas.width,canvas.height);
+    if(overlayImg) ctx.drawImage(overlayImg,0,0,canvas.width,canvas.height);
   }else{
-    ctx.fillStyle=h;ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle=h; ctx.fillRect(0,0,canvas.width,canvas.height);
   }
 }
 
@@ -1079,7 +1442,7 @@ function renderPieceInputs(){
     row.className='piece-row';row.dataset.piece=piece;
 
     // Canvas — piece-specific proportions
-    const FORM_SIZES={Helmet:{w:64,h:58},Chestplate:{w:64,h:62},Leggings:{w:52,h:72},Boots:{w:68,h:44}};
+    const FORM_SIZES={Helmet:{w:72,h:54},Chestplate:{w:68,h:58},Leggings:{w:52,h:72},Boots:{w:76,h:44}};
     const fsz=FORM_SIZES[piece]||{w:64,h:64};
     const canvas=document.createElement('canvas');
     canvas.width=fsz.w*2;canvas.height=fsz.h*2;
@@ -1095,17 +1458,37 @@ function renderPieceInputs(){
     lbl.className='piece-row-label';lbl.textContent=piece;
     right.appendChild(lbl);
 
-    // Hex input with permanent #
+    // Hex input with permanent # — disabled for non-leather pieces
+    const armourTypeNow2 = document.getElementById('armourTypeInput').value.trim();
+    const dyeable = isPieceDyeable(armourTypeNow2, piece);
+    const material = armourTypeNow2 ? getPieceMaterial(armourTypeNow2, piece) : 'leather';
+
     const hexWrap=document.createElement('div');
     hexWrap.className='hex-wrap';
+    hexWrap.style.opacity = dyeable ? '1' : '0.45';
     const prefix=document.createElement('span');
     prefix.className='hex-prefix';prefix.textContent='#';
     const hexIn=document.createElement('input');
     hexIn.type='text';hexIn.className='hex-input';
-    hexIn.placeholder='a06540';hexIn.maxLength=6;
+    hexIn.placeholder= dyeable ? 'a06540' : 'N/A';
+    hexIn.maxLength=6;
     hexIn.dataset.piece=piece;
+    hexIn.disabled = !dyeable;
+    hexIn.readOnly = !dyeable;
+    if(!dyeable){
+      hexIn.style.cursor='not-allowed';
+      prefix.style.opacity='0.4';
+    }
     hexWrap.appendChild(prefix);hexWrap.appendChild(hexIn);
     right.appendChild(hexWrap);
+
+    // Material label for non-leather pieces
+    if(!dyeable){
+      const matLabel=document.createElement('div');
+      matLabel.style.cssText='font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.04em;text-transform:uppercase';
+      matLabel.textContent = material.charAt(0).toUpperCase()+material.slice(1)+' (not dyeable)';
+      right.appendChild(matLabel);
+    }
 
     const catTag=document.createElement('div');
     catTag.className='piece-cat-tag';catTag.textContent='—';
@@ -1122,7 +1505,7 @@ function renderPieceInputs(){
       if(cls){
         catTag.textContent=cls.label;catTag.style.color=cls.colour;catTag.style.borderColor=cls.colour+'44';
       }else{catTag.textContent='—';catTag.style.color='';catTag.style.borderColor='';}
-      drawLeatherPreview(canvas,piece,hex);
+      drawLeatherPreview(canvas,piece,hex,armourType);
       // Sync all pieces if full set mode
       if(fullSetMode){
         document.querySelectorAll('#pieceInputs .hex-input').forEach(inp=>{
@@ -1132,7 +1515,7 @@ function renderPieceInputs(){
             const c2=row2.querySelector('.piece-preview');
             const t2=row2.querySelector('.piece-cat-tag');
             const cls2=classifyHex(hex, armourType, row2.dataset.piece);
-            drawLeatherPreview(c2,row2.dataset.piece,hex);
+            drawLeatherPreview(c2,row2.dataset.piece,hex,armourType);
             if(cls2){t2.textContent=cls2.label;t2.style.color=cls2.colour;t2.style.borderColor=cls2.colour+'44';}
             else{t2.textContent='—';t2.style.color='';t2.style.borderColor='';}
           }
@@ -1141,7 +1524,16 @@ function renderPieceInputs(){
       updateOverallCat();
     });
 
-    drawLeatherPreview(canvas,piece,BLEACHED_HEX);
+    // Draw initial preview with armour-type-specific default colour
+    const armourTypeNow = document.getElementById('armourTypeInput').value.trim();
+    const defaultHex = getDefaultHex(armourTypeNow, piece);
+    if(defaultHex !== BLEACHED_HEX && armourTypeNow){
+      // Pre-fill the hex input with the default colour
+      hexIn.value = defaultHex.replace('#','');
+      const initCls = classifyHex(defaultHex, armourTypeNow, piece);
+      if(initCls){ catTag.textContent=initCls.label; catTag.style.color=initCls.colour; catTag.style.borderColor=initCls.colour+'44'; }
+    }
+    drawLeatherPreview(canvas, piece, hexIn.value?'#'+hexIn.value:defaultHex, armourTypeNow);
   });
   updateOverallCat();
 }
@@ -1158,10 +1550,19 @@ function updateOverallCat(){
 }
 
 function getPieceData(){
-  return[...document.querySelectorAll('#pieceInputs .piece-row')].map(r=>({
-    piece:r.dataset.piece,
-    hex:normHex('#'+(r.querySelector('.hex-input').value||''))||BLEACHED_HEX,
-  }));
+  const armourType = document.getElementById('armourTypeInput').value.trim();
+  return[...document.querySelectorAll('#pieceInputs .piece-row')].map(r=>{
+    const piece = r.dataset.piece;
+    const dyeable = isPieceDyeable(armourType, piece);
+    const material = getPieceMaterial(armourType, piece);
+    const hexVal = r.querySelector('.hex-input').value||'';
+    return {
+      piece,
+      hex: dyeable ? (normHex('#'+hexVal)||BLEACHED_HEX) : null,
+      material,
+      dyeable,
+    };
+  });
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -1275,6 +1676,43 @@ window.acUpdate=function(){
 window.acPick=function(i){
   document.getElementById('armourTypeInput').value=acFiltered[i];
   document.getElementById('acList').classList.remove('open');
+  onArmourTypeChange();
+  checkArmourNameLen();
+};
+
+window.onArmourTypeChange=function(){
+  if(!selectedPieces.size) return;
+  // Re-render all piece rows with new defaults and correct material types
+  document.querySelectorAll('#pieceInputs .piece-row').forEach(row=>{
+    const piece = row.dataset.piece;
+    const hexIn = row.querySelector('.hex-input');
+    const canvas = row.querySelector('.piece-preview');
+    const catTag = row.querySelector('.piece-cat-tag');
+    const armourType = document.getElementById('armourTypeInput').value.trim();
+    const dyeable = isPieceDyeable(armourType, piece);
+    const material = getPieceMaterial(armourType, piece);
+
+    // Update hex input state
+    if(hexIn){
+      hexIn.disabled = !dyeable;
+      hexIn.readOnly = !dyeable;
+      hexIn.placeholder = dyeable ? 'a06540' : 'N/A';
+      hexIn.closest('.hex-wrap').style.opacity = dyeable ? '1' : '0.45';
+    }
+
+    if(dyeable){
+      const defaultHex = getDefaultHex(armourType, piece);
+      if(hexIn) hexIn.value = defaultHex.replace('#','');
+      const cls = classifyHex(defaultHex, armourType, piece);
+      if(cls && catTag){ catTag.textContent=cls.label; catTag.style.color=cls.colour; catTag.style.borderColor=cls.colour+'44'; }
+      drawLeatherPreview(canvas, piece, defaultHex, armourType);
+    } else {
+      if(hexIn) hexIn.value = '';
+      if(catTag){ catTag.textContent = material.charAt(0).toUpperCase()+material.slice(1); catTag.style.color='var(--text3)'; catTag.style.borderColor='var(--border)'; }
+      drawLeatherPreview(canvas, piece, '', armourType);
+    }
+  });
+  updateOverallCat();
 };
 window.acKey=function(e){
   const items=document.getElementById('acList').querySelectorAll('.ac-item');
@@ -1409,7 +1847,7 @@ function card(l){
 
   // Piece-specific canvas sizes — bigger, fills card width
   const pieces=l.pieces||[];
-  const PIECE_SIZES={Helmet:{w:70,h:64},Chestplate:{w:70,h:68},Leggings:{w:56,h:80},Boots:{w:76,h:48}};
+  const PIECE_SIZES={Helmet:{w:80,h:60},Chestplate:{w:76,h:64},Leggings:{w:58,h:82},Boots:{w:84,h:50}};
 
   // Build per-piece category tags
   const armourType=l.armour_type||'';
@@ -1422,7 +1860,7 @@ function card(l){
       <div class="card-piece-canvas-wrap">
         <canvas class="card-piece-canvas" width="${sz.w*2}" height="${sz.h*2}"
           style="width:${sz.w}px;height:${sz.h}px"
-          data-piece="${esc(p.piece)}" data-hex="${esc(p.hex)}"
+          data-piece="${esc(p.piece)}" data-hex="${esc(p.hex)}" data-armourtype="${esc(armourType)}"
           id="cc-${esc(l.id)}-${i}"></canvas>
       </div>
       <span class="card-piece-name">${esc(p.piece)}</span>
@@ -1439,7 +1877,7 @@ function card(l){
   // 36 char name limit
   const displayName=armourType.length>36?armourType.slice(0,34)+'…':armourType;
 
-  return`<div class="listing-card" onclick="openOffer('${esc(l.id)}')" style="${isSold?'opacity:.55;pointer-events:none':''}">
+  return`<div class="listing-card" onclick="openListingPanel('${esc(l.id)}')" style="${isSold?'opacity:.55;pointer-events:none':''}">
   <div class="card-stripe" style="${stripeGrad}"></div>
   <div class="card-body">
     <div class="card-top">
@@ -1451,7 +1889,7 @@ function card(l){
     ${pieceCanvases?`<div class="card-pieces-row">${pieceCanvases}</div>`:''}
   </div>
   <div class="seller-strip">
-    <img class="seller-avatar" src="https://mc-heads.net/avatar/${esc(l.uuid||'steve')}/22" alt="${esc(l.ign)}">
+    <img class="seller-avatar" src="https://mc-heads.net/avatar/${esc(l.uuid||'steve')}/32" alt="${esc(l.ign)}" style="border-radius:5px">
     <span class="seller-name">${esc(l.ign)}</span>
     ${l.proof?'<span class="proof-badge">✓ Proof</span>':''}
     <span class="seller-time" data-ts="${l.ts||Date.now()}">${ago(l.ts||Date.now())}</span>
@@ -1461,17 +1899,23 @@ function card(l){
       <div class="price-amount">${fmtC(l.price)}</div>
       <div class="price-label">Asking</div>
     </div>
-    <div class="card-actions">${ownerBtns}${!isMine?`<button class="card-btn offer" onclick="event.stopPropagation();openOffer('${esc(l.id)}')">Offer</button>`:''}</div>
+    <div class="card-actions">${ownerBtns}${!isMine?`<button class="card-btn offer" onclick="event.stopPropagation();openListingPanel('${esc(l.id)}')">View</button>`:''}</div>
   </div>
 </div>`;
 }
 
-// Render canvases after DOM update
+// Render canvases after DOM update — batched via rAF to avoid blocking UI
 function renderCardCanvases(){
-  document.querySelectorAll('.card-piece-canvas').forEach(canvas=>{
-    const piece=canvas.dataset.piece;
-    const hex=canvas.dataset.hex;
-    if(piece&&hex)drawLeatherPreview(canvas,piece,hex);
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('.card-piece-canvas[data-piece][data-hex]').forEach(canvas=>{
+      const piece=canvas.dataset.piece;
+      const hex=canvas.dataset.hex;
+      const armourType=canvas.dataset.armourtype||'';
+      if(piece&&hex&&!canvas.dataset.rendered){
+        canvas.dataset.rendered='1';
+        drawLeatherPreview(canvas,piece,hex,armourType);
+      }
+    });
   });
 }
 
@@ -1562,6 +2006,158 @@ function resetPostForm(){
 /* ════════════════════════════════════════════════════════════════════
    OFFER MODAL
 ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════
+   LISTING DETAIL PANEL
+════════════════════════════════════════════════════════════════════ */
+let activePanelListing = null;
+
+window.openListingPanel = function(id){
+  const l = allListings.find(x=>x.id===id);
+  if(!l) return;
+  activePanelListing = l;
+  activeListingId = id;
+  activeListingData = l;
+
+  document.getElementById('listingOverlay').classList.add('open');
+  document.getElementById('listingPanel').classList.add('open');
+
+  const isMine = currentUser && currentUser.uuid === l.uuid;
+  const isSold = l.status === 'sold';
+  const pieces = l.pieces || [];
+  const armourType = l.armour_type || '';
+
+  // Left column — large armour piece canvases
+  const LP_SIZES = {Helmet:{w:130,h:98},Chestplate:{w:124,h:104},Leggings:{w:94,h:134},Boots:{w:136,h:82}};
+  const lpPiecesHtml = pieces.map((p,i)=>{
+    const sz = LP_SIZES[p.piece]||{w:120,h:120};
+    const cls = classifyHex(p.hex, armourType, p.piece);
+    const col = cls?cls.colour:'#888';
+    return`<div class="lp-piece-wrap">
+      <canvas id="lpp-${i}" data-piece="${esc(p.piece)}" data-hex="${esc(p.hex)}"
+        width="${sz.w*2}" height="${sz.h*2}"
+        style="width:${sz.w}px;height:${sz.h}px;image-rendering:pixelated"></canvas>
+      <span class="lp-piece-name">${esc(p.piece)}</span>
+      <span class="lp-piece-tag" style="color:${col};border-color:${col}55;background:${col}15">${cls?cls.label:'—'}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('lpPieces').innerHTML = lpPiecesHtml||'<div style="color:var(--text3);font-size:12px">No pieces</div>';
+  // Draw canvases
+  requestAnimationFrame(()=>{
+    pieces.forEach((p,i)=>{
+      const c = document.getElementById(`lpp-${i}`);
+      if(c) drawLeatherPreview(c, p.piece, p.hex, armourType);
+    });
+  });
+
+  // Right column — listing info
+  const catColours={exotic:'#ff6b35',crystal:'#44ffee',fairy:'#ff66b2',bleached:'#c8906a',pure:'#999',default:'#888'};
+  const catCol = catColours[l.cat]||catColours.exotic;
+  const pieceColours = pieces.map(p=>{const c=classifyHex(p.hex,armourType,p.piece);return c?c.colour:'#888';});
+  const stripeGrad = pieceColours.length>1
+    ?`linear-gradient(90deg,${pieceColours.map((c,i)=>`${c} ${Math.round(i/pieceColours.length*100)}%,${c} ${Math.round((i+1)/pieceColours.length*100)}%`).join(',')})`
+    :(pieceColours[0]||'var(--border)');
+
+  const ownerActions = isMine&&!isSold ? `
+    <button class="lp-btn ghost" onclick="markDone('${esc(l.id)}');closeListingPanel()">Mark Sold</button>
+    <button class="lp-btn report" onclick="delListing('${esc(l.id)}');closeListingPanel()">Delete</button>` : '';
+  const buyerActions = !isMine&&!isSold ? `
+    <button class="lp-btn primary" onclick="openOfferFromPanel()">Make an Offer</button>` : '';
+  const reportBtn = !isMine ? `
+    <button class="lp-btn report" onclick="openReport('listing','${esc(l.id)}','${esc(l.ign)}')">Report</button>` : '';
+
+  document.getElementById('lpInfo').innerHTML = `
+    <div class="lp-head">
+      <div style="flex:1;min-width:0">
+        <div style="height:4px;border-radius:2px;margin-bottom:12px;background:${stripeGrad}"></div>
+        <div class="lp-title">${esc(l.armour_type||'')}</div>
+        ${l.set_name?`<div class="lp-setname">${esc(l.set_name)}</div>`:''}
+        <div style="margin-top:6px">
+          <span style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid ${catCol}44;color:${catCol};background:${catCol}15;font-weight:600">${esc(l.cat_label||l.cat||'Exotic')}</span>
+        </div>
+      </div>
+      <button class="icon-btn" onclick="closeListingPanel()" style="width:32px;height:32px;padding:0;font-size:14px;flex-shrink:0">✕</button>
+    </div>
+    <div class="lp-body">
+      <div>
+        <div class="lp-price">${fmtC(l.price)}</div>
+        <div class="lp-price-lbl">Asking Price</div>
+      </div>
+      <div class="lp-seller-row">
+        <img src="https://mc-heads.net/avatar/${esc(l.uuid||'steve')}/40" style="width:40px;height:40px;border-radius:8px;image-rendering:pixelated;border:1px solid var(--border)" alt="${esc(l.ign)}">
+        <div>
+          <div style="font-weight:600;font-size:14px;color:var(--text)">${esc(l.ign)}</div>
+          <div style="font-size:11px;color:var(--text3)">${ago(l.ts||Date.now())}</div>
+        </div>
+        ${l.proof?`<span class="proof-badge" style="margin-left:auto">✓ Proof</span>`:''}
+      </div>
+      <div class="lp-actions">
+        ${buyerActions}${ownerActions}${reportBtn}
+      </div>
+      ${l.notes?`<div class="lp-section"><div class="lp-section-title">Notes</div><div style="font-size:13px;color:var(--text2);line-height:1.6">${esc(l.notes)}</div></div>`:''}
+      ${l.proof?`<div class="lp-section"><div class="lp-section-title">Proof Screenshot</div><a href="${esc(l.proof)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--sunset1);display:inline-flex;align-items:center;gap:4px">View screenshot ↗</a></div>`:''}
+      ${isSold?`<div style="text-align:center;padding:16px;background:rgba(78,203,113,.08);border:1px solid rgba(78,203,113,.2);border-radius:10px;color:var(--green);font-weight:600;font-size:13px">✓ This listing has been sold</div>`:''}
+    </div>`;
+};
+
+window.closeListingPanel = function(){
+  document.getElementById('listingOverlay').classList.remove('open');
+  document.getElementById('listingPanel').classList.remove('open');
+};
+
+window.openOfferFromPanel = function(){
+  closeListingPanel();
+  openOffer(activeListingId);
+};
+
+/* ════════════════════════════════════════════════════════════════════
+   REPORT SYSTEM
+════════════════════════════════════════════════════════════════════ */
+let reportContext = {type:null, targetId:null, targetIgn:null};
+let selectedReportReason = null;
+
+window.openReport = function(type, targetId, targetIgn){
+  reportContext = {type, targetId, targetIgn};
+  selectedReportReason = null;
+  document.getElementById('reportNotes').value = '';
+  document.querySelectorAll('.report-reason-btn').forEach(b=>b.classList.remove('selected'));
+  openModal('reportModal');
+};
+
+window.selectReportReason = function(el, reason){
+  selectedReportReason = reason;
+  document.querySelectorAll('.report-reason-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+};
+
+window.submitReport = async function(){
+  if(!selectedReportReason){toast('Please select a reason.');return;}
+  const notes = document.getElementById('reportNotes').value.trim();
+  const btn = document.getElementById('reportSubmitBtn');
+  btn.disabled=true; btn.textContent='Submitting…';
+  try{
+    const res = await fetch(`${API}/reports`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json',...(getToken()?{Authorization:`Bearer ${getToken()}`}:{})},
+      body: JSON.stringify({
+        type: reportContext.type,
+        targetId: reportContext.targetId,
+        targetIgn: reportContext.targetIgn,
+        reason: selectedReportReason,
+        notes: notes||'',
+        reporterIgn: currentUser?.username||'anonymous',
+        reporterUuid: currentUser?.uuid||null,
+      }),
+    });
+    if(res.ok){
+      closeModal('reportModal');
+      toast('Report submitted. Thank you.');
+    } else {
+      toast('Failed to submit report.');
+    }
+  }catch(e){ toast('Failed to submit report.'); }
+  finally{ btn.disabled=false; btn.textContent='Submit Report'; }
+};
+
 let activeListingId=null;
 let activeListingData=null;
 
@@ -1611,24 +2207,28 @@ window.submitOffer=async function(){
 /* ════════════════════════════════════════════════════════════════════
    OWNER ACTIONS
 ════════════════════════════════════════════════════════════════════ */
-window.archiveChat=async function(chatId){
-  if(!confirm('Archive this conversation? You can view archived chats later.'))return;
+window.closeChat=async function(chatId){
   const token=getToken();
   try{
     await fetch(`${API}/chats/${chatId}/archive`,{method:'PUT',headers:{Authorization:`Bearer ${token}`}});
     activeChatId=null;
     document.getElementById('chatMain').innerHTML='<div class="chat-no-select"><div style="font-size:36px;opacity:.4">💬</div><div>Select a conversation</div></div>';
     loadChatList();
-    toast('Chat archived.');
-  }catch(e){toast('Could not archive chat.');}
+    toast('Chat closed.');
+  }catch(e){toast('Could not close chat.');}
 };
 
-window.markChatSold=async function(listingId){
-  if(!confirm('Mark the listing as sold? This cannot be undone.'))return;
+window.markChatSold=async function(listingId, chatId){
+  if(!confirm('Mark the listing as sold? This will also close this chat.'))return;
   const token=getToken();
   try{
-    await fetch(`${API}/listings/${listingId}/sold`,{method:'PUT',headers:{Authorization:`Bearer ${token}`}});
-    loadListings();loadStats();
+    await Promise.all([
+      fetch(`${API}/listings/${listingId}/sold`,{method:'PUT',headers:{Authorization:`Bearer ${token}`}}),
+      fetch(`${API}/chats/${chatId}/archive`,{method:'PUT',headers:{Authorization:`Bearer ${token}`}}),
+    ]);
+    activeChatId=null;
+    document.getElementById('chatMain').innerHTML='<div class="chat-no-select"><div style="font-size:36px;opacity:.4">✓</div><div>Listing marked as sold!</div></div>';
+    loadListings();loadStats();loadChatList();
     toast('Listing marked as sold!');
   }catch(e){toast('Could not mark as sold.');}
 };
@@ -1727,11 +2327,25 @@ const THEMES=[
 ];
 let currentTheme='light',themeMode='light';
 function buildThemeGrid(){
-  const filtered=THEMES.filter(t=>t.light===(themeMode==='light')&&!t.presetBg);
-  const preset=THEMES.filter(t=>t.presetBg);
-  const sw=t=>`<div class="tswatch${t.id===currentTheme?' active':''}" onclick="_st('${t.id}')" title="${t.name}"><div class="tswatch-inner" style="background:${t.bg}"><div class="tswatch-bar" style="background:${t.a1};width:80%"></div><div class="tswatch-bar" style="background:${t.a2};width:50%"></div><div style="display:flex;gap:3px;margin-top:2px"><div style="width:10px;height:10px;border-radius:3px;background:${t.bg2}"></div><div style="width:10px;height:10px;border-radius:3px;background:${t.bg2}"></div></div></div><div class="tswatch-name" style="background:${t.bg};color:${t.a1}">${t.name}</div></div>`;
+  const filtered=THEMES.filter(t=>t.light===(themeMode==='light')&&!t.presetBg&&!t._custom);
+  const preset=THEMES.filter(t=>t.presetBg&&!t._custom);
+  const custom=customThemes; // always show custom regardless of light/dark mode
+  const sw=t=>`<div class="tswatch${t.id===currentTheme?' active':''}" onclick="_st('${t.id}')" title="${esc(t.name)}"><div class="tswatch-inner" style="background:${t.bg}"><div class="tswatch-bar" style="background:${t.a1};width:80%"></div><div class="tswatch-bar" style="background:${t.a2};width:50%"></div><div style="display:flex;gap:3px;margin-top:2px"><div style="width:10px;height:10px;border-radius:3px;background:${t.bg2||t.bg}"></div><div style="width:10px;height:10px;border-radius:3px;background:${t.bg2||t.bg}"></div></div></div><div class="tswatch-name" style="background:${t.bg};color:${t.a1}">${esc(t.name)}</div></div>`;
   document.getElementById('themeGrid').innerHTML=filtered.map(sw).join('');
   document.getElementById('themeGridPreset').innerHTML=preset.map(sw).join('');
+  // Custom themes section
+  let customGrid=document.getElementById('themeGridCustom');
+  if(!customGrid){
+    customGrid=document.createElement('div');
+    customGrid.id='themeGridCustom';
+    customGrid.className='theme-grid';
+    customGrid.style.marginTop='8px';
+    const presetEl=document.getElementById('themeGridPreset');
+    if(presetEl) presetEl.after(customGrid);
+  }
+  customGrid.innerHTML=custom.length?custom.map(sw).join(''):'';
+  const lbl=document.getElementById('customThemesGridLabel');
+  if(lbl) lbl.style.display=custom.length?'block':'none';
 }
 window._st=function(id){
   currentTheme=id;const t=THEMES.find(x=>x.id===id)||{};const isLight=!!t.light;
@@ -1760,7 +2374,12 @@ function applyBg(){
 function clearBgEl(){document.getElementById('customBgLayer').style.backgroundImage='';document.body.classList.remove('custom-bg');}
 window.applyCustomBg=applyBg;
 window.clearCustomBg=function(){document.getElementById('setBgUrl').value='';applyBg();};
-function saveTh(){try{localStorage.setItem('vaultHub',JSON.stringify({theme:currentTheme,themeMode,bgUrl:document.getElementById('setBgUrl').value,bgBlur:document.getElementById('setBgBlur').value,bgBright:document.getElementById('setBgBright').value}));}catch(e){}}
+function saveTh(){
+  try{localStorage.setItem('vaultHub',JSON.stringify({theme:currentTheme,themeMode,bgUrl:document.getElementById('setBgUrl').value,bgBlur:document.getElementById('setBgBlur').value,bgBright:document.getElementById('setBgBright').value}));}catch(e){}
+  // Sync to server if logged in (debounced)
+  clearTimeout(saveTh._t);
+  saveTh._t=setTimeout(syncPreferencesToServer, 2000);
+}
 function loadTh(){
   try{
     const s=JSON.parse(localStorage.getItem('vaultHub')||'{}');
@@ -1769,7 +2388,201 @@ function loadTh(){
     if(s.bgUrl){document.getElementById('setBgUrl').value=s.bgUrl;document.getElementById('setBgBlur').value=s.bgBlur||8;document.getElementById('setBgBright').value=s.bgBright||35;applyBg();}
   }catch(e){}
 }
-window.resetAll=function(){localStorage.removeItem('vaultHub');location.reload();};
+window.resetAll=function(){localStorage.removeItem('vaultHub');localStorage.removeItem('vaultCustomThemes');location.reload();};
+
+/* ════════════════════════════════════════════════════════════════════
+   CUSTOM THEME SYSTEM
+════════════════════════════════════════════════════════════════════ */
+let customThemes = [];
+let editingThemeId = null;
+
+function loadCustomThemes(){
+  try{ customThemes=JSON.parse(localStorage.getItem('vaultCustomThemes')||'[]'); }catch(e){ customThemes=[]; }
+  renderCustomThemesList();
+  // Inject any custom theme CSS
+  customThemes.forEach(t=>injectCustomThemeCSS(t));
+}
+
+function saveCustomThemesToStorage(){
+  try{ localStorage.setItem('vaultCustomThemes', JSON.stringify(customThemes)); }catch(e){}
+  // Sync to account if logged in
+  if(currentUser) syncPreferencesToServer();
+}
+
+function injectCustomThemeCSS(t){
+  // Remove existing
+  const old=document.getElementById(`ct-style-${t.id}`);
+  if(old) old.remove();
+  const isLight=luminance(t.bg)>0.4;
+  const style=document.createElement('style');
+  style.id=`ct-style-${t.id}`;
+  const textDim=blendHex(t.text,'#888',0.55);
+  const textDimmer=blendHex(t.text,'#888',0.3);
+  const border=blendHex(t.bg,t.text,0.15);
+  const bg3=blendHex(t.bg,t.text,0.07);
+  style.textContent=`:root[data-theme="${t.id}"]{--bg:${t.bg};--bg2:${t.bg2};--bg3:${bg3};--border:${border};--text:${t.text};--text2:${textDim};--text3:${textDimmer};--green:#4ecb71;--red:#e85555;--gold:#f0c060;--sunset1:${t.a1};--sunset2:${t.a2};--sunset3:${t.a1};--card-shadow:0 4px 32px rgba(0,0,0,.4)}`;
+  document.head.appendChild(style);
+}
+
+// Simple luminance check
+function luminance(hex){
+  const h=hex.replace('#','');
+  const r=parseInt(h.slice(0,2),16)/255;
+  const g=parseInt(h.slice(2,4),16)/255;
+  const b=parseInt(h.slice(4,6),16)/255;
+  return 0.299*r+0.587*g+0.114*b;
+}
+// Blend two hex colours by ratio
+function blendHex(h1,h2,r){
+  const parse=h=>({r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)});
+  const a=parse(h1),b=parse(h2);
+  const blend=(x,y)=>Math.round(x*(1-r)+y*r);
+  const c=[blend(a.r,b.r),blend(a.g,b.g),blend(a.b,b.b)];
+  return'#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+function renderCustomThemesList(){
+  const el=document.getElementById('customThemesList');
+  if(!el) return;
+  if(!customThemes.length){ el.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px">No custom themes yet</div>'; return; }
+  el.innerHTML=customThemes.map(t=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">
+      <div style="width:24px;height:24px;border-radius:6px;background:${t.bg};border:2px solid ${t.a1};flex-shrink:0"></div>
+      <div style="flex:1;font-size:12px;font-weight:600;color:var(--text)">${esc(t.name)}</div>
+      <button onclick="_st('${t.id}')" style="padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:11px;cursor:pointer">Apply</button>
+      <button onclick="editCustomTheme('${t.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:11px;cursor:pointer">Edit</button>
+      <button onclick="deleteCustomTheme('${t.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid rgba(232,85,85,.3);background:rgba(232,85,85,.08);color:var(--red);font-size:11px;cursor:pointer">✕</button>
+    </div>`).join('');
+}
+
+window.openCustomThemeBuilder=function(){
+  editingThemeId=null;
+  document.getElementById('themeBuilderTitle').textContent='Create Custom Theme';
+  document.getElementById('ctName').value='';
+  document.getElementById('ctBg').value='#0a0c10';
+  document.getElementById('ctBg2').value='#111318';
+  document.getElementById('ctA1').value='#ff6b35';
+  document.getElementById('ctA2').value='#f7931e';
+  document.getElementById('ctText').value='#e8eaf0';
+  updateThemePreview();
+  openModal('themeBuilderModal');
+  ['ctBg','ctBg2','ctA1','ctA2','ctText'].forEach(id=>document.getElementById(id).addEventListener('input',updateThemePreview));
+};
+
+window.editCustomTheme=function(id){
+  const t=customThemes.find(x=>x.id===id);
+  if(!t) return;
+  editingThemeId=id;
+  document.getElementById('themeBuilderTitle').textContent='Edit Theme';
+  document.getElementById('ctName').value=t.name;
+  document.getElementById('ctBg').value=t.bg;
+  document.getElementById('ctBg2').value=t.bg2;
+  document.getElementById('ctA1').value=t.a1;
+  document.getElementById('ctA2').value=t.a2;
+  document.getElementById('ctText').value=t.text||'#e8eaf0';
+  updateThemePreview();
+  openModal('themeBuilderModal');
+};
+
+function updateThemePreview(){
+  const bg=document.getElementById('ctBg').value;
+  const bg2=document.getElementById('ctBg2').value;
+  const a1=document.getElementById('ctA1').value;
+  const a2=document.getElementById('ctA2').value;
+  const text=document.getElementById('ctText').value;
+  const prev=document.getElementById('ctPreview');
+  if(prev){
+    prev.style.background=bg2;
+    prev.style.borderColor=blendHex(bg,text,0.15);
+    document.getElementById('ctPrevTitle').style.background=`linear-gradient(120deg,${a1},${a2})`;
+    document.getElementById('ctPrevTitle').style.webkitBackgroundClip='text';
+    document.getElementById('ctPrevTitle').style.webkitTextFillColor='transparent';
+    document.getElementById('ctPrevSub').style.color=blendHex(text,'#888',0.45);
+    document.getElementById('ctPrevBtn').style.background=`linear-gradient(120deg,${a1},${a2})`;
+    document.getElementById('ctPrevOutline').style.color=a1;
+    document.getElementById('ctPrevOutline').style.borderColor=a1+'66';
+  }
+}
+
+window.saveCustomTheme=function(){
+  const name=document.getElementById('ctName').value.trim();
+  if(!name){toast('Please enter a theme name.');return;}
+  const t={
+    id: editingThemeId||(Date.now().toString(36)),
+    name, light:false,
+    bg:document.getElementById('ctBg').value,
+    bg2:document.getElementById('ctBg2').value,
+    a1:document.getElementById('ctA1').value,
+    a2:document.getElementById('ctA2').value,
+    text:document.getElementById('ctText').value,
+  };
+  if(editingThemeId){ const idx=customThemes.findIndex(x=>x.id===editingThemeId); if(idx>=0)customThemes[idx]=t; }
+  else { customThemes.push(t); }
+  injectCustomThemeCSS(t);
+  saveCustomThemesToStorage();
+  renderCustomThemesList();
+  // Add to THEMES array so _st works
+  const existing=THEMES.findIndex(x=>x.id===t.id);
+  if(existing>=0)THEMES[existing]=t; else THEMES.push(t);
+  closeModal('themeBuilderModal');
+  _st(t.id);
+  toast(`Theme "${name}" saved!`);
+};
+
+window.deleteCustomTheme=function(id){
+  if(!confirm('Delete this custom theme?'))return;
+  customThemes=customThemes.filter(t=>t.id!==id);
+  saveCustomThemesToStorage();
+  renderCustomThemesList();
+  const styleEl=document.getElementById(`ct-style-${id}`);
+  if(styleEl) styleEl.remove();
+  const idx=THEMES.findIndex(t=>t.id===id);
+  if(idx>=0) THEMES.splice(idx,1);
+  // If currently using deleted theme, switch to default
+  if(currentTheme===id) _st(themeMode==='light'?'light':'dark');
+  toast('Theme deleted.');
+};
+
+// Sync preferences to server (saves theme + custom themes to user account)
+async function syncPreferencesToServer(){
+  if(!currentUser) return;
+  const prefs={
+    theme: currentTheme,
+    themeMode,
+    bgUrl: document.getElementById('setBgUrl')?.value||'',
+    bgBlur: document.getElementById('setBgBlur')?.value||'8',
+    bgBright: document.getElementById('setBgBright')?.value||'35',
+    timezone: userTimezone,
+    customThemes,
+  };
+  try{
+    await fetch(`${API}/users/preferences`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},
+      body:JSON.stringify(prefs),
+    });
+  }catch(e){}
+}
+
+async function loadPreferencesFromServer(){
+  if(!currentUser) return;
+  try{
+    const res=await fetch(`${API}/users/preferences`,{headers:{Authorization:`Bearer ${getToken()}`}});
+    if(!res.ok) return;
+    const {prefs}=await res.json();
+    if(!prefs) return;
+    if(prefs.customThemes?.length){
+      customThemes=prefs.customThemes;
+      localStorage.setItem('vaultCustomThemes',JSON.stringify(customThemes));
+      customThemes.forEach(t=>injectCustomThemeCSS(t));
+      customThemes.forEach(t=>{ const ex=THEMES.findIndex(x=>x.id===t.id); if(ex>=0)THEMES[ex]=t; else THEMES.push(t); });
+      renderCustomThemesList();
+    }
+    if(prefs.theme){ _st(prefs.theme); }
+    if(prefs.timezone){ userTimezone=prefs.timezone; loadTzSetting(); }
+    if(prefs.bgUrl){ document.getElementById('setBgUrl').value=prefs.bgUrl; document.getElementById('setBgBlur').value=prefs.bgBlur||'8'; document.getElementById('setBgBright').value=prefs.bgBright||'35'; applyBg(); }
+  }catch(e){}
+}
 window.openSettings=function(){document.getElementById('settingsOverlay').classList.add('open');};
 window.closeSettings=function(){document.getElementById('settingsOverlay').classList.remove('open');};
 document.getElementById('settingsBtn').addEventListener('click',window.openSettings);
@@ -1792,14 +2605,19 @@ window.closeChatPanel = function(){
   document.getElementById('chatPanel').classList.remove('open');
 };
 
+let archivedChats = [];
+
 async function loadChatList(){
   if(!currentUser) return;
   try{
-    const res = await fetch(`${API}/chats`, {
-      headers: {Authorization: `Bearer ${getToken()}`}
-    });
-    const data = await res.json();
-    chatList = data.chats || [];
+    const [activeRes, archRes] = await Promise.all([
+      fetch(`${API}/chats`, {headers: {Authorization: `Bearer ${getToken()}`}}),
+      fetch(`${API}/chats?archived=1`, {headers: {Authorization: `Bearer ${getToken()}`}}),
+    ]);
+    const activeData = await activeRes.json();
+    const archData = await archRes.json();
+    chatList = activeData.chats || [];
+    archivedChats = archData.chats || [];
     renderChatList();
     updateChatBadge();
   }catch(e){}
@@ -1810,26 +2628,54 @@ function renderChatList(){
   const q = (document.getElementById('chatSearch')?.value||'').toLowerCase();
   const sort = document.getElementById('chatSort')?.value||'recent';
 
-  let list = chatList.filter(c=>{
-    if(!q) return true;
-    const isSeller = c.seller_uuid===currentUser?.uuid;
-    const other = isSeller?c.buyer_ign:(c.seller_ign||'');
-    return other.toLowerCase().includes(q)||(c.armour_type||'').toLowerCase().includes(q);
-  });
+  function filterChats(list){
+    if(!q) return list;
+    return list.filter(c=>{
+      const isSeller = c.seller_uuid===currentUser?.uuid;
+      const other = isSeller?c.buyer_ign:(c.seller_ign||'');
+      return other.toLowerCase().includes(q)
+        ||(c.armour_type||'').toLowerCase().includes(q)
+        ||(c.cat_label||'').toLowerCase().includes(q);
+    });
+  }
 
-  if(!list.length){
+  function chatItem(c, isArchived=false){
+    const isSeller = c.seller_uuid===currentUser?.uuid;
+    const otherName = isSeller?c.buyer_ign:(c.seller_ign||'Seller');
+    const preview = c.last_message
+      ?(c.last_message.startsWith('__offer__')?'Offer pinned':c.last_message)
+      :'Offer: '+fmtC(c.offer_amount);
+    const catTags = (c.cat_label||'').split(' + ').filter(Boolean).map(t=>{
+      const cat=t.toLowerCase().replace(' dyed','').replace('pure ','pure-').trim();
+      const colours={exotic:'#ff6b35',crystal:'#44ffee',fairy:'#ff66b2',bleached:'#c8906a',pure:'#999',default:'#888'};
+      const col=colours[cat]||colours.exotic;
+      return`<span style="font-size:9px;padding:1px 5px;border-radius:3px;border:1px solid ${col}44;color:${col};font-weight:600;background:${col}15">${t}</span>`;
+    }).join('');
+    return`<div class="chat-list-item${activeChatId===c.id?' active':''}${isArchived?' archived-item':''}" onclick="openChat('${c.id}')" style="${isArchived?'opacity:.65':''}">
+      <div class="chat-list-name">${esc(otherName)}</div>
+      <div class="chat-list-preview">${esc(c.armour_type||'')} · ${esc(preview)}</div>
+      ${catTags?`<div style="display:flex;align-items:center;gap:4px;margin-top:3px;flex-wrap:wrap">${catTags}</div>`:''}
+      <div class="chat-list-time">${isArchived?'<span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Closed · </span>':''}${ago(c.last_ts||c.created_at)}</div>
+    </div>`;
+  }
+
+  const activeFiltered = filterChats(chatList);
+  const archivedFiltered = filterChats(archivedChats);
+
+  if(!activeFiltered.length && !archivedFiltered.length){
     el.innerHTML='<div class="chat-empty-list">No conversations yet.<br>Make an offer to start chatting.</div>';
     return;
   }
 
+  let html = '';
+
   if(sort==='listing'){
-    // Group by listing
     const byListing = new Map();
-    list.forEach(c=>{
+    activeFiltered.forEach(c=>{
       if(!byListing.has(c.listing_id)) byListing.set(c.listing_id,{title:c.armour_type||'Item',chats:[]});
       byListing.get(c.listing_id).chats.push(c);
     });
-    el.innerHTML = [...byListing.entries()].map(([lid,{title,chats}])=>{
+    html = [...byListing.entries()].map(([lid,{title,chats}])=>{
       const latest = chats.reduce((a,b)=>(b.last_ts||b.created_at)>(a.last_ts||a.created_at)?b:a);
       return`<div class="chat-list-item" onclick="openListingChats('${lid}','${esc(title)}')">
         <div class="chat-list-name">${esc(title.length>26?title.slice(0,24)+'…':title)}</div>
@@ -1838,21 +2684,17 @@ function renderChatList(){
       </div>`;
     }).join('');
   } else {
-    // Most recent first — flat list
-    list.sort((a,b)=>(b.last_ts||b.created_at)-(a.last_ts||a.created_at));
-    el.innerHTML = list.map(c=>{
-      const isSeller = c.seller_uuid===currentUser?.uuid;
-      const otherName = isSeller?c.buyer_ign:(c.seller_ign||'Seller');
-      const preview = c.last_message
-        ?(c.last_message.startsWith('__offer__')?'Offer pinned':c.last_message)
-        :'Offer: '+fmtC(c.offer_amount);
-      return`<div class="chat-list-item${activeChatId===c.id?' active':''}" onclick="openChat('${c.id}')">
-        <div class="chat-list-name">${esc(otherName)}</div>
-        <div class="chat-list-preview">${esc(c.armour_type||'')} · ${esc(preview)}</div>
-        <div class="chat-list-time">${ago(c.last_ts||c.created_at)}</div>
-      </div>`;
-    }).join('');
+    const sorted = [...activeFiltered].sort((a,b)=>(b.last_ts||b.created_at)-(a.last_ts||a.created_at));
+    html = sorted.map(c=>chatItem(c,false)).join('');
   }
+
+  // Archived section
+  if(archivedFiltered.length){
+    html += `<div style="padding:8px 16px;font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid var(--border);margin-top:4px">Closed Chats</div>`;
+    html += [...archivedFiltered].sort((a,b)=>(b.last_ts||b.created_at)-(a.last_ts||a.created_at)).map(c=>chatItem(c,true)).join('');
+  }
+
+  el.innerHTML = html;
 }
 
 window.openListingChats = function(listingId, title){
@@ -1890,6 +2732,7 @@ function updateChatBadge(){
 
 window.openChat = async function(chatId){
   activeChatId = chatId;
+  lastMessageTs = 0; // reset so poll picks up all messages on next tick
   renderChatList();
   // Refresh listing chats panel active state if open
   const lp = document.getElementById('listingChatsPanel');
@@ -1904,7 +2747,10 @@ window.openChat = async function(chatId){
       headers: {Authorization: `Bearer ${getToken()}`}
     });
     const data = await res.json();
-    renderChatView(data.chat, data.messages || []);
+    const msgs = data.messages || [];
+    renderChatView(data.chat, msgs);
+    // Track latest message timestamp for incremental polling
+    if(msgs.length) lastMessageTs = Math.max(...msgs.map(m=>m.ts||0));
   }catch(e){
     main.innerHTML='<div class="chat-no-select">Failed to load chat.</div>';
   }
@@ -1915,12 +2761,24 @@ function renderChatView(chat, messages){
   const isSeller = chat.seller_uuid === currentUser?.uuid;
   const otherName = isSeller ? chat.buyer_ign : (chat.seller_ign||'Seller');
   const offerMsg = chat.offer_message ? `<div class="offer-pin-msg">${esc(chat.offer_message)}</div>` : '';
-  const pieces = chat.pieces ? JSON.parse(chat.pieces) : [];
+  const pieces = chat.pieces ? (() => { try { return JSON.parse(chat.pieces); } catch(e) { return []; } })() : [];
+
+  // Build listing info bar pieces
+  const CHAT_PIECE_SIZES={Helmet:{w:44,h:33},Chestplate:{w:42,h:35},Leggings:{w:32,h:45},Boots:{w:46,h:27}};
+  const piecesHtml = pieces.map((p,i)=>{
+    const sz=CHAT_PIECE_SIZES[p.piece]||{w:36,h:36};
+    const cls=classifyHex(p.hex, chat.armour_type||'', p.piece);
+    const col=cls?cls.colour:'#888';
+    return`<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+      <canvas data-piece="${esc(p.piece)}" data-hex="${esc(p.hex)}" id="chatpc-${i}"
+        width="${sz.w*2}" height="${sz.h*2}" style="width:${sz.w}px;height:${sz.h}px;image-rendering:pixelated"></canvas>
+      <span style="font-size:8px;color:${col};font-weight:600;letter-spacing:.03em;border:1px solid ${col}44;background:${col}15;border-radius:3px;padding:0 4px">${cls?cls.label:'—'}</span>
+    </div>`;
+  }).join('');
 
   const msgsHtml = messages.map(m=>{
     const isMe = m.sender_uuid === currentUser?.uuid;
     const cls = isMe ? 'mine' : 'theirs';
-    // Check if it's the pinned offer message
     if(m.content && m.content.startsWith('__offer__')){
       const parts = m.content.split(':');
       const amt = parts[1]||'';
@@ -1928,11 +2786,11 @@ function renderChatView(chat, messages){
       return`<div class="msg-offer">Offer: ${fmtC(amt)} coins${msg?` — ${esc(msg)}`:''}
       <div style="font-size:10px;color:var(--text3);margin-top:2px">${ago(m.ts)}</div></div>`;
     }
-    const avatar = `https://mc-heads.net/avatar/${esc(m.sender_uuid||'steve')}/22`;
+    const avatar = `https://mc-heads.net/avatar/${esc(m.sender_uuid||'steve')}/32`;
     const imgHtml = m.image_url ? `<img class="msg-img" src="${esc(m.image_url)}" onclick="window.open('${esc(m.image_url)}','_blank')" alt="Image">` : '';
     const textHtml = m.content ? `<div>${esc(m.content)}</div>` : '';
     return`<div class="msg-row ${cls}">
-      <img class="msg-avatar" src="${avatar}" alt="${esc(m.sender_ign)}">
+      <img class="msg-avatar" src="${avatar}" alt="${esc(m.sender_ign)}" style="border-radius:6px">
       <div>
         <div class="msg-bubble ${cls}">${textHtml}${imgHtml}</div>
         <div class="msg-time">${ago(m.ts)}</div>
@@ -1956,13 +2814,19 @@ function renderChatView(chat, messages){
         <div style="font-size:10px;color:var(--text3);margin-top:1px" id="chatTzLabel"></div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
-        ${isSeller?`<button class="icon-btn" style="background:rgba(78,203,113,.1);border-color:rgba(78,203,113,.3);color:var(--green);font-size:12px;height:30px;padding:0 10px" onclick="markChatSold('${chat.listing_id}')" title="Mark listing as sold">Mark Sold</button>`:''}
-        <button class="icon-btn" style="background:rgba(232,85,85,.1);border-color:rgba(232,85,85,.3);color:var(--red);font-size:12px;height:30px;padding:0 10px" onclick="archiveChat('${chat.id}')" title="Archive chat">Archive</button>
+        ${isSeller?`<button class="icon-btn" style="background:rgba(78,203,113,.1);border-color:rgba(78,203,113,.3);color:var(--green);font-size:12px;height:30px;padding:0 10px" onclick="markChatSold('${chat.listing_id}','${chat.id}')">Mark Sold</button>`:''}
+        <button class="icon-btn" style="background:rgba(232,85,85,.1);border-color:rgba(232,85,85,.3);color:var(--red);font-size:12px;height:30px;padding:0 10px" onclick="closeChat('${chat.id}')">Close Chat</button>
+        <button class="icon-btn" style="background:rgba(232,85,85,.06);border-color:rgba(232,85,85,.2);color:var(--red);font-size:12px;height:30px;padding:0 10px" onclick="openReport('chat','${chat.id}','${esc(otherName)}')">Report</button>
         <button class="icon-btn" onclick="closeChatPanel()" style="width:30px;height:30px;padding:0;font-size:13px;flex-shrink:0">✕</button>
       </div>
     </div>
-    <div class="offer-pin">
-      <div class="offer-pin-label">📌 Pinned Offer</div>
+    ${pieces.length ? `
+    <div style="margin:10px 16px 0;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px">
+      <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">${esc(chat.armour_type||'')}${chat.set_name?` — ${esc(chat.set_name)}`:''}</div>
+      <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap">${piecesHtml}</div>
+    </div>` : ''}
+    <div class="offer-pin" style="margin-top:10px">
+      <div class="offer-pin-label">Pinned Offer</div>
       <div class="offer-pin-amount">${fmtC(chat.offer_amount)} coins</div>
       ${offerMsg}
     </div>
@@ -1979,6 +2843,12 @@ function renderChatView(chat, messages){
   // Scroll to bottom
   const msgs = document.getElementById('chatMsgs');
   if(msgs) msgs.scrollTop = msgs.scrollHeight;
+
+  // Draw piece canvases in listing info bar
+  pieces.forEach((p,i)=>{
+    const canvas=document.getElementById(`chatpc-${i}`);
+    if(canvas) drawLeatherPreview(canvas, p.piece, p.hex, chat.armour_type||'');
+  });
 
   // Start live clock
   startChatClock();
@@ -2110,14 +2980,49 @@ window.submitOffer = async function(){
   finally{btn.disabled=false;btn.textContent='Send Offer';}
 };
 
+let lastMessageTs = 0;
+
 function pollChats(){
   if(chatPollingInterval) clearInterval(chatPollingInterval);
-  chatPollingInterval = setInterval(()=>{
-    loadChatList();
-    if(activeChatId) openChat(activeChatId);
-  }, 15_000);
+  chatPollingInterval = setInterval(async ()=>{
+    // Refresh chat list quietly
+    await loadChatList();
+    // If a chat is open, only fetch new messages since last known
+    if(activeChatId){
+      try{
+        const res = await fetch(`${API}/chats/${activeChatId}?since=${lastMessageTs}`, {
+          headers: {Authorization: `Bearer ${getToken()}`}
+        });
+        const data = await res.json();
+        const newMsgs = (data.messages||[]).filter(m=>m.ts > lastMessageTs);
+        if(newMsgs.length){
+          const container = document.getElementById('chatMsgs');
+          if(container){
+            newMsgs.forEach(m=>{
+              const isMe = m.sender_uuid === currentUser?.uuid;
+              const cls = isMe ? 'mine' : 'theirs';
+              if(m.content && m.content.startsWith('__offer__')) return;
+              const avatar = `https://mc-heads.net/avatar/${esc(m.sender_uuid||'steve')}/32`;
+              const imgHtml = m.image_url ? `<img class="msg-img" src="${esc(m.image_url)}" onclick="window.open('${esc(m.image_url)}','_blank')" alt="Image">` : '';
+              const textHtml = m.content ? `<div>${esc(m.content)}</div>` : '';
+              const el = document.createElement('div');
+              el.className=`msg-row ${cls}`;
+              el.innerHTML=`<img class="msg-avatar" src="${avatar}" style="border-radius:6px" alt="${esc(m.sender_ign)}"><div><div class="msg-bubble ${cls}">${textHtml}${imgHtml}</div><div class="msg-time">${ago(m.ts)}</div></div>`;
+              container.appendChild(el);
+            });
+            lastMessageTs = newMsgs[newMsgs.length-1].ts;
+            container.scrollTop = container.scrollHeight;
+          }
+        }
+      }catch(e){}
+    }
+  }, 8000); // 8s is fast enough without hammering
 }
-const gridObserver=new MutationObserver(()=>renderCardCanvases());
+const gridObserver=new MutationObserver(()=>{
+  // Clear rendered cache so new canvases get drawn
+  document.querySelectorAll('.card-piece-canvas[data-rendered]').forEach(c=>delete c.dataset.rendered);
+  renderCardCanvases();
+});
 gridObserver.observe(document.getElementById('listingsGrid'),{childList:true});
 gridObserver.observe(document.getElementById('completedGrid'),{childList:true});
 
@@ -2125,6 +3030,7 @@ buildThemeGrid();
 loadTh();
 buildThemeGrid();
 loadTzSetting();
+loadCustomThemes();
 loadStoredUser();
 handleCallback();   // handles MC-ID redirect if ?code= is in URL
 loadListings();

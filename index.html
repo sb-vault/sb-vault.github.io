@@ -162,7 +162,7 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 
 /* ── Card piece previews ──────────────────────────────────────────────── */
 .card-pieces-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 0 6px;width:100%}
-.card-piece-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 4px 8px;min-height:150px}
+.card-piece-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px 4px 7px;min-height:110px}
 .card-piece-canvas-wrap{flex:1;display:flex;align-items:flex-end;justify-content:center;width:100%}
 .card-piece-canvas{image-rendering:pixelated;display:block}
 .card-piece-name{font-size:9px;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;font-weight:600}
@@ -1135,10 +1135,10 @@ const MC_SKIN = 'https://textures.minecraft.net/texture/';
 
 // Embedded leather textures (Invicon versions – no network needed)
 const LEATHER_TEXTURES = {
-  'leather_helmet': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABJklEQVR4nOWSSUvDUBSFv7Tpi0lqOiQLsRZaEBEHFHSl/3+nBUERERFFKrVzGzO9tM+FLrRt3Itndw/3fnAOF/68tFXmXs1TOaBYtNE0jU63R9Vzubh7WtrPLRoHNVcd7u7gmHnOT485Ozmi5jk4pkG9JNSvgP1NV203G2x4FUhiXMci9ifM4pB1o0CzvkXDtX9A9O+DZVlUyw5qloKa8fhwT687QCYRtrmG5ZRod3pkAqSUpGlKEKQUCgY317fohmAyDukNB9jlKrFMsgEpGuQNWleXtF6GX4W9f2Ztd1SjWEFYNoyi1R2onCDN5dGEudgVc10QJjPiZJ5d4jQK6Y98gnTpHonONIgJpcyO8Pz6pgkh1GQ0WQL4UYIcDOiP/ZW/85/1AYE/bs1rgfqqAAAAAElFTkSuQmCC',
-  'leather_chestplate': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB6UlEQVR4nMWSy24TQRBFT/VMj8dj52nl5UAEbCKkSCAQ//8PIBZRgDgo2I7ycpzpcXumHyyQMRawYsHZlVR1q25Vwf9GAI6f9eNWoYmNxftIHYT3gyv5NfF5r4gHO9uU5ZQ072CccDoYSgqQJfD65CXeVuAdp5/Of+t0uL3Gm5Nj5s4zc4GPn78CoADEe5RvyMShY0N/q+Bdvx0XxW/3W/FJr0tHC4WGJDjmxgCQAnTyFtXjlPU8pTITnh3ust7p0k7Ook4Sjo6e0i1SHm5G1DHFxQStZClgG8doOET11im0JhNFb73N0cEO/b19QnQQAtOqwjaWxwZI0qWF0lQMLr4xHo/Z29nF1RaF0G5p0iTh7uaW6BvyrIUxhi/nF0wepssJzsYTAchG9/FVU5O12pTGcnM3IdMFWatN4yNeCYPLMR/uECiXAgscYOtAg6cOgs47zH2gleeIEkxpqOrV66wIxDSlrAMqOkJUhDSnISURDSLYoAiJAD8P9GMHC7wkGNswD4o6KuZRIMupmkDlAp6ENC9WJlgRKO2c6/sJ1kUa0VgvOJVhg+JxVnP7MMU6/3cLI4NsjK6iC0Kxtkk5q5HJlERgXpUMLoecT9zKi68EC15sZrHd3cDMLFprUiWExnJ6bf6Y/098B03k7N6s0/w+AAAAAElFTkSuQmCC',
-  'leather_leggings': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABeklEQVR4nM2RS2/TQBRGz/g1Y4dGilB5iA1bFkiAQBRaqf9/jZCQuqIImqS4jWN7bI/n0UWlECOlW7i7+0lz7rl34F+X+Ds4ffk8ONtjM4mLYuI4wfWazI7obuTLTTt5k+w3rx4fh0/v3hB5wyglvbUYY/DGkDvHqqyo9GW47PUOEu0DjvKMIhHgehhaXN8gI48SDpkEikQwk5OZU4MgPMYNjGNHOwSuymuUzHmkFIWSRKlAxDwAUCn10GKDZWt6ljdrrPW8ePqENFrQuQHzEKAxhq8XF+imZGvh2+r+yLX+Far5LV6k2Giy9fQGmco5OTvnw8kpUfKHffxswcfPZ7x++54gpoCJgXeC9apkW21wIQbsvVlrWf/e4HxMluaHAaY2LH+sqOtbusbs8nqj+fl9ifcRTdkcXqFQM9JEURRzitlil0s1J8+PkFmBTNVhA601dQvWO8a9/+pcYLABgiCO48OA3o5cVxWjM+yLah+4KktEiOit4/+qO5djuaXFTLxhAAAAAElFTkSuQmCC',
-  'leather_boots': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABcklEQVR4nNWSy24TQRBFT830jN22sB0HQmQTnChhESRAgBAb/v8DkBA7orxIQhyb2PPodE9PswDZMZgPSO3q1r1Hd1Hw4Ef+Fl7tbget21xeTzkZTwRgd+txGDzdJMtmfD66WMmolfCwGz6+PkTiBGO+cDL+rT/pd3j78gVlPscVs/D1Kpe1gF4zod9OsR7Eu2VN70iCI0hFWrv7kVWAN3Ns9pPCVjhTLnRbFhS3Y2pr8MauAKL7SxwJsXh85airpTEETyOOaeuElpb/A5SKcM6R5zlpmi70uq4REay11HVYD/h0OAzPR3tEqkmn28P5pTFpNMmMIU40+wf7vHnWWRwVwN7OILx7/4FuI+Li7JTJbYGoZQNPzDS749Fwg4PtHSp9zrX9Fr7/uBEFsNHvMZ1nmBKOL8ccnZ7jotYCMJnlhKokShtsisJUHt1qAn8eaTTYClQliQjOOY4n5T8PBjDq66CU4s57UJqzq5u1vgc2vwDyh521+sVqOAAAAABJRU5ErkJggg==',
+  'leather_helmet': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABKUlEQVR4nO2RoY7CYBCEv7+9UGoKDggVmFIScAgshgSLJ+mr8ABoPG+AbVKNxRBShWiobRsoggSyZyktD3DJjZvZyWR3Fv48VJXY7/dF0zR6vR66rrPf7xmPxwRBUOkvwHVd2Ww2Mp1OJQxDCcNQ5vO5eJ4nuq7Lp197J47jyHK5ZDKZkOc5rusSRRFpmtJqtVgsFliWJV8DbNtmOBzyeDx4Pp9st1t2ux1JktDpdJjNZtTr9cIGP+/ker1yv9+5XC40m03W6zWNRoPz+czhcGAwGJBl2feA1+uFaZqsViuOx2OhMN/3xbZt2u02URRVn2AYBkopLMv67ArDMMiyjNvt9r3EOI45nU7keV4KEBHiOCZN09KsgNFoJEqp0rtqtZp0u92S/g/4Bch+cZa3xkoHAAAAAElFTkSuQmCC',
+  'leather_chestplate': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACFUlEQVR4nMWSMUtqcRjGf+d04JQFGuVJdGpQhIimaMqhpUVagobyC/kpXKtJJzcHdTkIDg6SQYdSwwjTk0n99Xh4Gy5YXrp3ucN9thcefg/v+7zwv6UBpFIp2d7eZjQaMZlMUEpRKpW078ZoNCpHR0e0Wi0ikQivr6+Uy+VfnuPjY3l6epJGoyG1Wk0ymYz8nnR2dia9Xk9ubm7Etm05Pz8XAB3A8zym0ylLS0uICAcHB+zv788he3t7cnh4yPr6OqFQCN/3abfbABgAsViM29tbotEojuNwenpKIpEgm83K2toaFxcXxGIxKpUKvu8znU5ZXl7+AgyHQ/L5PKlUio2NDVZWVtjZ2eHk5IR0Oo1SitlsRrfbxXVdXl5eFgGO41CtVhmPx+RyORzHIRAIYFkWgUCAUqnE7u4ulmVRr9e5vr7G9/0vQLPZ1ACKxaI8Pz8TDoe5v7/Htm0sy8KyLD4+PgC4urri4eFh3pDx/dKz2YzhcDivMxKJ8Pb2RjgcxjRNWq0WrusutLMAME2Tfr+P7/uICKurq4gIuq6j6zpKKXRdXwAsTJqm0ev1mEwmeJ6HUopgMMhgMJgnb21t/Rnw+PiIbduMRiM0TeP9/R3DMFBK0el0qNfrf18B0AqFgnieRzKZpNvtUqvVMAyDdrvN5eUlg8Fg4cU1ftDm5qbE43E6nQ6hUAjTNHFdl7u7ux/9/6RPsZYF1xfqbu4AAAAASUVORK5CYII=',
+  'leather_leggings': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABpElEQVR4nMWRvarqQBSFlzFqJghBCP6QiKhorS+heTCfx8paU2lhkSqIIKjBJIrkV2MhZuZW13tyz7E+u5vFno+11wJ+e3L/C6PRiEVRBEIIOI6DKIq4Xq9I0xTn8xmn0yn3EdDtdtl8Psfz+QQhBGEYwvd9xHGMfD6P1WqFyWQCSun7H/cVoKoqJElCkiTwfR+XywWlUgnFYhGiKEKSJFSr1Yxj/uuDUoowDOF5HuI4xmKxQL1eh6qqaLfbEAQBPM9/BpTLZRyPR0RRBMuyoOs6Ho8HNE1DoVCA53lI0/RziMPhkCmKgs1mA9/3EQRBDgAIIWwwGIDneex2O7iu+y18AICmaYwxxtbrNVMUhf3Vx+MxcxyHGYaR0b+d8Hq9oOs6DMMAY//2bNvGcrkEpRSyLMO27Z8BrutiNpvBNE04jvPWt9stptMpKKUwTTPjOlNjs9lEpVJBp9NBr9fL6K1WC7VaDbIsZwAZB5ZlYb/fI0mSzAm32w33+x2MMRBCMoBMmo1Gg9VqNcRxjCAI3i0IgsD6/T44jsPhcEAYhj+38CvzByjiyVx3LgmvAAAAAElFTkSuQmCC',
+  'leather_boots': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABZklEQVR4nN2SsYrCQBCG/z1PRZeEuKigglrYBkV8B8UXsLXXztpXsfMJbKxsrRVtDFoYiAiRsCiEGGGuOFwux3kP4DTLfvzz7TIM8H5lmiZ1u13inNOTZTIZ6vV61Gg06L9elMtlWiwWtFwuqdlsqnC73abdbkfz+ZyEEBHJ5y8BarUafN9HEASKB0EAIkI8HgdR9BMRwel0wn6/h+u6OJ/PijuOg/V6Dc/z4HleRPDx85JIJMAYw/V6xe12UzwMQ2iahmKxiGw2+1rAOYeUEofDAUIIxe/3O2KxGC6XC8Iw/FvQ6XSo3+9D13XU63X4vq9CuVwOtm1DCIHhcIhqtUoRQaVSoclkgsFgANd1sVqtwDmPvGRZFgqFAsbjMUajEdLpNKkhtlotbLdbHI9HzGYzTKdTJJNJ1bzZbCClhGEYeDwekFKiVCrBsqzvQD6fp1QqRYZhEGPs5bIwxkjTNALwPN+hvgCl95dWWoCmCgAAAABJRU5ErkJggg==',
 };
 
 // Piece name → texture key
@@ -1435,7 +1435,7 @@ function renderPieceInputs(){
     row.className='piece-row';row.dataset.piece=piece;
 
     // Canvas – piece-specific proportions
-    const FORM_SIZES={Helmet:{w:60,h:54},Chestplate:{w:60,h:56},Leggings:{w:60,h:72},Boots:{w:60,h:50}};
+    const FORM_SIZES={Helmet:{w:56,h:50},Chestplate:{w:56,h:52},Leggings:{w:56,h:67},Boots:{w:56,h:47}};
     const fsz=FORM_SIZES[piece]||{w:64,h:64};
     const canvas=document.createElement('canvas');
     canvas.width=fsz.w*2;canvas.height=fsz.h*2;
@@ -1873,7 +1873,7 @@ function card(l){
 
   // Piece-specific canvas sizes – bigger, fills card width
   const pieces=l.pieces||[];
-  const PIECE_SIZES={Helmet:{w:80,h:72},Chestplate:{w:80,h:74},Leggings:{w:80,h:96},Boots:{w:80,h:67}};
+  const PIECE_SIZES={Helmet:{w:56,h:50},Chestplate:{w:56,h:52},Leggings:{w:56,h:67},Boots:{w:56,h:47}};
 
   // Build per-piece category tags
   const armourType=l.armour_type||'';
@@ -2053,7 +2053,7 @@ window.openListingPanel = function(id){
   const armourType = l.armour_type || '';
 
   // Left column – large armour piece canvases
-  const LP_SIZES = {Helmet:{w:128,h:115},Chestplate:{w:128,h:118},Leggings:{w:128,h:154},Boots:{w:128,h:107}};
+  const LP_SIZES = {Helmet:{w:112,h:101},Chestplate:{w:112,h:104},Leggings:{w:112,h:134},Boots:{w:112,h:93}};
   const lpPiecesHtml = pieces.map((p,i)=>{
     const sz = LP_SIZES[p.piece]||{w:120,h:120};
     const cls = classifyHex(p.hex, armourType, p.piece);
@@ -2804,7 +2804,7 @@ function renderChatView(chat, messages){
   const isClosed = isSeller ? chat.archived_seller===1 : chat.archived_buyer===1;
 
   // Build listing info bar pieces
-  const CHAT_PIECE_SIZES={Helmet:{w:40,h:36},Chestplate:{w:40,h:37},Leggings:{w:40,h:48},Boots:{w:40,h:34}};
+  const CHAT_PIECE_SIZES={Helmet:{w:40,h:36},Chestplate:{w:40,h:37},Leggings:{w:40,h:48},Boots:{w:40,h:33}};
   const piecesHtml = pieces.map((p,i)=>{
     const sz=CHAT_PIECE_SIZES[p.piece]||{w:36,h:36};
     const cls=classifyHex(p.hex, chat.armour_type||'', p.piece);

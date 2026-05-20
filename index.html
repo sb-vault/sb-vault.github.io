@@ -143,7 +143,7 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .msg-row{display:flex;gap:8px;align-items:flex-end}
 .msg-row.mine{flex-direction:row-reverse}
 .msg-avatar{width:26px;height:26px;border-radius:6px;image-rendering:pixelated;border:1px solid var(--border);flex-shrink:0}
-.msg-bubble{max-width:60%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.5;overflow-wrap:break-word;word-break:break-word;white-space:normal;min-width:0}
+.msg-bubble{max-width:70%;min-width:60px;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.5;overflow-wrap:break-word;word-break:break-word;white-space:normal}
 .msg-bubble.theirs{background:var(--bg3);color:var(--text);border-bottom-left-radius:4px}
 .msg-bubble.mine{background:linear-gradient(135deg,var(--sunset1),var(--sunset2));color:#fff;border-bottom-right-radius:4px}
 .msg-time{font-size:10px;color:var(--text3);padding:4px 4px 0;white-space:nowrap;display:block}
@@ -162,7 +162,7 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 
 /* ── Card piece previews ──────────────────────────────────────────────── */
 .card-pieces-row{display:flex;align-items:flex-end;gap:6px;padding:10px 0 6px;width:100%;justify-content:space-evenly}
-.card-piece-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 4px 8px;min-height:130px}
+.card-piece-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 4px 8px;min-height:140px}
 .card-piece-canvas-wrap{flex:1;display:flex;align-items:flex-end;justify-content:center;width:100%}
 .card-piece-canvas{image-rendering:pixelated;display:block}
 .card-piece-name{font-size:9px;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;font-weight:600}
@@ -1230,28 +1230,13 @@ function isPieceDyeable(armourType, piece){
   return getPieceMaterial(armourType, piece) === 'leather';
 }
 
-// Skull texture hashes for helmets that are player heads
-// Format: lowercase armour type substring → texture hash
+// Skull helmets – player UUIDs from NEU repo SkullOwner.Id field
+// mc-heads.net/avatar/<UUID>/<size> serves face image with CORS
+// Add more UUIDs by opening each item's JSON in NotEnoughUpdates-REPO/items/
+// and finding the SkullOwner.Id field
 const SKULL_HELMETS = {
-  'superior dragon': '39fda5f0632be46afd76ae24496675e913023985b093baa38e9a8fda6290d',
-  'wise dragon':     '36e8d7ca71ed9131d2928080526fd1de64ce301c4eb62c5a60b7cc7f94a31',
-  'young dragon':    'dda2c3ad7595717cae00e75e6f225bc324660eaace3d64650ef7306e81b12',
-  'old dragon':      '905034acd3bce3525a70d96a18b31e370e2596c378592e04bcd4a6f8436fa',
-  'unstable dragon': '3da69b913270ec472369121abe2a085a5504427e77a9fc1b4602e5b979c71',
-  'strong dragon':   '317971774363f47b4b3a572dc2945a4b751a4e9ebb058529bb94df90a79af',
-  'protector dragon':'2036dd42f70a31df64320e7453e9b7adad5cdd096941fd9feb09afec4dae7',
-  'holy dragon':     '5cf26d03e3f7a107e7cd3d4a76f214a4a4f036ef4bc2a70c35a513a60ed',
-  'tarantula':       'fc9747f5ddb405b009792eb6179a1ac637e975532443bd3186fdfed11f6d9',
-  'shark scale':     '4ea4e976a71b247f1a1b1a37fdf34cb14d169fdced0c76fe8dbe330314c01',
-  'bat person':      '1ea0f45e9f751b04b618370b81a7067bec0476debd7143b6395b253121bf8',
-  'sorrow':          'fab16af6a7518ed4aaf286975ee11d3698b387e733d8e2ca91b4ab75b34b8',
-  'necron':          '2eb2233f4b224bc0ed06d6a9a79f5a365cc628f6b8b602994415384a40320',
-  'goldor':          '8d5dc9ff118d65d2fd79c31f247087a1398a73a58ddca50bed64151843354',
-  'storm':           '2902d5624027666bdc752580d4df5a50f5788d9425b8ad716e1bbadab62ae',
-  'maxor':           'f907a14df7213f4654c4cd827face38ac8ab5f0c18719f142024caaba5e',
-  'angler':          '5b756d4a44c37ffe487ca1215a4320e70f116f34e5db790e345dfc6a2a472',
-  'wither':          'd9675d489b8d6544f9e5d0ff70bcea6016070b63514b082a8ff41ed0aaee2',
-  'goldor':          '8d5dc9ff118d65d2fd79c31f247087a1398a73a58ddca50bed64151843354',
+  'superior dragon': 'd4981ca4-723e-3237-8099-7c8f5637b3c3',
+  // Add other UUIDs here as you find them in the NEU repo
 };
 
 // Default colours per armour type + piece (hex)
@@ -1294,11 +1279,11 @@ function getDefaultHex(armourType, piece){
   return BLEACHED_HEX;
 }
 
-// Returns skull texture hash if this armour type's helmet is a skull
+// Returns skull UUID for an armour type's helmet
 function getSkullHash(armourType){
   const key = armourType.toLowerCase();
-  for(const [k,hash] of Object.entries(SKULL_HELMETS)){
-    if(key.includes(k)) return hash;
+  for(const [k,uuid] of Object.entries(SKULL_HELMETS)){
+    if(key.includes(k)) return uuid;
   }
   return null;
 }
@@ -1315,27 +1300,18 @@ function loadImg(url){
   });
 }
 
-// Skull textures: fetch raw skin PNG via Worker proxy, then render face+hat layers
-async function drawSkullPreview(canvas, hash){
+// mc-heads.net serves face images with CORS – no proxy needed
+async function drawSkullPreview(canvas, uuid){
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  // Worker proxies textures.minecraft.net with CORS headers
-  const skin = await loadImg(`${API}/skull/${hash}`);
-  if(skin){
-    // MC skin layout (64x64): face at 8,8→16,16; hat overlay at 40,8→48,16
-    const unit = (skin.naturalWidth||64) / 64;
-    const off = document.createElement('canvas');
-    off.width = canvas.width; off.height = canvas.height;
-    const oc = off.getContext('2d');
-    oc.imageSmoothingEnabled = false;
-    // Base face layer
-    oc.drawImage(skin, 8*unit,8*unit, 8*unit,8*unit, 0,0, canvas.width,canvas.height);
-    // Hat overlay (may be transparent if not set)
-    oc.drawImage(skin, 40*unit,8*unit, 8*unit,8*unit, 0,0, canvas.width,canvas.height);
+  const size = Math.max(canvas.width, canvas.height) * 2;
+  const img = await loadImg(`https://mc-heads.net/avatar/${uuid}/${size}`);
+  if(img){
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(off, 0,0);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   } else {
-    ctx.fillStyle='#666'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#666';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
   }
 }
 
@@ -1448,7 +1424,7 @@ function renderPieceInputs(){
     row.className='piece-row';row.dataset.piece=piece;
 
     // Canvas – piece-specific proportions
-    const FORM_SIZES={Helmet:{w:56,h:48},Chestplate:{w:62,h:52},Leggings:{w:52,h:66},Boots:{w:62,h:38}};
+    const FORM_SIZES={Helmet:{w:57,h:51},Chestplate:{w:79,h:74},Leggings:{w:57,h:68},Boots:{w:79,h:57}};
     const fsz=FORM_SIZES[piece]||{w:64,h:64};
     const canvas=document.createElement('canvas');
     canvas.width=fsz.w*2;canvas.height=fsz.h*2;
@@ -1886,7 +1862,7 @@ function card(l){
 
   // Piece-specific canvas sizes – bigger, fills card width
   const pieces=l.pieces||[];
-  const PIECE_SIZES={Helmet:{w:64,h:56},Chestplate:{w:72,h:60},Leggings:{w:60,h:76},Boots:{w:72,h:44}};
+  const PIECE_SIZES={Helmet:{w:67,h:60},Chestplate:{w:93,h:87},Leggings:{w:67,h:80},Boots:{w:93,h:67}};
 
   // Build per-piece category tags
   const armourType=l.armour_type||'';
@@ -2066,7 +2042,7 @@ window.openListingPanel = function(id){
   const armourType = l.armour_type || '';
 
   // Left column – large armour piece canvases
-  const LP_SIZES = {Helmet:{w:110,h:74},Chestplate:{w:110,h:101},Leggings:{w:110,h:128},Boots:{w:110,h:64}};
+  const LP_SIZES = {Helmet:{w:103,h:93},Chestplate:{w:145,h:134},Leggings:{w:103,h:124},Boots:{w:145,h:103}};
   const lpPiecesHtml = pieces.map((p,i)=>{
     const sz = LP_SIZES[p.piece]||{w:120,h:120};
     const cls = classifyHex(p.hex, armourType, p.piece);
@@ -2817,7 +2793,7 @@ function renderChatView(chat, messages){
   const isClosed = isSeller ? chat.archived_seller===1 : chat.archived_buyer===1;
 
   // Build listing info bar pieces
-  const CHAT_PIECE_SIZES={Helmet:{w:41,h:28},Chestplate:{w:41,h:38},Leggings:{w:41,h:48},Boots:{w:41,h:24}};
+  const CHAT_PIECE_SIZES={Helmet:{w:37,h:33},Chestplate:{w:51,h:48},Leggings:{w:37,h:44},Boots:{w:51,h:37}};
   const piecesHtml = pieces.map((p,i)=>{
     const sz=CHAT_PIECE_SIZES[p.piece]||{w:36,h:36};
     const cls=classifyHex(p.hex, chat.armour_type||'', p.piece);

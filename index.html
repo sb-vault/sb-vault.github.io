@@ -162,7 +162,7 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 
 /* ── Card piece previews ──────────────────────────────────────────────── */
 .card-pieces-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 0 6px;width:100%}
-.card-piece-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 4px 8px;min-height:140px}
+.card-piece-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 4px 8px;min-height:150px}
 .card-piece-canvas-wrap{flex:1;display:flex;align-items:flex-end;justify-content:center;width:100%}
 .card-piece-canvas{image-rendering:pixelated;display:block}
 .card-piece-name{font-size:9px;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;font-weight:600}
@@ -1136,7 +1136,7 @@ const MC_SKIN = 'https://textures.minecraft.net/texture/';
 // Embedded leather textures (Invicon versions – no network needed)
 const LEATHER_TEXTURES = {
   'leather_helmet': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABJklEQVR4nOWSSUvDUBSFv7Tpi0lqOiQLsRZaEBEHFHSl/3+nBUERERFFKrVzGzO9tM+FLrRt3Itndw/3fnAOF/68tFXmXs1TOaBYtNE0jU63R9Vzubh7WtrPLRoHNVcd7u7gmHnOT485Ozmi5jk4pkG9JNSvgP1NV203G2x4FUhiXMci9ifM4pB1o0CzvkXDtX9A9O+DZVlUyw5qloKa8fhwT687QCYRtrmG5ZRod3pkAqSUpGlKEKQUCgY317fohmAyDukNB9jlKrFMsgEpGuQNWleXtF6GX4W9f2Ztd1SjWEFYNoyi1R2onCDN5dGEudgVc10QJjPiZJ5d4jQK6Y98gnTpHonONIgJpcyO8Pz6pgkh1GQ0WQL4UYIcDOiP/ZW/85/1AYE/bs1rgfqqAAAAAElFTkSuQmCC',
-  'leather_chestplate': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB6ElEQVR4nMWSS2/TUBCFv7n2dRwnLW2jvlKoCpsKqRIIxP//DyAWVYGmUJJUfaWp7dz4vligEsJjxYKznvnmnJmB/y0BODzox/VCE63B+0gThLeDC/m58GmviLubG5TllDTvUDnheDCUFCBL4OXRc7ypwTuOP5z+NmlvY4VXR4fMnWfmAu8/fgZAAYj3KG/JxKGjpb9e8Kbfjg/Nr3da8XGvS0cLhYYkOOZVBUAK0Mlb1PdTVvOUuppwsLfFaqdLOzmJOknY339Ct0i5uxrRxBQXE7SSBcBYx2g4RPVWKbQmE0Vvtc3+7ib97R1CdBAC07rGWMO9BZJ0EaGsagZnXxmPx2xvbuEag0JotzRpknBzdU30ljxrUVUVn07PmNxNFw5OxhMByEa38YVtyFptyspwdTMh0wVZq431Ea+EwfmYdzcIlAvAgxxgmoDF0wRB5x3mPtDKc0QJVVlRN8vXWQLENKVsAio6QlSENMeSkogGEUxQhESAHwf6voMHeUmojGUeFE1UzKNAllPbQO0CnoQ0L5YcLAFOrudyeTvBuIgVjfGCUxkmKO5nDdd3U4zzf48A8GV0gQtCsbJGOWuQyZREYF6XDM6HnE7c0ovLrwCAZ2tZbHcfUc0MWmtSJQRrOL6s/lj/T/oGvvrqs9Eq1pwAAAAASUVORK5CYII=',
+  'leather_chestplate': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB6UlEQVR4nMWSy24TQRBFT/VMj8dj52nl5UAEbCKkSCAQ//8PIBZRgDgo2I7ycpzpcXumHyyQMRawYsHZlVR1q25Vwf9GAI6f9eNWoYmNxftIHYT3gyv5NfF5r4gHO9uU5ZQ072CccDoYSgqQJfD65CXeVuAdp5/Of+t0uL3Gm5Nj5s4zc4GPn78CoADEe5RvyMShY0N/q+Bdvx0XxW/3W/FJr0tHC4WGJDjmxgCQAnTyFtXjlPU8pTITnh3ust7p0k7Ook4Sjo6e0i1SHm5G1DHFxQStZClgG8doOET11im0JhNFb73N0cEO/b19QnQQAtOqwjaWxwZI0qWF0lQMLr4xHo/Z29nF1RaF0G5p0iTh7uaW6BvyrIUxhi/nF0wepssJzsYTAchG9/FVU5O12pTGcnM3IdMFWatN4yNeCYPLMR/uECiXAgscYOtAg6cOgs47zH2gleeIEkxpqOrV66wIxDSlrAMqOkJUhDSnISURDSLYoAiJAD8P9GMHC7wkGNswD4o6KuZRIMupmkDlAp6ENC9WJlgRKO2c6/sJ1kUa0VgvOJVhg+JxVnP7MMU6/3cLI4NsjK6iC0Kxtkk5q5HJlERgXpUMLoecT9zKi68EC15sZrHd3cDMLFprUiWExnJ6bf6Y/098B03k7N6s0/w+AAAAAElFTkSuQmCC',
   'leather_leggings': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABeklEQVR4nM2RS2/TQBRGz/g1Y4dGilB5iA1bFkiAQBRaqf9/jZCQuqIImqS4jWN7bI/n0UWlECOlW7i7+0lz7rl34F+X+Ds4ffk8ONtjM4mLYuI4wfWazI7obuTLTTt5k+w3rx4fh0/v3hB5wyglvbUYY/DGkDvHqqyo9GW47PUOEu0DjvKMIhHgehhaXN8gI48SDpkEikQwk5OZU4MgPMYNjGNHOwSuymuUzHmkFIWSRKlAxDwAUCn10GKDZWt6ljdrrPW8ePqENFrQuQHzEKAxhq8XF+imZGvh2+r+yLX+Far5LV6k2Giy9fQGmco5OTvnw8kpUfKHffxswcfPZ7x++54gpoCJgXeC9apkW21wIQbsvVlrWf/e4HxMluaHAaY2LH+sqOtbusbs8nqj+fl9ifcRTdkcXqFQM9JEURRzitlil0s1J8+PkFmBTNVhA601dQvWO8a9/+pcYLABgiCO48OA3o5cVxWjM+yLah+4KktEiOit4/+qO5djuaXFTLxhAAAAAElFTkSuQmCC',
   'leather_boots': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABcklEQVR4nNWSy24TQRBFT830jN22sB0HQmQTnChhESRAgBAb/v8DkBA7orxIQhyb2PPodE9PswDZMZgPSO3q1r1Hd1Hw4Ef+Fl7tbget21xeTzkZTwRgd+txGDzdJMtmfD66WMmolfCwGz6+PkTiBGO+cDL+rT/pd3j78gVlPscVs/D1Kpe1gF4zod9OsR7Eu2VN70iCI0hFWrv7kVWAN3Ns9pPCVjhTLnRbFhS3Y2pr8MauAKL7SxwJsXh85airpTEETyOOaeuElpb/A5SKcM6R5zlpmi70uq4REay11HVYD/h0OAzPR3tEqkmn28P5pTFpNMmMIU40+wf7vHnWWRwVwN7OILx7/4FuI+Li7JTJbYGoZQNPzDS749Fwg4PtHSp9zrX9Fr7/uBEFsNHvMZ1nmBKOL8ccnZ7jotYCMJnlhKokShtsisJUHt1qAn8eaTTYClQliQjOOY4n5T8PBjDq66CU4s57UJqzq5u1vgc2vwDyh521+sVqOAAAAABJRU5ErkJggg==',
 };
@@ -1374,9 +1374,12 @@ async function drawLeatherPreview(canvas, piece, hex, armourType){
 
   for(let i=0;i<id.data.length;i+=4){
     if(id.data[i+3]===0) continue; // skip transparent pixels
-    id.data[i]   = Math.round(id.data[i]   * tR / 255);
-    id.data[i+1] = Math.round(id.data[i+1] * tG / 255);
-    id.data[i+2] = Math.round(id.data[i+2] * tB / 255);
+    // Get pixel brightness (0–255)
+    const bright = (id.data[i] + id.data[i+1] + id.data[i+2]) / 3 / 255;
+    // Apply tint: scale the tint colour by the pixel brightness
+    id.data[i]   = Math.round(tR * bright);
+    id.data[i+1] = Math.round(tG * bright);
+    id.data[i+2] = Math.round(tB * bright);
   }
   oc.putImageData(id, 0, 0);
   ctx.imageSmoothingEnabled = false;
@@ -1432,7 +1435,7 @@ function renderPieceInputs(){
     row.className='piece-row';row.dataset.piece=piece;
 
     // Canvas – piece-specific proportions
-    const FORM_SIZES={Helmet:{w:57,h:51},Chestplate:{w:79,h:74},Leggings:{w:57,h:68},Boots:{w:79,h:57}};
+    const FORM_SIZES={Helmet:{w:60,h:54},Chestplate:{w:60,h:56},Leggings:{w:60,h:72},Boots:{w:60,h:50}};
     const fsz=FORM_SIZES[piece]||{w:64,h:64};
     const canvas=document.createElement('canvas');
     canvas.width=fsz.w*2;canvas.height=fsz.h*2;
@@ -1870,7 +1873,7 @@ function card(l){
 
   // Piece-specific canvas sizes – bigger, fills card width
   const pieces=l.pieces||[];
-  const PIECE_SIZES={Helmet:{w:67,h:60},Chestplate:{w:93,h:87},Leggings:{w:67,h:80},Boots:{w:93,h:67}};
+  const PIECE_SIZES={Helmet:{w:80,h:72},Chestplate:{w:80,h:74},Leggings:{w:80,h:96},Boots:{w:80,h:67}};
 
   // Build per-piece category tags
   const armourType=l.armour_type||'';
@@ -2050,7 +2053,7 @@ window.openListingPanel = function(id){
   const armourType = l.armour_type || '';
 
   // Left column – large armour piece canvases
-  const LP_SIZES = {Helmet:{w:103,h:93},Chestplate:{w:145,h:134},Leggings:{w:103,h:124},Boots:{w:145,h:103}};
+  const LP_SIZES = {Helmet:{w:128,h:115},Chestplate:{w:128,h:118},Leggings:{w:128,h:154},Boots:{w:128,h:107}};
   const lpPiecesHtml = pieces.map((p,i)=>{
     const sz = LP_SIZES[p.piece]||{w:120,h:120};
     const cls = classifyHex(p.hex, armourType, p.piece);
@@ -2801,7 +2804,7 @@ function renderChatView(chat, messages){
   const isClosed = isSeller ? chat.archived_seller===1 : chat.archived_buyer===1;
 
   // Build listing info bar pieces
-  const CHAT_PIECE_SIZES={Helmet:{w:37,h:33},Chestplate:{w:51,h:48},Leggings:{w:37,h:44},Boots:{w:51,h:37}};
+  const CHAT_PIECE_SIZES={Helmet:{w:40,h:36},Chestplate:{w:40,h:37},Leggings:{w:40,h:48},Boots:{w:40,h:34}};
   const piecesHtml = pieces.map((p,i)=>{
     const sz=CHAT_PIECE_SIZES[p.piece]||{w:36,h:36};
     const cls=classifyHex(p.hex, chat.armour_type||'', p.piece);

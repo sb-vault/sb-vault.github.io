@@ -143,7 +143,7 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .msg-row{display:flex;gap:8px;align-items:flex-end}
 .msg-row.mine{flex-direction:row-reverse}
 .msg-avatar{width:26px;height:26px;border-radius:6px;image-rendering:pixelated;border:1px solid var(--border);flex-shrink:0}
-.msg-bubble{max-width:65%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.5;word-break:break-word}
+.msg-bubble{max-width:65%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.5;word-wrap:break-word;overflow-wrap:break-word;word-break:normal;white-space:pre-wrap}
 .msg-bubble.theirs{background:var(--bg3);color:var(--text);border-bottom-left-radius:4px}
 .msg-bubble.mine{background:linear-gradient(135deg,var(--sunset1),var(--sunset2));color:#fff;border-bottom-right-radius:4px}
 .msg-time{font-size:10px;color:var(--text3);padding:4px 4px 0;white-space:nowrap;display:block}
@@ -1307,30 +1307,26 @@ const imgCache = {};
 function loadImg(url){
   if(imgCache[url]) return Promise.resolve(imgCache[url]);
   return new Promise(res=>{
-    const img = new Image(); img.crossOrigin='anonymous';
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = ()=>{ imgCache[url]=img; res(img); };
     img.onerror = ()=>res(null);
     img.src = url;
   });
 }
 
-// Draw a skull head texture on a canvas (shows face only)
+// mc-heads.net/head/<texture-hash> returns a rendered face image with CORS
 async function drawSkullPreview(canvas, hash){
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  const url = MC_SKIN + hash;
-  const skin = await loadImg(url);
-  if(!skin){ ctx.fillStyle='#888'; ctx.fillRect(0,0,canvas.width,canvas.height); return; }
-  // Minecraft skin layout: face is at 8,8 → 16,16 (8×8 pixels within 64×64 skin)
-  const sw=skin.naturalWidth||64, sh=skin.naturalHeight||64;
-  const scale=sw/64;
-  // Draw base face layer (8,8 to 16,16)
-  const faceX=8*scale, faceY=8*scale, faceS=8*scale;
-  // Draw hat layer (40,8 to 48,16)
-  const hatX=40*scale, hatY=8*scale, hatS=8*scale;
-  ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(skin, faceX,faceY,faceS,faceS, 0,0,canvas.width,canvas.height);
-  ctx.drawImage(skin, hatX,hatY,hatS,hatS, 0,0,canvas.width,canvas.height);
+  const img = await loadImg(`https://mc-heads.net/head/${hash}`);
+  if(img){
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.fillStyle = '#888';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
 }
 
 async function drawLeatherPreview(canvas, piece, hex, armourType){
@@ -1442,7 +1438,7 @@ function renderPieceInputs(){
     row.className='piece-row';row.dataset.piece=piece;
 
     // Canvas — piece-specific proportions
-    const FORM_SIZES={Helmet:{w:72,h:54},Chestplate:{w:68,h:58},Leggings:{w:52,h:72},Boots:{w:76,h:44}};
+    const FORM_SIZES={Helmet:{w:59,h:34},Chestplate:{w:68,h:59},Leggings:{w:59,h:68},Boots:{w:68,h:39}};
     const fsz=FORM_SIZES[piece]||{w:64,h:64};
     const canvas=document.createElement('canvas');
     canvas.width=fsz.w*2;canvas.height=fsz.h*2;
@@ -1497,8 +1493,9 @@ function renderPieceInputs(){
     row.appendChild(right);
     container.appendChild(row);
 
-    // Events
+    // Events — no syncing, each piece is independent
     hexIn.addEventListener('input',()=>{
+      if(!dyeable) return;
       const hex='#'+hexIn.value;
       const armourType=document.getElementById('armourTypeInput').value.trim();
       const cls=classifyHex(hex, armourType, piece);
@@ -1506,34 +1503,24 @@ function renderPieceInputs(){
         catTag.textContent=cls.label;catTag.style.color=cls.colour;catTag.style.borderColor=cls.colour+'44';
       }else{catTag.textContent='—';catTag.style.color='';catTag.style.borderColor='';}
       drawLeatherPreview(canvas,piece,hex,armourType);
-      // Sync all pieces if full set mode
-      if(fullSetMode){
-        document.querySelectorAll('#pieceInputs .hex-input').forEach(inp=>{
-          if(inp!==hexIn){
-            inp.value=hexIn.value;
-            const row2=inp.closest('.piece-row');
-            const c2=row2.querySelector('.piece-preview');
-            const t2=row2.querySelector('.piece-cat-tag');
-            const cls2=classifyHex(hex, armourType, row2.dataset.piece);
-            drawLeatherPreview(c2,row2.dataset.piece,hex,armourType);
-            if(cls2){t2.textContent=cls2.label;t2.style.color=cls2.colour;t2.style.borderColor=cls2.colour+'44';}
-            else{t2.textContent='—';t2.style.color='';t2.style.borderColor='';}
-          }
-        });
-      }
       updateOverallCat();
     });
 
-    // Draw initial preview with armour-type-specific default colour
+    // Draw initial preview
     const armourTypeNow = document.getElementById('armourTypeInput').value.trim();
-    const defaultHex = getDefaultHex(armourTypeNow, piece);
-    if(defaultHex !== BLEACHED_HEX && armourTypeNow){
-      // Pre-fill the hex input with the default colour
-      hexIn.value = defaultHex.replace('#','');
-      const initCls = classifyHex(defaultHex, armourTypeNow, piece);
-      if(initCls){ catTag.textContent=initCls.label; catTag.style.color=initCls.colour; catTag.style.borderColor=initCls.colour+'44'; }
+    if(dyeable){
+      const defaultHex = getDefaultHex(armourTypeNow, piece);
+      if(defaultHex !== BLEACHED_HEX && armourTypeNow){
+        hexIn.value = defaultHex.replace('#','');
+        const initCls = classifyHex(defaultHex, armourTypeNow, piece);
+        if(initCls){ catTag.textContent=initCls.label; catTag.style.color=initCls.colour; catTag.style.borderColor=initCls.colour+'44'; }
+      }
+      drawLeatherPreview(canvas, piece, hexIn.value?'#'+hexIn.value:BLEACHED_HEX, armourTypeNow);
+    } else {
+      // Non-leather: no hex, no tag, just material texture
+      catTag.style.display='none';
+      drawLeatherPreview(canvas, piece, '', armourTypeNow);
     }
-    drawLeatherPreview(canvas, piece, hexIn.value?'#'+hexIn.value:defaultHex, armourTypeNow);
   });
   updateOverallCat();
 }
@@ -1730,29 +1717,49 @@ document.addEventListener('click',e=>{
    API CALLS
 ════════════════════════════════════════════════════════════════════ */
 let allListings=[];
-let filterCat='all';
+let filterCats = new Set(['all']); // multi-select set
 
 async function loadListings(){
-  const sort=document.getElementById('sortSelect').value;
-  const q=(document.getElementById('searchInput').value||'').trim();
-  const params=new URLSearchParams({sort,status:'active'});
-  if(filterCat!=='all')params.set('cat',filterCat);
-  if(q)params.set('q',q);
+  const sort = document.getElementById('sortSelect').value;
+  const q = (document.getElementById('searchInput').value||'').trim();
+  const params = new URLSearchParams({sort, status:'active'});
+  if(!filterCats.has('all') && filterCats.size > 0){
+    // Pass multiple cats as comma-separated
+    params.set('cat', [...filterCats].join(','));
+  }
+  if(q) params.set('q', q);
   try{
-    const res=await fetch(`${API}/listings?${params}`);
-    const data=await res.json();
-    allListings=data.listings||[];
+    const res = await fetch(`${API}/listings?${params}`);
+    const data = await res.json();
+    allListings = data.listings || [];
     renderListings();
   }catch(e){
-    document.getElementById('listingsGrid').innerHTML=empty('⚠️','Could not load listings','Check your connection and refresh.');
+    document.getElementById('listingsGrid').innerHTML = empty('⚠️','Could not load listings','Check your connection and refresh.');
   }
 }
 
-let completedFilterCat='all';
+let completedFilterCats = new Set(['all']);
 window.setCompletedFilter=function(val,el){
-  completedFilterCat=val;
-  document.querySelectorAll('#completedCatChips .chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
+  if(val==='all'){
+    completedFilterCats = new Set(['all']);
+    document.querySelectorAll('#completedCatChips .chip').forEach(c=>{
+      c.classList.toggle('active', c.dataset.cat==='all');
+    });
+  } else {
+    completedFilterCats.delete('all');
+    if(completedFilterCats.has(val)){
+      completedFilterCats.delete(val);
+      el.classList.remove('active');
+      if(completedFilterCats.size===0){
+        completedFilterCats.add('all');
+        document.querySelector('#completedCatChips .chip[data-cat="all"]').classList.add('active');
+      }
+    } else {
+      completedFilterCats.add(val);
+      el.classList.add('active');
+      document.querySelector('#completedCatChips .chip[data-cat="all"]').classList.remove('active');
+    }
+  }
   loadCompleted();
 };
 
@@ -1760,7 +1767,9 @@ async function loadCompleted(){
   const q=(document.getElementById('completedSearch')?.value||'').trim();
   const sort=document.getElementById('completedSort')?.value||'newest';
   const params=new URLSearchParams({status:'sold',sort});
-  if(completedFilterCat!=='all')params.set('cat',completedFilterCat);
+  if(!completedFilterCats.has('all') && completedFilterCats.size>0){
+    params.set('cat', [...completedFilterCats].join(','));
+  }
   if(q)params.set('q',q);
   try{
     const res=await fetch(`${API}/listings?${params}`);
@@ -1786,10 +1795,30 @@ async function loadStats(){
 
 window.openHowItWorks=function(){ openModal('howModal'); };
 
-window.setFilter=function(val,el){
-  filterCat=val;
-  document.querySelectorAll('#catChips .chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
+window.setFilter=function(val, el){
+  if(val==='all'){
+    // All deselects everything else
+    filterCats = new Set(['all']);
+    document.querySelectorAll('#catChips .chip').forEach(c=>{
+      c.classList.toggle('active', c.dataset.cat==='all');
+    });
+  } else {
+    // Toggle this cat
+    filterCats.delete('all');
+    if(filterCats.has(val)){
+      filterCats.delete(val);
+      el.classList.remove('active');
+      // If nothing selected, revert to All
+      if(filterCats.size===0){
+        filterCats.add('all');
+        document.querySelector('#catChips .chip[data-cat="all"]').classList.add('active');
+      }
+    } else {
+      filterCats.add(val);
+      el.classList.add('active');
+      document.querySelector('#catChips .chip[data-cat="all"]').classList.remove('active');
+    }
+  }
   loadListings();
 };
 
@@ -1847,7 +1876,7 @@ function card(l){
 
   // Piece-specific canvas sizes — bigger, fills card width
   const pieces=l.pieces||[];
-  const PIECE_SIZES={Helmet:{w:80,h:60},Chestplate:{w:76,h:64},Leggings:{w:58,h:82},Boots:{w:84,h:50}};
+  const PIECE_SIZES={Helmet:{w:69,h:40},Chestplate:{w:80,h:69},Leggings:{w:69,h:80},Boots:{w:80,h:46}};
 
   // Build per-piece category tags
   const armourType=l.armour_type||'';
@@ -2027,7 +2056,7 @@ window.openListingPanel = function(id){
   const armourType = l.armour_type || '';
 
   // Left column — large armour piece canvases
-  const LP_SIZES = {Helmet:{w:130,h:98},Chestplate:{w:124,h:104},Leggings:{w:94,h:134},Boots:{w:136,h:82}};
+  const LP_SIZES = {Helmet:{w:97,h:56},Chestplate:{w:112,h:97},Leggings:{w:97,h:112},Boots:{w:112,h:64}};
   const lpPiecesHtml = pieces.map((p,i)=>{
     const sz = LP_SIZES[p.piece]||{w:120,h:120};
     const cls = classifyHex(p.hex, armourType, p.piece);
@@ -2210,12 +2239,23 @@ window.submitOffer=async function(){
 window.closeChat=async function(chatId){
   const token=getToken();
   try{
-    await fetch(`${API}/chats/${chatId}/archive`,{method:'PUT',headers:{Authorization:`Bearer ${token}`}});
+    // Archive for both parties simultaneously
+    await fetch(`${API}/chats/${chatId}/archive`,{method:'PUT',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({both:true})});
     activeChatId=null;
-    document.getElementById('chatMain').innerHTML='<div class="chat-no-select"><div style="font-size:36px;opacity:.4">💬</div><div>Select a conversation</div></div>';
     loadChatList();
-    toast('Chat closed.');
+    document.getElementById('chatMain').innerHTML='<div class="chat-no-select"><div style="font-size:36px;opacity:.4">💬</div><div>Select a conversation</div></div>';
+    toast('Chat closed for both parties.');
   }catch(e){toast('Could not close chat.');}
+};
+
+window.restoreChat=async function(chatId){
+  const token=getToken();
+  try{
+    await fetch(`${API}/chats/${chatId}/restore`,{method:'PUT',headers:{Authorization:`Bearer ${token}`}});
+    loadChatList();
+    openChat(chatId);
+    toast('Chat restored.');
+  }catch(e){toast('Could not restore chat.');}
 };
 
 window.markChatSold=async function(listingId, chatId){
@@ -2763,8 +2803,11 @@ function renderChatView(chat, messages){
   const offerMsg = chat.offer_message ? `<div class="offer-pin-msg">${esc(chat.offer_message)}</div>` : '';
   const pieces = chat.pieces ? (() => { try { return JSON.parse(chat.pieces); } catch(e) { return []; } })() : [];
 
+  // Check if this chat is closed for the current user
+  const isClosed = isSeller ? chat.archived_seller===1 : chat.archived_buyer===1;
+
   // Build listing info bar pieces
-  const CHAT_PIECE_SIZES={Helmet:{w:44,h:33},Chestplate:{w:42,h:35},Leggings:{w:32,h:45},Boots:{w:46,h:27}};
+  const CHAT_PIECE_SIZES={Helmet:{w:48,h:28},Chestplate:{w:56,h:48},Leggings:{w:48,h:56},Boots:{w:56,h:32}};
   const piecesHtml = pieces.map((p,i)=>{
     const sz=CHAT_PIECE_SIZES[p.piece]||{w:36,h:36};
     const cls=classifyHex(p.hex, chat.armour_type||'', p.piece);
@@ -2814,8 +2857,10 @@ function renderChatView(chat, messages){
         <div style="font-size:10px;color:var(--text3);margin-top:1px" id="chatTzLabel"></div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
-        ${isSeller?`<button class="icon-btn" style="background:rgba(78,203,113,.1);border-color:rgba(78,203,113,.3);color:var(--green);font-size:12px;height:30px;padding:0 10px" onclick="markChatSold('${chat.listing_id}','${chat.id}')">Mark Sold</button>`:''}
-        <button class="icon-btn" style="background:rgba(232,85,85,.1);border-color:rgba(232,85,85,.3);color:var(--red);font-size:12px;height:30px;padding:0 10px" onclick="closeChat('${chat.id}')">Close Chat</button>
+        ${isClosed
+          ? `<button class="icon-btn" style="background:rgba(78,203,113,.1);border-color:rgba(78,203,113,.3);color:var(--green);font-size:12px;height:30px;padding:0 10px" onclick="restoreChat('${chat.id}')">Restore Chat</button>`
+          : `${isSeller?`<button class="icon-btn" style="background:rgba(78,203,113,.1);border-color:rgba(78,203,113,.3);color:var(--green);font-size:12px;height:30px;padding:0 10px" onclick="markChatSold('${chat.listing_id}','${chat.id}')">Mark Sold</button>`:''}<button class="icon-btn" style="background:rgba(232,85,85,.1);border-color:rgba(232,85,85,.3);color:var(--red);font-size:12px;height:30px;padding:0 10px" onclick="closeChat('${chat.id}')">Close Chat</button>`
+        }
         <button class="icon-btn" style="background:rgba(232,85,85,.06);border-color:rgba(232,85,85,.2);color:var(--red);font-size:12px;height:30px;padding:0 10px" onclick="openReport('chat','${chat.id}','${esc(otherName)}')">Report</button>
         <button class="icon-btn" onclick="closeChatPanel()" style="width:30px;height:30px;padding:0;font-size:13px;flex-shrink:0">✕</button>
       </div>
@@ -2831,14 +2876,17 @@ function renderChatView(chat, messages){
       ${offerMsg}
     </div>
     <div class="chat-messages" id="chatMsgs">${msgsHtml}</div>
-    <div class="chat-input-area">
-      ${imgBtnHtml}
-      <textarea class="chat-input" id="chatInputField" placeholder="Type a message…" rows="1"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"
-        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
-      <button class="chat-send-btn" onclick="sendChatMessage()" style="width:auto;padding:0 14px;font-size:13px;font-weight:600">Send</button>
-    </div>
-    <input type="file" id="chatImageInput" accept="image/*" style="display:none" onchange="handleImageUpload(event)">`;
+    ${isClosed
+      ? `<div style="padding:12px 16px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--text3);background:var(--bg3)">This chat is closed. Restore it to send messages.</div>`
+      : `<div class="chat-input-area">
+          ${imgBtnHtml}
+          <textarea class="chat-input" id="chatInputField" placeholder="Type a message…" rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"
+            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+          <button class="chat-send-btn" onclick="sendChatMessage()" style="width:auto;padding:0 14px;font-size:13px;font-weight:600">Send</button>
+        </div>
+        <input type="file" id="chatImageInput" accept="image/*" style="display:none" onchange="handleImageUpload(event)">`
+    }`;
 
   // Scroll to bottom
   const msgs = document.getElementById('chatMsgs');
@@ -2878,13 +2926,30 @@ window.sendChatMessage = async function(){
   if(!content) return;
   input.value = '';
   input.style.height = 'auto';
+
+  // Optimistically append the message locally first (no flash)
+  const container = document.getElementById('chatMsgs');
+  if(container){
+    const el = document.createElement('div');
+    el.className = 'msg-row mine';
+    const avatar = HEAD_URL(currentUser.uuid);
+    el.innerHTML = `<img class="msg-avatar" src="${avatar}" style="border-radius:6px" alt="${esc(currentUser.username)}">
+      <div><div class="msg-bubble mine">${esc(content)}</div><div class="msg-time">just now</div></div>`;
+    container.appendChild(el);
+    container.scrollTop = container.scrollHeight;
+  }
+
   try{
-    await fetch(`${API}/chats/${activeChatId}/messages`, {
+    const res = await fetch(`${API}/chats/${activeChatId}/messages`, {
       method: 'POST',
       headers: {'Content-Type':'application/json', Authorization: `Bearer ${getToken()}`},
       body: JSON.stringify({content}),
     });
-    openChat(activeChatId); // reload messages
+    const data = await res.json();
+    if(data.ok && data.id){
+      // Update lastMessageTs so poll doesn't re-add this message
+      lastMessageTs = Date.now();
+    }
   }catch(e){ toast('Failed to send message.'); }
 };
 

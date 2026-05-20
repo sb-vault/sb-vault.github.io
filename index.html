@@ -161,8 +161,8 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .chat-no-select{padding:60px 24px;text-align:center;color:var(--text3);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:13px}
 
 /* ── Card piece previews ──────────────────────────────────────────────── */
-.card-pieces-row{display:flex;align-items:flex-end;gap:6px;padding:10px 0 6px;width:100%;justify-content:space-evenly}
-.card-piece-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 4px 8px;min-height:140px}
+.card-pieces-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 0 6px;width:100%}
+.card-piece-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 4px 8px;min-height:140px}
 .card-piece-canvas-wrap{flex:1;display:flex;align-items:flex-end;justify-content:center;width:100%}
 .card-piece-canvas{image-rendering:pixelated;display:block}
 .card-piece-name{font-size:9px;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;font-weight:600}
@@ -1135,10 +1135,10 @@ const MC_SKIN = 'https://textures.minecraft.net/texture/';
 
 // Embedded leather textures (Invicon versions – no network needed)
 const LEATHER_TEXTURES = {
-  'leather_helmet': 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAQABADASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAgMECP/EACQQAAICAQMCBwAAAAAAAAAAAAECAwQRAAUxBhMSIUFxgdHx/8QAFAEBAAAAAAAAAAAAAAAAAAAAA//EABoRAAEFAQAAAAAAAAAAAAAAABEAAQISIQP/2gAMAwEAAhEDEQA/AMpdJ9PR7xHNZs2xWrQuiMw5HiYDPsAc/Gk9S7NFtnbmq2e/Xkd0Vm5JUkZwOPLGooNxli2mfbgimOWRZC3qCM/egmuvLQiplQEjdnznkn80QnYnEzy50A1f/9k=',
-  'leather_chestplate': 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAQABADASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAEECP/EACYQAAEDAwIFBQAAAAAAAAAAAAECBAUDBhEAIQcSEzHBIkFRYaH/xAAUAQEAAAAAAAAAAAAAAAAAAAAE/8QAGREAAQUAAAAAAAAAAAAAAAAAEQADEhMh/9oADAMBAAIRAxEAPwDNkfabGVtNLqOURIppBVXmWeUHvjHsSPOlIWowirWqV36iZMJUUhNT0Z+PsjfUlgTjSLbv2rqp0w4SCCexwDt+6OIc2ylA1os6nUFLJKh2387aEHbInCnlmqQ0L//Z',
-  'leather_leggings': 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAQABADASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAQMECP/EACEQAAEEAQQDAQAAAAAAAAAAAAECBAURAwAGEiETUXFB/8QAFAEBAAAAAAAAAAAAAAAAAAAABP/EABwRAAEEAwEAAAAAAAAAAAAAABEAAhITASHB4f/aAAwDAQACEQMRAD8Ay7suJgXka9eTWZePwqAQE5QixRJ+/mk7xjIZm3aOYfMrJjzXdr5V6+aki5RDbbkhHKyrSXKgeIFhVDq+tCWlEO4GOYjMtamoI4lPSb9GtHi+wnXiTJlcRgjq/9k=',
-  'leather_boots': 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAQABADASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAEDCP/EACQQAAEEAQMDBQAAAAAAAAAAAAIBAwQFAAYhURESYSQyM4Gx/8QAFQEBAQAAAAAAAAAAAAAAAAAAAwT/xAAZEQEAAwEBAAAAAAAAAAAAAAARAANBoRL/2gAMAwEAAhEDEQA/AMmVNMzL05Z2rkghKH2oDaJ71XlcLinZhUNXZNvmZTBJTAh2BU4XLrqCK1pZKWJWi2bieofUt3F58dPzE7fxpOlwp5VeJus/A+hbh9eVwGxceSgq8mnZ/9k=',
+  'leather_helmet': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABJklEQVR4nOWSSUvDUBSFv7Tpi0lqOiQLsRZaEBEHFHSl/3+nBUERERFFKrVzGzO9tM+FLrRt3Itndw/3fnAOF/68tFXmXs1TOaBYtNE0jU63R9Vzubh7WtrPLRoHNVcd7u7gmHnOT485Ozmi5jk4pkG9JNSvgP1NV203G2x4FUhiXMci9ifM4pB1o0CzvkXDtX9A9O+DZVlUyw5qloKa8fhwT687QCYRtrmG5ZRod3pkAqSUpGlKEKQUCgY317fohmAyDukNB9jlKrFMsgEpGuQNWleXtF6GX4W9f2Ztd1SjWEFYNoyi1R2onCDN5dGEudgVc10QJjPiZJ5d4jQK6Y98gnTpHonONIgJpcyO8Pz6pgkh1GQ0WQL4UYIcDOiP/ZW/85/1AYE/bs1rgfqqAAAAAElFTkSuQmCC',
+  'leather_chestplate': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB6ElEQVR4nMWSS2/TUBCFv7n2dRwnLW2jvlKoCpsKqRIIxP//DyAWVYGmUJJUfaWp7dz4vligEsJjxYKznvnmnJmB/y0BODzox/VCE63B+0gThLeDC/m58GmviLubG5TllDTvUDnheDCUFCBL4OXRc7ypwTuOP5z+NmlvY4VXR4fMnWfmAu8/fgZAAYj3KG/JxKGjpb9e8Kbfjg/Nr3da8XGvS0cLhYYkOOZVBUAK0Mlb1PdTVvOUuppwsLfFaqdLOzmJOknY339Ct0i5uxrRxBQXE7SSBcBYx2g4RPVWKbQmE0Vvtc3+7ib97R1CdBAC07rGWMO9BZJ0EaGsagZnXxmPx2xvbuEag0JotzRpknBzdU30ljxrUVUVn07PmNxNFw5OxhMByEa38YVtyFptyspwdTMh0wVZq431Ea+EwfmYdzcIlAvAgxxgmoDF0wRB5x3mPtDKc0QJVVlRN8vXWQLENKVsAio6QlSENMeSkogGEUxQhESAHwf6voMHeUmojGUeFE1UzKNAllPbQO0CnoQ0L5YcLAFOrudyeTvBuIgVjfGCUxkmKO5nDdd3U4zzf48A8GV0gQtCsbJGOWuQyZREYF6XDM6HnE7c0ovLrwCAZ2tZbHcfUc0MWmtSJQRrOL6s/lj/T/oGvvrqs9Eq1pwAAAAASUVORK5CYII=',
+  'leather_leggings': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABeklEQVR4nM2RS2/TQBRGz/g1Y4dGilB5iA1bFkiAQBRaqf9/jZCQuqIImqS4jWN7bI/n0UWlECOlW7i7+0lz7rl34F+X+Ds4ffk8ONtjM4mLYuI4wfWazI7obuTLTTt5k+w3rx4fh0/v3hB5wyglvbUYY/DGkDvHqqyo9GW47PUOEu0DjvKMIhHgehhaXN8gI48SDpkEikQwk5OZU4MgPMYNjGNHOwSuymuUzHmkFIWSRKlAxDwAUCn10GKDZWt6ljdrrPW8ePqENFrQuQHzEKAxhq8XF+imZGvh2+r+yLX+Far5LV6k2Giy9fQGmco5OTvnw8kpUfKHffxswcfPZ7x++54gpoCJgXeC9apkW21wIQbsvVlrWf/e4HxMluaHAaY2LH+sqOtbusbs8nqj+fl9ifcRTdkcXqFQM9JEURRzitlil0s1J8+PkFmBTNVhA601dQvWO8a9/+pcYLABgiCO48OA3o5cVxWjM+yLah+4KktEiOit4/+qO5djuaXFTLxhAAAAAElFTkSuQmCC',
+  'leather_boots': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABcklEQVR4nNWSy24TQRBFT830jN22sB0HQmQTnChhESRAgBAb/v8DkBA7orxIQhyb2PPodE9PswDZMZgPSO3q1r1Hd1Hw4Ef+Fl7tbget21xeTzkZTwRgd+txGDzdJMtmfD66WMmolfCwGz6+PkTiBGO+cDL+rT/pd3j78gVlPscVs/D1Kpe1gF4zod9OsR7Eu2VN70iCI0hFWrv7kVWAN3Ns9pPCVjhTLnRbFhS3Y2pr8MauAKL7SxwJsXh85airpTEETyOOaeuElpb/A5SKcM6R5zlpmi70uq4REay11HVYD/h0OAzPR3tEqkmn28P5pTFpNMmMIU40+wf7vHnWWRwVwN7OILx7/4FuI+Li7JTJbYGoZQNPzDS749Fwg4PtHSp9zrX9Fr7/uBEFsNHvMZ1nmBKOL8ccnZ7jotYCMJnlhKokShtsisJUHt1qAn8eaTTYClQliQjOOY4n5T8PBjDq66CU4s57UJqzq5u1vgc2vwDyh521+sVqOAAAAABJRU5ErkJggg==',
 };
 
 // Piece name → texture key
@@ -1352,7 +1352,7 @@ async function drawLeatherPreview(canvas, piece, hex, armourType){
     return;
   }
 
-  // Leather – use embedded Invicon textures + tint
+  // Leather – tint embedded transparent PNG textures
   const texKey = PIECE_TEX[piece]||'leather_helmet';
   const dataUrl = LEATHER_TEXTURES[texKey];
   if(!dataUrl){ ctx.fillStyle='#a06540'; ctx.fillRect(0,0,canvas.width,canvas.height); return; }
@@ -1360,7 +1360,6 @@ async function drawLeatherPreview(canvas, piece, hex, armourType){
   const baseImg = await loadImg(dataUrl);
   if(!baseImg){ ctx.fillStyle='#a06540'; ctx.fillRect(0,0,canvas.width,canvas.height); return; }
 
-  // Draw base to offscreen canvas and read pixels
   const off = document.createElement('canvas');
   off.width = 16; off.height = 16;
   const oc = off.getContext('2d');
@@ -1373,21 +1372,11 @@ async function drawLeatherPreview(canvas, piece, hex, armourType){
   const tG = parseInt(h.slice(3,5),16);
   const tB = parseInt(h.slice(5,7),16);
 
-  // Tint: for each pixel, if it's the dark background keep it dark,
-  // otherwise multiply-blend with the tint colour
   for(let i=0;i<id.data.length;i+=4){
-    const r=id.data[i], g=id.data[i+1], b=id.data[i+2];
-    const brightness = (r+g+b)/3;
-    if(brightness < 12){
-      // Near-black background – make transparent so canvas bg shows through
-      id.data[i]=0; id.data[i+1]=0; id.data[i+2]=0; id.data[i+3]=0;
-    } else {
-      // Armour pixel – multiply with tint
-      id.data[i]  = Math.round(r * tR / 255);
-      id.data[i+1]= Math.round(g * tG / 255);
-      id.data[i+2]= Math.round(b * tB / 255);
-    }
-    id.data[i+3] = 255;
+    if(id.data[i+3]===0) continue; // skip transparent pixels
+    id.data[i]   = Math.round(id.data[i]   * tR / 255);
+    id.data[i+1] = Math.round(id.data[i+1] * tG / 255);
+    id.data[i+2] = Math.round(id.data[i+2] * tB / 255);
   }
   oc.putImageData(id, 0, 0);
   ctx.imageSmoothingEnabled = false;
@@ -2932,29 +2921,26 @@ window.sendChatMessage = async function(){
   input.value = '';
   input.style.height = 'auto';
 
-  // Optimistically append the message locally first (no flash)
+  // Set lastMessageTs NOW so the poll skips this message when it comes back
+  lastMessageTs = Date.now();
+
+  // Optimistically append locally — no flash, no reload
   const container = document.getElementById('chatMsgs');
-  if(container){
+  if(container && currentUser){
     const el = document.createElement('div');
     el.className = 'msg-row mine';
     const avatar = HEAD_URL(currentUser.uuid);
-    el.innerHTML = `<img class="msg-avatar" src="${avatar}" style="border-radius:6px" alt="${esc(currentUser.username)}">
-      <div><div class="msg-bubble mine">${esc(content)}</div><div class="msg-time">just now</div></div>`;
+    el.innerHTML = `<img class="msg-avatar" src="${avatar}" style="border-radius:6px" alt="${esc(currentUser.username)}"><div><div class="msg-bubble mine">${esc(content)}</div><div class="msg-time">just now</div></div>`;
     container.appendChild(el);
     container.scrollTop = container.scrollHeight;
   }
 
   try{
-    const res = await fetch(`${API}/chats/${activeChatId}/messages`, {
+    await fetch(`${API}/chats/${activeChatId}/messages`, {
       method: 'POST',
       headers: {'Content-Type':'application/json', Authorization: `Bearer ${getToken()}`},
       body: JSON.stringify({content}),
     });
-    const data = await res.json();
-    if(data.ok && data.id){
-      // Update lastMessageTs so poll doesn't re-add this message
-      lastMessageTs = Date.now();
-    }
   }catch(e){ toast('Failed to send message.'); }
 };
 

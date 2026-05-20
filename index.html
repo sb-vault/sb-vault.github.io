@@ -161,12 +161,12 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .chat-no-select{padding:60px 24px;text-align:center;color:var(--text3);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:13px}
 
 /* ── Card piece previews ──────────────────────────────────────────────── */
-.card-pieces-row{display:flex;align-items:stretch;gap:6px;padding:10px 0 6px;width:100%}
-.card-piece-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 4px 8px;min-height:120px}
-.card-piece-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;width:100%}
-.card-piece-canvas{image-rendering:pixelated;display:block;max-width:100%}
+.card-pieces-row{display:flex;align-items:flex-end;gap:6px;padding:10px 0 6px;width:100%;justify-content:space-evenly}
+.card-piece-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 4px 8px;min-height:130px}
+.card-piece-canvas-wrap{flex:1;display:flex;align-items:flex-end;justify-content:center;width:100%}
+.card-piece-canvas{image-rendering:pixelated;display:block}
 .card-piece-name{font-size:9px;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;font-weight:600}
-.card-piece-tag{font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid;white-space:nowrap;font-weight:600;letter-spacing:.03em}
+.card-piece-tag{font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid;font-weight:600;letter-spacing:.03em}
 .hero-banner{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:32px 36px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:24px;overflow:hidden;position:relative}
 .hero-banner::before{content:'';position:absolute;right:-80px;top:-80px;width:360px;height:360px;background:radial-gradient(ellipse,rgba(255,107,53,.08) 0,transparent 70%);pointer-events:none}
 .hero-title{font-family:'Cinzel',serif;font-size:clamp(22px,3.5vw,38px);font-weight:700;background:linear-gradient(135deg,var(--sunset1),var(--sunset2),var(--sunset3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.15;margin-bottom:10px}
@@ -1108,7 +1108,7 @@ function classifyHex(hex, armourType, pieceName){
   if(!h||!/^#[0-9a-f]{6}$/.test(h))return null;
   // Check piece-specific default FIRST (before any other classification)
   if(armourType&&pieceName&&isDefaultColour(armourType,pieceName,h)){
-    return{cat:'default',label:'Default Armour',colour:'#888'};
+    return{cat:'default',label:'Default',colour:'#888'};
   }
   if(h===BLEACHED_HEX)return{cat:'bleached',label:'Bleached',colour:'#c8906a'};
   if(CRYSTAL_HEXES.has(h))return{cat:'crystal',label:'Crystal',colour:'#44ffee'};
@@ -1438,7 +1438,7 @@ function renderPieceInputs(){
     row.className='piece-row';row.dataset.piece=piece;
 
     // Canvas — piece-specific proportions
-    const FORM_SIZES={Helmet:{w:59,h:34},Chestplate:{w:68,h:59},Leggings:{w:59,h:68},Boots:{w:68,h:39}};
+    const FORM_SIZES={Helmet:{w:59,h:39},Chestplate:{w:59,h:54},Leggings:{w:59,h:68},Boots:{w:59,h:34}};
     const fsz=FORM_SIZES[piece]||{w:64,h:64};
     const canvas=document.createElement('canvas');
     canvas.width=fsz.w*2;canvas.height=fsz.h*2;
@@ -1876,7 +1876,7 @@ function card(l){
 
   // Piece-specific canvas sizes — bigger, fills card width
   const pieces=l.pieces||[];
-  const PIECE_SIZES={Helmet:{w:69,h:40},Chestplate:{w:80,h:69},Leggings:{w:69,h:80},Boots:{w:80,h:46}};
+  const PIECE_SIZES={Helmet:{w:69,h:46},Chestplate:{w:69,h:63},Leggings:{w:69,h:80},Boots:{w:69,h:40}};
 
   // Build per-piece category tags
   const armourType=l.armour_type||'';
@@ -2056,7 +2056,7 @@ window.openListingPanel = function(id){
   const armourType = l.armour_type || '';
 
   // Left column — large armour piece canvases
-  const LP_SIZES = {Helmet:{w:97,h:56},Chestplate:{w:112,h:97},Leggings:{w:97,h:112},Boots:{w:112,h:64}};
+  const LP_SIZES = {Helmet:{w:110,h:74},Chestplate:{w:110,h:101},Leggings:{w:110,h:128},Boots:{w:110,h:64}};
   const lpPiecesHtml = pieces.map((p,i)=>{
     const sz = LP_SIZES[p.piece]||{w:120,h:120};
     const cls = classifyHex(p.hex, armourType, p.piece);
@@ -2807,7 +2807,7 @@ function renderChatView(chat, messages){
   const isClosed = isSeller ? chat.archived_seller===1 : chat.archived_buyer===1;
 
   // Build listing info bar pieces
-  const CHAT_PIECE_SIZES={Helmet:{w:48,h:28},Chestplate:{w:56,h:48},Leggings:{w:48,h:56},Boots:{w:56,h:32}};
+  const CHAT_PIECE_SIZES={Helmet:{w:41,h:28},Chestplate:{w:41,h:38},Leggings:{w:41,h:48},Boots:{w:41,h:24}};
   const piecesHtml = pieces.map((p,i)=>{
     const sz=CHAT_PIECE_SIZES[p.piece]||{w:36,h:36};
     const cls=classifyHex(p.hex, chat.armour_type||'', p.piece);

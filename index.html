@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Vault — SkyBlock Exotic Trading</title>
+<title>The Vault – SkyBlock Exotic Trading</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ── Themes ──────────────────────────────────────────────────────────── */
@@ -89,13 +89,13 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .listing-overlay.open{display:block;animation:fadeIn .2s ease}
 .listing-panel{position:fixed;right:0;top:0;bottom:0;width:820px;max-width:96vw;background:var(--bg2);border-left:1px solid var(--border);z-index:301;display:flex;box-shadow:-8px 0 40px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);will-change:transform}
 .listing-panel.open{transform:translateX(0)}
-/* Left column — armour pieces */
+/* Left column – armour pieces */
 .lp-pieces{width:200px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px 16px;background:var(--bg3);overflow-y:auto}
 .lp-piece-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
 .lp-piece-canvas{image-rendering:pixelated;display:block}
 .lp-piece-name{font-size:10px;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
 .lp-piece-tag{font-size:10px;padding:2px 8px;border-radius:5px;border:1px solid;font-weight:600}
-/* Right column — listing info */
+/* Right column – listing info */
 .lp-info{flex:1;display:flex;flex-direction:column;overflow-y:auto}
 .lp-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:sticky;top:0;background:var(--bg2);z-index:1}
 .lp-title{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--text);line-height:1.2}
@@ -143,7 +143,7 @@ body.custom-bg header{background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-web
 .msg-row{display:flex;gap:8px;align-items:flex-end}
 .msg-row.mine{flex-direction:row-reverse}
 .msg-avatar{width:26px;height:26px;border-radius:6px;image-rendering:pixelated;border:1px solid var(--border);flex-shrink:0}
-.msg-bubble{max-width:65%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.5;word-wrap:break-word;overflow-wrap:break-word;word-break:normal;white-space:pre-wrap}
+.msg-bubble{max-width:60%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.5;overflow-wrap:break-word;word-break:break-word;white-space:normal;min-width:0}
 .msg-bubble.theirs{background:var(--bg3);color:var(--text);border-bottom-left-radius:4px}
 .msg-bubble.mine{background:linear-gradient(135deg,var(--sunset1),var(--sunset2));color:#fff;border-bottom-right-radius:4px}
 .msg-time{font-size:10px;color:var(--text3);padding:4px 4px 0;white-space:nowrap;display:block}
@@ -393,7 +393,7 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
     </div>
     <div class="header-right">
       <div style="position:relative">
-        <button class="icon-btn" id="aboutBtn" onclick="toggleAbout()">About</button>
+        <button class="icon-btn" id="aboutBtn" onclick="toggleAbout()" style="height:38px">About</button>
         <div id="aboutDropdown">
           <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px">The Vault</div>
           <p style="margin-bottom:10px">Free, open-source marketplace for Hypixel SkyBlock exotic, crystal-dyed, and fairy-dyed armour.</p>
@@ -406,16 +406,16 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
           </div>
         </div>
       </div>
-      <!-- Auth area — swaps between login button and user pill -->
+      <!-- Auth area -->
       <div id="authArea">
-        <button class="icon-btn primary" onclick="startLogin()">Login with Minecraft</button>
+        <button class="icon-btn primary" onclick="startLogin()" style="height:38px">Login with Minecraft</button>
       </div>
       <div class="chat-btn-wrap" id="chatBtnWrap" style="display:none">
-        <button class="icon-btn" id="chatBtn" onclick="openChatPanel()" title="Messages">Chat
+        <button class="icon-btn" id="chatBtn" onclick="openChatPanel()" title="Messages" style="height:38px">Chat
           <span class="chat-badge" id="chatBadge"></span>
         </button>
       </div>
-      <button class="icon-btn" id="settingsBtn" title="Settings" style="font-size:22px;width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;line-height:1">⚙</button>
+      <button class="icon-btn" id="settingsBtn" title="Settings" style="height:38px;width:38px;padding:0;font-size:18px;display:flex;align-items:center;justify-content:center">⚙</button>
     </div>
   </div>
 </header>
@@ -633,7 +633,7 @@ footer{text-align:center;padding:20px 0 4px;color:var(--text3);font-size:11px;le
     </div>
     <div class="modal-body">
       <div class="how-grid" style="margin-bottom:20px">
-        <div class="how-card"><div class="how-num">01</div><div class="how-title">Verify Your Account</div><div class="how-desc">Click "Login with Minecraft" — you'll be taken to MC-ID to verify your Minecraft account once. No password needed.</div></div>
+        <div class="how-card"><div class="how-num">01</div><div class="how-title">Verify Your Account</div><div class="how-desc">Click "Login with Minecraft" – you'll be taken to MC-ID to verify your Minecraft account once. No password needed.</div></div>
         <div class="how-card"><div class="how-num">02</div><div class="how-title">Post a Listing</div><div class="how-desc">Pick your armour type, select pieces, enter hex colour codes. The category is detected automatically from the colour.</div></div>
         <div class="how-card"><div class="how-num">03</div><div class="how-title">Browse &amp; Offer</div><div class="how-desc">Browse active listings, filter by category. Hit "Offer" to start a chat with the seller and negotiate.</div></div>
         <div class="how-card"><div class="how-num">04</div><div class="how-title">Trade &amp; Complete</div><div class="how-desc">Reach out via Hypixel IGN, agree on a trade, execute in-game, then mark the listing complete.</div></div>
@@ -864,7 +864,7 @@ const SCOPE          = 'openid profile';
 const HEAD_URL = uuid => `https://mc-heads.net/avatar/${uuid}/32`;
 
 /* ════════════════════════════════════════════════════════════════════
-   AUTH — MC-ID PKCE FLOW
+   AUTH – MC-ID PKCE FLOW
 ════════════════════════════════════════════════════════════════════ */
 let currentUser = null;
 
@@ -906,7 +906,7 @@ async function handleCallback(){
   const retState  = params.get('state');
   const error     = params.get('error');
 
-  // Nothing to handle — not a callback
+  // Nothing to handle – not a callback
   if(!code && !error) return;
 
   // Clean URL immediately so refresh doesn't re-trigger
@@ -1034,7 +1034,7 @@ const FAIRY_HEXES = new Set([
   '#b266ff','#9933ff','#7f00ff','#6600cc','#4c0099','#330066',
 ]);
 
-// Original armour colours — keyed by lowercase armour type fragment
+// Original armour colours – keyed by lowercase armour type fragment
 // Value: object with piece initials (h/c/l/b) mapping to lowercase hex
 // 'full' means all four pieces share that hex
 const ORIGINAL_COLOURS = {
@@ -1080,7 +1080,7 @@ function isDefaultColour(armourType, pieceName, hex){
   if(!armourType||!pieceName||!hex)return false;
   const h=normHex(hex);
   const al=armourType.toLowerCase();
-  // Find matching entry — check if armour type string contains the key
+  // Find matching entry – check if armour type string contains the key
   for(const [key,colours] of Object.entries(ORIGINAL_COLOURS)){
     if(!al.includes(key))continue;
     if(colours.full){
@@ -1128,7 +1128,7 @@ function classifyPieces(pieces, armourType){
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   ARMOUR RENDERING — leather tint + skull textures + default colours
+   ARMOUR RENDERING – leather tint + skull textures + default colours
 ════════════════════════════════════════════════════════════════════ */
 const MC_TEX = 'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.4/assets/minecraft/textures/item/';
 const MC_SKIN = 'https://textures.minecraft.net/texture/';
@@ -1141,7 +1141,7 @@ const PIECE_TEX = {
 
 // Material types per armour set per piece
 // 'leather' = dyeable (default), 'chainmail', 'iron', 'gold', 'diamond', 'netherite'
-// Key = lowercase armour type substring — checked with .includes()
+// Key = lowercase armour type substring – checked with .includes()
 // Value = {h, c, l, b} piece keys
 const ARMOUR_MATERIALS = {
   // ── Vanilla sets ───────────────────────────────────────────────────
@@ -1198,7 +1198,7 @@ const ARMOUR_MATERIALS = {
   'guardian chestplate':  {h:'leather', c:'chainmail',l:'leather',  b:'leather'},
 };
 
-// All other sets not listed above are LEATHER (dyeable) — this covers:
+// All other sets not listed above are LEATHER (dyeable) – this covers:
 // All dragon armour, all slayer armour (tarantula, revenant, sven, voidgloom, inferno),
 // All crimson/terror/aurora/fervor/hollow, all dungeon armour (necron/goldor/storm/maxor/wither),
 // Farm suit/armour, pumpkin, cactus, leaflet, speedster, spooky, snow suit,
@@ -1315,17 +1315,27 @@ function loadImg(url){
   });
 }
 
-// mc-heads.net/head/<texture-hash> returns a rendered face image with CORS
+// Skull textures: fetch raw skin PNG via Worker proxy, then render face+hat layers
 async function drawSkullPreview(canvas, hash){
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  const img = await loadImg(`https://mc-heads.net/head/${hash}`);
-  if(img){
+  // Worker proxies textures.minecraft.net with CORS headers
+  const skin = await loadImg(`${API}/skull/${hash}`);
+  if(skin){
+    // MC skin layout (64x64): face at 8,8→16,16; hat overlay at 40,8→48,16
+    const unit = (skin.naturalWidth||64) / 64;
+    const off = document.createElement('canvas');
+    off.width = canvas.width; off.height = canvas.height;
+    const oc = off.getContext('2d');
+    oc.imageSmoothingEnabled = false;
+    // Base face layer
+    oc.drawImage(skin, 8*unit,8*unit, 8*unit,8*unit, 0,0, canvas.width,canvas.height);
+    // Hat overlay (may be transparent if not set)
+    oc.drawImage(skin, 40*unit,8*unit, 8*unit,8*unit, 0,0, canvas.width,canvas.height);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(off, 0,0);
   } else {
-    ctx.fillStyle = '#888';
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#666'; ctx.fillRect(0,0,canvas.width,canvas.height);
   }
 }
 
@@ -1360,7 +1370,7 @@ async function drawLeatherPreview(canvas, piece, hex, armourType){
     return;
   }
 
-  // Leather — tinted rendering
+  // Leather – tinted rendering
   const tex = PIECE_TEX[piece]||'leather_helmet';
   const [baseImg, overlayImg] = await Promise.all([
     loadImg(MC_TEX+tex+'.png'),
@@ -1437,8 +1447,8 @@ function renderPieceInputs(){
     const row=document.createElement('div');
     row.className='piece-row';row.dataset.piece=piece;
 
-    // Canvas — piece-specific proportions
-    const FORM_SIZES={Helmet:{w:59,h:39},Chestplate:{w:59,h:54},Leggings:{w:59,h:68},Boots:{w:59,h:34}};
+    // Canvas – piece-specific proportions
+    const FORM_SIZES={Helmet:{w:56,h:48},Chestplate:{w:62,h:52},Leggings:{w:52,h:66},Boots:{w:62,h:38}};
     const fsz=FORM_SIZES[piece]||{w:64,h:64};
     const canvas=document.createElement('canvas');
     canvas.width=fsz.w*2;canvas.height=fsz.h*2;
@@ -1454,7 +1464,7 @@ function renderPieceInputs(){
     lbl.className='piece-row-label';lbl.textContent=piece;
     right.appendChild(lbl);
 
-    // Hex input with permanent # — disabled for non-leather pieces
+    // Hex input with permanent # – disabled for non-leather pieces
     const armourTypeNow2 = document.getElementById('armourTypeInput').value.trim();
     const dyeable = isPieceDyeable(armourTypeNow2, piece);
     const material = armourTypeNow2 ? getPieceMaterial(armourTypeNow2, piece) : 'leather';
@@ -1493,7 +1503,7 @@ function renderPieceInputs(){
     row.appendChild(right);
     container.appendChild(row);
 
-    // Events — no syncing, each piece is independent
+    // Events – no syncing, each piece is independent
     hexIn.addEventListener('input',()=>{
       if(!dyeable) return;
       const hex='#'+hexIn.value;
@@ -1553,7 +1563,7 @@ function getPieceData(){
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   PRICE PARSER — supports k, m, b, kk
+   PRICE PARSER – supports k, m, b, kk
 ════════════════════════════════════════════════════════════════════ */
 function sanitisePrice(inp){
   // Allow digits, decimal point, k/m/b at end only
@@ -1874,9 +1884,9 @@ function card(l){
     ?`<button class="card-btn done" onclick="event.stopPropagation();markDone('${esc(l.id)}')" title="Mark sold">✓</button><button class="card-btn del" onclick="event.stopPropagation();delListing('${esc(l.id)}')" title="Delete">✕</button>`
     :'';
 
-  // Piece-specific canvas sizes — bigger, fills card width
+  // Piece-specific canvas sizes – bigger, fills card width
   const pieces=l.pieces||[];
-  const PIECE_SIZES={Helmet:{w:69,h:46},Chestplate:{w:69,h:63},Leggings:{w:69,h:80},Boots:{w:69,h:40}};
+  const PIECE_SIZES={Helmet:{w:64,h:56},Chestplate:{w:72,h:60},Leggings:{w:60,h:76},Boots:{w:72,h:44}};
 
   // Build per-piece category tags
   const armourType=l.armour_type||'';
@@ -1933,7 +1943,7 @@ function card(l){
 </div>`;
 }
 
-// Render canvases after DOM update — batched via rAF to avoid blocking UI
+// Render canvases after DOM update – batched via rAF to avoid blocking UI
 function renderCardCanvases(){
   requestAnimationFrame(()=>{
     document.querySelectorAll('.card-piece-canvas[data-piece][data-hex]').forEach(canvas=>{
@@ -2055,7 +2065,7 @@ window.openListingPanel = function(id){
   const pieces = l.pieces || [];
   const armourType = l.armour_type || '';
 
-  // Left column — large armour piece canvases
+  // Left column – large armour piece canvases
   const LP_SIZES = {Helmet:{w:110,h:74},Chestplate:{w:110,h:101},Leggings:{w:110,h:128},Boots:{w:110,h:64}};
   const lpPiecesHtml = pieces.map((p,i)=>{
     const sz = LP_SIZES[p.piece]||{w:120,h:120};
@@ -2078,7 +2088,7 @@ window.openListingPanel = function(id){
     });
   });
 
-  // Right column — listing info
+  // Right column – listing info
   const catColours={exotic:'#ff6b35',crystal:'#44ffee',fairy:'#ff66b2',bleached:'#c8906a',pure:'#999',default:'#888'};
   const catCol = catColours[l.cat]||catColours.exotic;
   const pieceColours = pieces.map(p=>{const c=classifyHex(p.hex,armourType,p.piece);return c?c.colour:'#888';});
@@ -2826,7 +2836,7 @@ function renderChatView(chat, messages){
       const parts = m.content.split(':');
       const amt = parts[1]||'';
       const msg = parts.slice(2).join(':');
-      return`<div class="msg-offer">Offer: ${fmtC(amt)} coins${msg?` — ${esc(msg)}`:''}
+      return`<div class="msg-offer">Offer: ${fmtC(amt)} coins${msg?` – ${esc(msg)}`:''}
       <div style="font-size:10px;color:var(--text3);margin-top:2px">${ago(m.ts)}</div></div>`;
     }
     const avatar = `https://mc-heads.net/avatar/${esc(m.sender_uuid||'steve')}/32`;
@@ -2842,7 +2852,7 @@ function renderChatView(chat, messages){
   }).join('');
 
   const imgBtnHtml = isSeller
-    ? `<button class="chat-img-btn" onclick="triggerImageUpload()" title="Send image" style="font-size:20px;font-weight:300">+</button>`
+    ? `<button class="chat-img-btn" onclick="triggerImageUpload()" title="Send image" style="font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0">+</button>`
     : '';
 
   document.getElementById('chatMain').innerHTML = `
@@ -2867,7 +2877,7 @@ function renderChatView(chat, messages){
     </div>
     ${pieces.length ? `
     <div style="margin:10px 16px 0;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">${esc(chat.armour_type||'')}${chat.set_name?` — ${esc(chat.set_name)}`:''}</div>
+      <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">${esc(chat.armour_type||'')}${chat.set_name?` – ${esc(chat.set_name)}`:''}</div>
       <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap">${piecesHtml}</div>
     </div>` : ''}
     <div class="offer-pin" style="margin-top:10px">

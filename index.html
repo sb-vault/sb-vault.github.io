@@ -149,7 +149,9 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .offers-toggle input{accent-color:var(--green)}
 
 /* ── Sets grid ───────────────────────────────────────────────────────── */
-.sets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.sets-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:900px){.sets-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:580px){.sets-grid{grid-template-columns:1fr}}
 .set-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .set-card:hover{border-color:var(--text3);box-shadow:var(--card-shadow)}
 .set-stripe{height:3px;background:var(--border)}
@@ -159,10 +161,10 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .set-type{font-size:11px;color:var(--text3);margin-top:2px}
 .set-for-offers{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid rgba(78,203,113,.3);color:var(--green);background:rgba(78,203,113,.08);flex-shrink:0;margin-top:1px}
 .set-pieces{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px}
-.set-piece-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 3px}
-.set-piece-canvas{image-rendering:pixelated;display:block}
-.set-piece-name{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
-.set-piece-tag{font-size:8px;padding:1px 5px;border-radius:3px;border:1px solid;font-weight:600}
+.set-piece-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 4px 6px;min-height:100px}
+.set-piece-canvas{image-rendering:pixelated;display:block;flex:1}
+.set-piece-name{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;font-weight:600;text-align:center;line-height:1.2}
+.set-piece-tag{font-size:8px;padding:1px 5px;border-radius:3px;border:1px solid;font-weight:600;text-align:center}
 .set-foot{display:flex;align-items:center;justify-content:space-between}
 .set-cats{display:flex;gap:4px;flex-wrap:wrap}
 .set-ts{font-size:10px;color:var(--text3)}
@@ -886,13 +888,7 @@ const ARMOUR_MATERIALS = {
   'spring boots':{h:'leather',c:'leather',l:'leather',b:'chainmail'},
   'guardian chestplate':{h:'leather',c:'chainmail',l:'leather',b:'leather'},
 };
-const MATERIAL_TEX = {
-  chainmail:{Helmet:'chainmail_helmet',Chestplate:'chainmail_chestplate',Leggings:'chainmail_leggings',Boots:'chainmail_boots'},
-  iron:{Helmet:'iron_helmet',Chestplate:'iron_chestplate',Leggings:'iron_leggings',Boots:'iron_boots'},
-  gold:{Helmet:'golden_helmet',Chestplate:'golden_chestplate',Leggings:'golden_leggings',Boots:'golden_boots'},
-  diamond:{Helmet:'diamond_helmet',Chestplate:'diamond_chestplate',Leggings:'diamond_leggings',Boots:'diamond_boots'},
-  netherite:{Helmet:'netherite_helmet',Chestplate:'netherite_chestplate',Leggings:'netherite_leggings',Boots:'netherite_boots'},
-};
+// Material item textures now defined in rendering section as MATERIAL_ITEM_TEX
 function getPieceMaterial(armourType, piece){
   const key = armourType.toLowerCase();
   const pKey = {Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'}[piece]||'h';
@@ -903,14 +899,7 @@ function getPieceMaterial(armourType, piece){
 }
 function isPieceDyeable(armourType, piece){ return getPieceMaterial(armourType, piece) === 'leather'; }
 
-const SKULL_HELMETS = { 'superior dragon': 'd4981ca4-723e-3237-8099-7c8f5637b3c3' };
-function getSkullHash(armourType){
-  const key = armourType.toLowerCase();
-  for(const [k,uuid] of Object.entries(SKULL_HELMETS)){
-    if(key.includes(k)) return uuid;
-  }
-  return null;
-}
+// Skull lookup now handled inside drawLeatherPreview via SKULL_TEXTURES map
 
 const ARMOUR_DEFAULTS = {
   'superior dragon':{h:'#f2df11',c:'#f2df11',l:'#f2df11',b:'#f25d18'},
@@ -946,87 +935,387 @@ function getDefaultHex(armourType, piece){
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   ARMOUR RENDERING
+   ARMOUR RENDERING — 3D ISOMETRIC (Minecraft armor_layer UV mapping)
+   
+   Sources:
+   - Armor textures: assets/minecraft/textures/models/armor/
+     leather_layer_1.png  (helmet, chestplate, boots outer)
+     leather_layer_2.png  (leggings)
+   - Non-leather item icons: assets/minecraft/textures/item/
+   - Skull helmets: mc-heads.net avatar from NEU SkullOwner.Id UUID
+   
+   The 3D look uses canvas 2D with perspective skew transforms to fake
+   isometric projection: top face (skewed), left face, right face (darker).
+   
+   armor_layer_1.png UV layout (64×32):
+     Helmet:     top=0,0  8×8 | front=8,8 8×8 | left=0,8 8×8 | right=16,8 8×8 | back=24,8 8×8
+     Chestplate: top=20,0 8×4 | front=20,20 8×12 | left=16,20 4×12 | right=28,20 4×12
+     Boots:      top=0,16 4×4 | front=4,20 4×8 | left=0,20 4×8 | right=8,20 4×8
+   armor_layer_2.png UV layout (64×32):
+     Leggings:   top=4,0  8×4 | front=4,4 8×12 (L hip) / back=12,4 8×12 (R hip)
 ════════════════════════════════════════════════════════════════════ */
-const MC_TEX = 'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.4/assets/minecraft/textures/item/';
-const LEATHER_TEXTURES = {
-  'leather_helmet':'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABQklEQVR4nOWSPYrCUBSFvxcSCxPE+IMIaiVkD0KQ9IKNSzBZilvICmwtrQQLswRBUKs0FhpsHv4g8U01w8yYWA/M6c7lnA/u5cKfled56p13XVcBiKyy7/tKCEGj0UDTNDabDd1ul8lk8pLXfg+CIFDD4RDbtgmCgPF4jOM41Go1BoOBegvwfV95nofjONxuN1qtFsfjESkl5XKZXq/HaDT6AdG/m2q1SqfT4fF4kKYpi8WC7XaLlJJKpUKz2WS9XpMLuFwu3O93kiTBNE1msxmmaXI4HNjv97TbbaSU+YDn80mhUGA6nRKGoXBdV+m6znK5FKVSSdXrdWzbzgb0+31lGAZCCIrFIgCr1err6oZhIKXker1mHzFNU06nE3Ecv4Q+lSRJ/gpRFIkoirAsS8Vx/FI+n8/sdjvm83nm7/xnfQAiGn9RyQbpeAAAAABJRU5ErkJggg==',
-  'leather_chestplate':'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACIklEQVR4nKWSTUtqURSGn31y+4l4TjoITJoGGUiTEHJif8GBP8Bmjfoh/YMGgmMbNgiJJg2aRpQQTRIUO4jl2X7tc9x3cssr98q9cJ/ZYr3rZb1rb1hDqVQy63p/5fj4+J+HQwBnZ2dma2uL8XiM1pr5fE6r1VoRVqtVUygU6HQ6OI6DUorz83MRAohEItRqNYbDIVprLi8vV4aPjo5MPp/n5OSE8XiMUupbYwH4vo/v+1iWhTGG3d1dTk9Pv2Ps7e2Rz+dJJpMkEgmCIKDf7y8jZDIZOp0O6XSaXq9HqVRie3ubWCxmYrEY5XKZTCbDw8MDi8UC3/cJh8NLg9FoxN3dHfv7+ySTScLhMDs7OxSLRQ4PD9FaEwQBruvieR6fn59IKZcRut0urVaL+/t7Dg4OGI1GWJaFbdtEo1EeHx+ZzWakUim63S5XV1e8vr4uN7i4uBAAUkozHA6xbZter8fz8zO2beM4DrPZDIDb21sajYZYecYvgiDA8zyUUmit2dzcZDKZkEqlkFLy9vaG53m//4MvpJR8fHywWCwwxhCJRDDGIITAsiy01ggh1hsIIRgMBsTjcYQQaK2Jx+N4nvd9NMdxVgysXwvXdXl6emIymSCEYDqdEgqFmM/nuK7Ly8sLSqn1G1xfX4tsNmuCICCXy+G6Lu12m42NDfr9Pjc3NzSbzZUMq4F+UqlUTDab5f39nUQigZQSpRT1ev2P+v/iB/i09HOJY46rAAAAAElFTkSuQmCC',
-  'leather_leggings':'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABfklEQVR4nM2PsYrqQBSG/ySbMBARIQQEH8PWV7Gy9wXUl7EULH0DEbEzForEJgpCZIwykzEBM2eb3ezmire9969mPma+8x/gX8f4EwwGA1JKwXEcGIYBxhju9zu01kiSBOPxuPLn4/el1+tRv9/H8/mE4zhI0xRCCCilYJomdrsdOOc0m81Kifl96HQ65HkeXNdFlmWQUuJ2u8G2bdi2DcYYXNdFo9GoNC4F8/ncIKJy6vl8xnK5xHq9RpIkMAwDtm3DsqyKoLICYwxxHCNNU1wuFwRBgDzP0W63YVkWhBAoiuK9IEkSTKdTHI9HCCEwmUwMAOCcUxiGL9NfMhqNiIhov99Tt9ulbz4cDulLUuEvDYqiQBAEOBwOIPp5xznHdruF1hr1ev39CtfrFavVClEUgXNe8tPphMViAa01oih6L/B9H7VaDc1mE61Wq8J930ee359gLkcAAABJRU5ErkJggg==',
-  'leather_boots':'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABiUlEQVR4nNWSvariUBSFP39yjRqCKBZ2KcTaBxAbS3sLLTVl3sFX8CFstBAfwcJKS7EOihIlmIgmxj/OFAOZm+FeZpopZnVrsdd3NpsD/71ivweGYYhischqtWI0GsUA2u22qFar7HY7BoNBpJP8bLrdrtB1nY+PDxzHCfNKpUKn0+FwOGDbthgOh7EvAcVikVKpxP1+5/l8hvnz+UQIQSKRQAgR2TgCcBwHy7I4n8+4rhvmp9MJ0zTxPI/r9fo9IJn8aYMgIAiCMH+9XmQyGVKpFKqqRgDxzyaVSuH7PpZloShKBBCPx7lcLrzf768B/X5fNBoNMpkMmqbxeDzCIVVVsW0bRVFoNpvouh4eIgnQ6/WEYRjk83nm8zmmaSLLcuSl/X6Ppmm0Wi3y+TyNRgNeyl8qTKdTHI9HCCEwmUwMAOCcUxiGL9NfMhqNiIhov99Tt9ulbz4cDulLUuEvDYqiQBAEOBwOIPp5xznHdruF1hr1ev39CtfrFavVClEUgXNe8tPphMViAa01oih6L/B9H7VaDc1mE61Wq8J934+l87+i9h8qjmfRWAAAAABJRU5ErkJggg==',
-};
-const PIECE_TEX = {Helmet:'leather_helmet',Chestplate:'leather_chestplate',Leggings:'leather_leggings',Boots:'leather_boots'};
 
+// Base URL for Minecraft texture assets (InventivetalentDev mirror with CORS)
+const MC_ASSET = 'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.4/assets/minecraft/textures/';
+const MC_ARMOR_URL = MC_ASSET + 'models/armor/';
+const MC_ITEM_URL  = MC_ASSET + 'item/';
+
+// Image cache
 const imgCache = {};
 function loadImg(url){
   if(imgCache[url]) return Promise.resolve(imgCache[url]);
-  return new Promise(res => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => { imgCache[url] = img; res(img); };
-    img.onerror = () => res(null);
-    img.src = url;
+  return new Promise(res=>{
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>{ imgCache[url]=img; res(img); };
+    img.onerror=()=>res(null);
+    img.src=url;
   });
 }
 
-async function drawLeatherPreview(canvas, piece, hex, armourType){
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Skull helmet
-  if(piece === 'Helmet' && armourType){
-    const uuid = getSkullHash(armourType);
-    if(uuid){
-      const img = await loadImg(`https://mc-heads.net/avatar/${uuid}/128`);
-      if(img){ ctx.imageSmoothingEnabled=false; ctx.drawImage(img,0,0,canvas.width,canvas.height); }
-      else { ctx.fillStyle='#888'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+// Tint an ImageData in-place with a hex colour (greyscale-brightness × tint)
+function tintImageData(id, hexStr){
+  const h=normHex(hexStr)||BLEACHED_HEX;
+  const tR=parseInt(h.slice(1,3),16), tG=parseInt(h.slice(3,5),16), tB=parseInt(h.slice(5,7),16);
+  const d=id.data;
+  for(let i=0;i<d.length;i+=4){
+    if(d[i+3]===0) continue;
+    const bright=(d[i]+d[i+1]+d[i+2])/3/255;
+    d[i]=Math.round(tR*bright); d[i+1]=Math.round(tG*bright); d[i+2]=Math.round(tB*bright);
+  }
+}
+
+// Crop a region from a loaded Image onto a new OffscreenCanvas/canvas
+function cropRegion(img, sx, sy, sw, sh){
+  const c=document.createElement('canvas'); c.width=sw; c.height=sh;
+  const x=c.getContext('2d'); x.imageSmoothingEnabled=false;
+  x.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+  return c;
+}
+
+// Darken an ImageData by a multiplier (0–1)
+function darkenImageData(id, factor){
+  const d=id.data;
+  for(let i=0;i<d.length;i+=4){
+    if(d[i+3]===0) continue;
+    d[i]=Math.round(d[i]*factor); d[i+1]=Math.round(d[i+1]*factor); d[i+2]=Math.round(d[i+2]*factor);
+  }
+}
+
+// Draw a texture region as a skewed isometric face onto ctx.
+// Uses ctx.transform to map a rectangle to a parallelogram.
+// face: 'top' | 'left' | 'right'
+// x,y = destination top-left of the face bounding box
+// w,h = pixel width/height of the face in output space
+// srcCanvas = source canvas/image to sample from
+function drawIsoFace(ctx, face, dx, dy, w, h, srcCanvas){
+  ctx.save();
+  ctx.imageSmoothingEnabled=false;
+  
+  if(face==='top'){
+    // Top face: rhombus going right-down and left-down
+    // points: TL=(dx+w/2, dy), TR=(dx+w, dy+h/2), BR=(dx+w/2, dy+h), BL=(dx, dy+h/2)
+    // We achieve this with a transform that maps the rect [0,0,w,h] to those 4 corners
+    ctx.transform(1, 0.5, -1, 0.5, dx+w/2, dy);
+    ctx.drawImage(srcCanvas, 0, 0, w, h);
+  } else if(face==='left'){
+    // Left face: parallelogram going right (slanted) and straight down
+    // TL=(dx,dy+h*0.25), TR=(dx+w/2,dy), BR=(dx+w/2,dy+h), BL=(dx,dy+h*1.25) — but simpler:
+    ctx.transform(1, -0.5, 0, 1, dx, dy + h*0.5);
+    ctx.drawImage(srcCanvas, 0, 0, w, h);
+  } else { // right
+    // Right face: darker side
+    ctx.transform(1, 0.5, 0, 1, dx + w, dy);
+    ctx.drawImage(srcCanvas, 0, 0, w, h);
+  }
+  ctx.restore();
+}
+
+// ── UV regions for each piece on armor_layer_1.png (64×32 texture)
+// Each entry: {face: {sx,sy,sw,sh}} — coordinates in the 64×32 texture
+// Minecraft armor layer textures are in 64×32 pixels; all values are in texels.
+const UV_LAYER1 = {
+  Helmet: {
+    top:   {sx:2,sy:0,sw:8,sh:4},
+    front: {sx:8,sy:8,sw:8,sh:8},
+    left:  {sx:0,sy:8,sw:8,sh:8},
+    right: {sx:16,sy:8,sw:8,sh:8},
+  },
+  Chestplate: {
+    top:   {sx:20,sy:0,sw:8,sh:4},
+    front: {sx:20,sy:4,sw:8,sh:12},
+    left:  {sx:16,sy:4,sw:4,sh:12},
+    right: {sx:28,sy:4,sw:4,sh:12},
+  },
+  Boots: {
+    top:   {sx:0,sy:16,sw:4,sh:4},
+    front: {sx:4,sy:20,sw:4,sh:8},
+    left:  {sx:0,sy:20,sw:4,sh:8},
+    right: {sx:8,sy:20,sw:4,sh:8},
+  },
+};
+// Leggings use armor_layer_2.png
+const UV_LAYER2 = {
+  Leggings: {
+    top:   {sx:4,sy:0,sw:8,sh:4},
+    front: {sx:4,sy:4,sw:8,sh:12},
+    left:  {sx:0,sy:4,sw:4,sh:12},
+    right: {sx:12,sy:4,sw:4,sh:12},
+  },
+};
+
+// Non-leather item textures (flat icon from item/ folder)
+const MATERIAL_ITEM_TEX = {
+  chainmail:{Helmet:'chainmail_helmet',Chestplate:'chainmail_chestplate',Leggings:'chainmail_leggings',Boots:'chainmail_boots'},
+  iron:     {Helmet:'iron_helmet',     Chestplate:'iron_chestplate',     Leggings:'iron_leggings',     Boots:'iron_boots'},
+  gold:     {Helmet:'golden_helmet',   Chestplate:'golden_chestplate',   Leggings:'golden_leggings',   Boots:'golden_boots'},
+  diamond:  {Helmet:'diamond_helmet',  Chestplate:'diamond_chestplate',  Leggings:'diamond_leggings',  Boots:'diamond_boots'},
+  netherite:{Helmet:'netherite_helmet',Chestplate:'netherite_chestplate',Leggings:'netherite_leggings',Boots:'netherite_boots'},
+};
+const MATERIAL_FALLBACK_COLOURS = {chainmail:'#a0a8b0',iron:'#d4d4d4',gold:'#f5c542',diamond:'#5deafe',netherite:'#5a4a5a'};
+
+// Fetch skull texture URL from NEU repo for a given armour type
+// Decodes base64 texture value from the nbttag's SkullOwner.Properties.textures[0].Value
+// We only have a handful hardcoded; for others we use mc-heads avatar
+const SKULL_TEXTURES = {
+  // UUID from NEU repo SUPERIOR_DRAGON_HELMET.json SkullOwner.Id
+  'superior dragon': 'd4981ca4-723e-3237-8099-7c8f5637b3c3',
+  // Add more here as needed from NEU items/*.json SkullOwner.Id fields
+};
+
+// Attempt to load skull skin and draw just the head face (front=8,8 to 16,16 on 64×64 skin)
+async function drawSkullArmour3D(canvas, armourType){
+  const ctx=canvas.getContext('2d');
+  const cw=canvas.width, ch=canvas.height;
+  ctx.clearRect(0,0,cw,ch);
+  const uuid = SKULL_TEXTURES[armourType.toLowerCase()];
+  
+  // Try mc-heads avatar (renders the face+hat layers nicely, CORS-enabled)
+  const avatarUrl = uuid
+    ? `https://mc-heads.net/avatar/${uuid}/64`
+    : null;
+  
+  if(avatarUrl){
+    const img = await loadImg(avatarUrl);
+    if(img){
+      // Draw as a 3D cube face (helmet-like isometric box)
+      // Use the avatar image for the front face and a darkened copy for side
+      const S = Math.min(cw,ch);
+      
+      // Create front face canvas from avatar
+      const front = document.createElement('canvas'); front.width=8; front.height=8;
+      const fc=front.getContext('2d'); fc.imageSmoothingEnabled=false;
+      fc.drawImage(img,0,0,8,8);
+      
+      // Top: slightly lighter, side view of top of head
+      const top = document.createElement('canvas'); top.width=8; top.height=4;
+      const tc=top.getContext('2d'); tc.imageSmoothingEnabled=false;
+      tc.drawImage(img,0,0,8,4); // use top 4 rows as approximate top face
+      
+      // Right side: darkened version
+      const right = document.createElement('canvas'); right.width=8; right.height=8;
+      const rc=right.getContext('2d'); rc.imageSmoothingEnabled=false;
+      rc.drawImage(img,0,0,8,8);
+      const rid=rc.getImageData(0,0,8,8); darkenImageData(rid,0.62); rc.putImageData(rid,0,0);
+      
+      // isometric scaling: total width = fw + rw, total height = th + fh
+      // with iso angles: top face projects h/2 upward, right adds h/2 vertically
+      const fw=Math.round(cw*0.6), fh=Math.round(ch*0.65);
+      const rw=cw-fw, th=Math.round(fh*0.35);
+      const baseY=th;
+      
+      // top face
+      draw3DFace(ctx,'top', fw/2, 0, fw, th, top);
+      // front face
+      draw3DFace(ctx,'front', 0, baseY, fw, fh, front);
+      // right face
+      draw3DFace(ctx,'right', fw, baseY, rw, fh, right);
       return;
     }
   }
-  const material = armourType ? getPieceMaterial(armourType, piece) : 'leather';
-  if(material !== 'leather'){
-    const texName = MATERIAL_TEX[material]?.[piece];
-    if(texName){
-      const img = await loadImg(MC_TEX + texName + '.png');
-      if(img){ ctx.imageSmoothingEnabled=false; ctx.drawImage(img,0,0,canvas.width,canvas.height); }
-      else { const fb={chainmail:'#a0a8b0',iron:'#d8d8d8',gold:'#f5c542',diamond:'#5deafe',netherite:'#5a4a5a'}; ctx.fillStyle=fb[material]||'#888'; ctx.fillRect(0,0,canvas.width,canvas.height); }
-    }
-    return;
-  }
-  const texKey = PIECE_TEX[piece]||'leather_helmet';
-  const dataUrl = LEATHER_TEXTURES[texKey];
-  if(!dataUrl){ ctx.fillStyle=BLEACHED_HEX; ctx.fillRect(0,0,canvas.width,canvas.height); return; }
-  const baseImg = await loadImg(dataUrl);
-  if(!baseImg){ ctx.fillStyle=BLEACHED_HEX; ctx.fillRect(0,0,canvas.width,canvas.height); return; }
-  const off = document.createElement('canvas');
-  off.width=16; off.height=16;
-  const oc = off.getContext('2d');
-  oc.imageSmoothingEnabled=false;
-  oc.drawImage(baseImg,0,0,16,16);
-  const id = oc.getImageData(0,0,16,16);
-  const h = normHex(hex) || BLEACHED_HEX;
-  const tR=parseInt(h.slice(1,3),16), tG=parseInt(h.slice(3,5),16), tB=parseInt(h.slice(5,7),16);
-  for(let i=0;i<id.data.length;i+=4){
-    if(id.data[i+3]===0) continue;
-    const bright = (id.data[i]+id.data[i+1]+id.data[i+2])/3/255;
-    id.data[i]=Math.round(tR*bright);
-    id.data[i+1]=Math.round(tG*bright);
-    id.data[i+2]=Math.round(tB*bright);
-  }
-  oc.putImageData(id,0,0);
-  ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(off,0,0,canvas.width,canvas.height);
+  // Fallback: grey box
+  ctx.fillStyle='#666'; ctx.fillRect(0,0,cw,ch);
 }
 
-// Sizes at 3× invicon scale (invicon: H=10×9, C=14×13, L=10×12, B=14×10)
-const CARD_SIZES   = {Helmet:{w:30,h:27},Chestplate:{w:42,h:39},Leggings:{w:30,h:36},Boots:{w:42,h:30}};
-const PANEL_SIZES  = {Helmet:{w:90,h:81},Chestplate:{w:126,h:117},Leggings:{w:90,h:108},Boots:{w:126,h:90}};
+// Core: draw a 3D box face using canvas 2D transforms
+// face: 'top'|'front'|'right'
+// dx,dy,dw,dh = bounding rectangle in canvas space
+// src = ImageBitmap/Canvas to texture the face with
+function draw3DFace(ctx, face, dx, dy, dw, dh, src){
+  ctx.save(); ctx.imageSmoothingEnabled=false;
+  if(face==='top'){
+    // Rhombus: maps rect [0..dw, 0..dh] → parallelogram
+    // TL = (dx+dw*0.5, dy), TR = (dx+dw, dy+dh*0.5)
+    // BR = (dx+dw*0.5, dy+dh), BL = (dx, dy+dh*0.5)
+    ctx.transform(0.5, 0.25, -0.5, 0.25, dx+dw*0.5, dy);
+    ctx.drawImage(src, 0, 0, dw*2, dh*4);
+  } else if(face==='front'){
+    // Straight rectangle
+    ctx.drawImage(src, dx, dy, dw, dh);
+  } else { // right
+    // Parallelogram slanting right upward: TL=(dx,dy), TR=(dx+dw,dy-dh*0.25), BL=(dx,dy+dh), BR=(dx+dw,dy+dh*0.75)
+    ctx.transform(1, -0.25, 0, 1, dx, dy);
+    ctx.drawImage(src, 0, 0, dw, dh);
+  }
+  ctx.restore();
+}
+
+// Main entry: draw a leather armour piece as a 3D isometric shape
+// canvas: target canvas element (sized by CARD_SIZES/PANEL_SIZES)
+// piece: 'Helmet'|'Chestplate'|'Leggings'|'Boots'
+// hex: dye colour as '#rrggbb'
+// armourType: full armour type name (e.g. 'Superior Dragon Armour')
+async function drawLeatherPreview(canvas, piece, hex, armourType){
+  const ctx=canvas.getContext('2d');
+  const cw=canvas.width, ch=canvas.height;
+  ctx.clearRect(0,0,cw,ch);
+  
+  // ── Skull helmet? ────────────────────────────────────────────────
+  if(piece==='Helmet' && armourType){
+    const al=armourType.toLowerCase();
+    for(const k of Object.keys(SKULL_TEXTURES)){
+      if(al.includes(k)){ await drawSkullArmour3D(canvas, al); return; }
+    }
+  }
+  
+  // ── Non-leather material? (flat item icon) ───────────────────────
+  const material = armourType ? getPieceMaterial(armourType, piece) : 'leather';
+  if(material !== 'leather'){
+    const texName = MATERIAL_ITEM_TEX[material]?.[piece];
+    if(texName){
+      const img = await loadImg(MC_ITEM_URL + texName + '.png');
+      if(img){
+        ctx.imageSmoothingEnabled=false;
+        // Draw as flat icon centred
+        const scale=Math.min(cw,ch);
+        const ox=Math.round((cw-scale)/2), oy=Math.round((ch-scale)/2);
+        ctx.drawImage(img,ox,oy,scale,scale);
+        return;
+      }
+    }
+    ctx.fillStyle=MATERIAL_FALLBACK_COLOURS[material]||'#888';
+    ctx.fillRect(0,0,cw,ch);
+    return;
+  }
+  
+  // ── Leather: use armor_layer texture with tinting ────────────────
+  const isLeggings = piece==='Leggings';
+  const layerFile = isLeggings ? 'leather_layer_2.png' : 'leather_layer_1.png';
+  const uvMap = isLeggings ? UV_LAYER2 : UV_LAYER1;
+  const uvPiece = uvMap[piece];
+  
+  const layerImg = await loadImg(MC_ARMOR_URL + layerFile);
+  
+  if(!layerImg || !uvPiece){
+    // Fallback: coloured rectangle
+    ctx.fillStyle = normHex(hex)||BLEACHED_HEX;
+    ctx.fillRect(0,0,cw,ch);
+    return;
+  }
+  
+  const col = normHex(hex) || BLEACHED_HEX;
+  
+  // Crop each UV face, tint it, and draw 3D isometric
+  async function makeFace(uvEntry, darken=1){
+    const {sx,sy,sw,sh}=uvEntry;
+    const fc=document.createElement('canvas'); fc.width=sw; fc.height=sh;
+    const x=fc.getContext('2d'); x.imageSmoothingEnabled=false;
+    x.drawImage(layerImg,sx,sy,sw,sh,0,0,sw,sh);
+    const id=x.getImageData(0,0,sw,sh);
+    tintImageData(id,col);
+    if(darken<1) darkenImageData(id,darken);
+    x.putImageData(id,0,0);
+    return fc;
+  }
+  
+  // Build top/front/right faces
+  // Helmet: cube-like (8×8 front, 8×4 top, 8×8 side)
+  // Chestplate: tall rectangle (8×12 front, 8×4 top, 4×12 side)
+  // Leggings: wide (8×12 front, 8×4 top, 4×12 side)
+  // Boots: smaller cube (4×8 front, 4×4 top, 4×8 side)
+  
+  // Compute layout proportions based on UV aspect ratios
+  // We'll map these into the canvas dimensions
+  // Layout: top face top-left, front face bottom-left, right face bottom-right
+  
+  const {front:uvF, top:uvT, right:uvR} = uvPiece;
+  const frontAR = uvF.sw/uvF.sh; // width/height ratio of front face
+  const sideAR  = uvR.sw/uvR.sh; // width/height ratio of right face
+  
+  // Isometric layout:
+  //   Total canvas width  = frontW + rightW
+  //   Total canvas height = topH + frontH
+  // where topH = frontW * 0.5 (isometric top = halfheight of front)
+  // We solve: frontW + rightW = cw, topH + frontH = ch
+  // rightW ≈ frontW * sideAR / frontAR (preserving aspect ratio)
+  // topH ≈ frontW * 0.35
+  
+  // Simpler: divide canvas into fixed iso proportions based on piece
+  const ISO = {
+    Helmet:     {fw:0.60,fh:0.65,tw:0.60,th:0.30},
+    Chestplate: {fw:0.58,fh:0.72,tw:0.58,th:0.25},
+    Leggings:   {fw:0.60,fh:0.72,tw:0.60,th:0.25},
+    Boots:      {fw:0.58,fh:0.65,tw:0.58,th:0.30},
+  };
+  const iso=ISO[piece]||ISO.Helmet;
+  const fw=Math.round(cw*iso.fw);
+  const fh=Math.round(ch*iso.fh);
+  const rw=cw-fw;
+  const th=Math.round(ch*iso.th);
+  
+  const frontFace = await makeFace(uvF, 1.0);
+  const topFace   = await makeFace(uvT, 0.80);
+  const rightFace = await makeFace(uvR, 0.62);
+  
+  // Draw top face (isometric rhombus from top-left)
+  // Top: TL=(fw/2, 0), TR=(fw, th/2), BR=(fw/2, th), BL=(0, th/2)
+  // We do this with canvas 2D transform: map source [0,0]-[tw,th] to above parallelogram
+  {
+    ctx.save(); ctx.imageSmoothingEnabled=false;
+    // transform: a rhombus with points at those 4 corners
+    // The transform matrix maps [x,y] → [a*x + c*y + e, b*x + d*y + f]
+    // TL corner: x=0,y=0 → (fw/2, 0)  ⟹ e=fw/2, f=0
+    // right: x=uvT.sw,y=0 → (fw, th/2)  ⟹ a=(fw-fw/2)/uvT.sw = fw/2/uvT.sw, b=(th/2)/uvT.sw
+    // down: x=0,y=uvT.sh → (0, th/2)   ⟹ c=(0-fw/2)/uvT.sh = -fw/2/uvT.sh, d=(th/2)/uvT.sh
+    const a=fw/2/uvT.sw, b=th/2/uvT.sw, c=-fw/2/uvT.sh, d=th/2/uvT.sh;
+    ctx.transform(a, b, c, d, fw/2, 0);
+    ctx.drawImage(topFace, 0,0, uvT.sw, uvT.sh);
+    ctx.restore();
+  }
+  // Front face: straight rectangle at bottom-left, starting at y=th
+  {
+    ctx.save(); ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(frontFace, 0, th, fw, fh);
+    ctx.restore();
+  }
+  // Right face: parallelogram — bottom-left at (fw, th), top-left at (fw, th - th), slanting right
+  // Right face top-left = (fw, th/2) matching where the top face meets it
+  // Map: TL=(fw, th/2), TR=(fw+rw, th), BL=(fw, th/2+fh), BR=(fw+rw, th+fh)
+  {
+    ctx.save(); ctx.imageSmoothingEnabled=false;
+    // transform: right face parallelogram
+    // x=0,y=0 → (fw, th/2)
+    // x=uvR.sw,y=0 → (fw+rw, th)  ⟹ a=rw/uvR.sw, b=(th/2)/uvR.sw
+    // x=0,y=uvR.sh → (fw, th/2+fh)  ⟹ c=0, d=fh/uvR.sh
+    const a=rw/uvR.sw, b=(th/2)/uvR.sw, d=fh/uvR.sh;
+    ctx.transform(a, b, 0, d, fw, th/2);
+    ctx.drawImage(rightFace, 0,0, uvR.sw, uvR.sh);
+    ctx.restore();
+  }
+}
+
+// ── Canvas sizes ─────────────────────────────────────────────────────────
+// Card (small): 3 per row, needs to fit ~80px wide cells
+// Panel (large): side panel detail view
+// We use square canvas and let the 3D projection fill it naturally.
+const CARD_SIZES  = {Helmet:{w:72,h:72},Chestplate:{w:72,h:80},Leggings:{w:72,h:80},Boots:{w:72,h:72}};
+const PANEL_SIZES = {Helmet:{w:160,h:160},Chestplate:{w:160,h:180},Leggings:{w:160,h:180},Boots:{w:160,h:160}};
 
 function renderCanvasQueue(canvases){
-  requestAnimationFrame(() => {
-    canvases.forEach(canvas => {
-      if(canvas && !canvas.dataset.rendered){
-        canvas.dataset.rendered = '1';
-        drawLeatherPreview(canvas, canvas.dataset.piece, canvas.dataset.hex, canvas.dataset.armourtype||'');
+  requestAnimationFrame(()=>{
+    canvases.forEach(canvas=>{
+      if(canvas&&!canvas.dataset.rendered){
+        canvas.dataset.rendered='1';
+        drawLeatherPreview(canvas,canvas.dataset.piece,canvas.dataset.hex||BLEACHED_HEX,canvas.dataset.armourtype||'');
       }
     });
   });
@@ -1091,11 +1380,11 @@ function museumCard(m){
     const pieces = s.pieces || [];
     const firstPiece = pieces.find(p => isPieceDyeable(s.armour_type||'', p.piece)) || pieces[0];
     if(!firstPiece) return '';
-    const sz = CARD_SIZES[firstPiece.piece] || {w:30,h:27};
+    const sz = CARD_SIZES[firstPiece.piece] || {w:72,h:72};
     const cats = classifyPieces(pieces, s.armour_type||'');
     const col = cats[0]?.colour || '#888';
     return `<div class="mc-set-thumb" style="border-top:2px solid ${col}22">
-      <canvas width="${sz.w*2}" height="${sz.h*2}" style="width:${sz.w}px;height:${sz.h}px;image-rendering:pixelated"
+      <canvas width="${sz.w}" height="${sz.h}" style="width:${Math.round(sz.w/2)}px;height:${Math.round(sz.h/2)}px;image-rendering:pixelated"
         data-piece="${esc(firstPiece.piece)}" data-hex="${esc(firstPiece.hex||BLEACHED_HEX)}" data-armourtype="${esc(s.armour_type||'')}"></canvas>
     </div>`;
   }).join('');
@@ -1260,14 +1549,14 @@ function setCard(s){
     ? `linear-gradient(90deg,${pieceColours.map((c,i)=>`${c} ${Math.round(i/pieceColours.length*100)}%,${c} ${Math.round((i+1)/pieceColours.length*100)}%`).join(',')})`
     : (pieceColours[0]||'var(--border)');
   const piecesHtml = pieces.map((p,i) => {
-    const sz = CARD_SIZES[p.piece]||{w:30,h:27};
+    const sz = CARD_SIZES[p.piece]||{w:72,h:72};
     const cls = classifyHex(p.hex, armourType, p.piece);
     const col = cls?.colour || '#888';
     return `<div class="set-piece-wrap">
-      <canvas width="${sz.w*2}" height="${sz.h*2}" style="width:${sz.w}px;height:${sz.h}px"
+      <canvas width="${sz.w}" height="${sz.h}" style="width:${Math.round(sz.w/2)}px;height:${Math.round(sz.h/2)}px"
         data-piece="${esc(p.piece)}" data-hex="${esc(p.hex||BLEACHED_HEX)}" data-armourtype="${esc(armourType)}" id="sc-${esc(s.id)}-${i}"></canvas>
-      <span class="set-piece-name">${p.piece.slice(0,4)}</span>
-      <span class="set-piece-tag" style="color:${col};border-color:${col}44;background:${col}12">${cls?cls.label.replace('Pure ',''):'—'}</span>
+      <span class="set-piece-name">${esc(p.piece)}</span>
+      <span class="set-piece-tag" style="color:${col};border-color:${col}44;background:${col}12">${cls?esc(cls.label.replace('Pure ','')):'—'}</span>
     </div>`;
   }).join('');
   const catPills = cats.map(c=>`<span style="font-size:9px;padding:2px 6px;border-radius:4px;border:1px solid ${c.colour}44;color:${c.colour};font-weight:600;background:${c.colour}12">${esc(c.label)}</span>`).join('');
@@ -1336,11 +1625,11 @@ window.openSetPanel = function(id){
 
   // Left col – large pieces
   const spPieces = pieces.map((p,i) => {
-    const sz = PANEL_SIZES[p.piece]||{w:90,h:81};
+    const sz = PANEL_SIZES[p.piece]||{w:160,h:160};
     const cls = classifyHex(p.hex, armourType, p.piece);
     const col = cls?.colour||'#888';
     return `<div class="sp-piece-wrap">
-      <canvas id="spp-${i}" width="${sz.w*2}" height="${sz.h*2}" style="width:${sz.w}px;height:${sz.h}px;image-rendering:pixelated"
+      <canvas id="spp-${i}" width="${sz.w}" height="${sz.h}" style="width:${Math.round(sz.w/2)}px;height:${Math.round(sz.h/2)}px;image-rendering:pixelated"
         data-piece="${esc(p.piece)}" data-hex="${esc(p.hex||BLEACHED_HEX)}" data-armourtype="${esc(armourType)}"></canvas>
       <span class="sp-piece-name">${esc(p.piece)}</span>
       <span class="sp-piece-tag" style="color:${col};border-color:${col}55;background:${col}12">${cls?cls.label:'—'}</span>
@@ -1498,7 +1787,7 @@ function renderAddPieceInputs(){
   const armourType = document.getElementById('addArmourType').value.trim();
   const pieces = ['Helmet','Chestplate','Leggings','Boots'].filter(p=>addSelectedPieces.has(p));
   container.innerHTML = '';
-  const FORM_SIZES = {Helmet:{w:40,h:36},Chestplate:{w:56,h:52},Leggings:{w:40,h:48},Boots:{w:56,h:40}};
+  const FORM_SIZES = {Helmet:{w:72,h:72},Chestplate:{w:72,h:80},Leggings:{w:72,h:80},Boots:{w:72,h:72}};
   pieces.forEach(piece => {
     const dyeable = isPieceDyeable(armourType||'', piece);
     const material = armourType ? getPieceMaterial(armourType, piece) : 'leather';
@@ -1506,8 +1795,8 @@ function renderAddPieceInputs(){
     const row = document.createElement('div');
     row.className = 'piece-row'; row.dataset.piece = piece;
     const canvas = document.createElement('canvas');
-    canvas.width=fsz.w*2; canvas.height=fsz.h*2;
-    canvas.className='piece-preview'; canvas.style.cssText=`width:${fsz.w}px;height:${fsz.h}px;flex-shrink:0`;
+    canvas.width=fsz.w; canvas.height=fsz.h;
+    canvas.className='piece-preview'; canvas.style.cssText=`width:${Math.round(fsz.w/2)}px;height:${Math.round(fsz.h/2)}px;flex-shrink:0`;
     row.appendChild(canvas);
     const right = document.createElement('div'); right.className='piece-row-right';
     const lbl = document.createElement('div'); lbl.className='piece-row-label'; lbl.textContent=piece; right.appendChild(lbl);

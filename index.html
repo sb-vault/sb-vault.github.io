@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Vault – SkyBlock Exotic Armour Museum</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skinview3d@3.4.1/bundles/skinview3d.bundle.js"></script>
 <style>
 /* ── Themes ──────────────────────────────────────────────────────────── */
 :root[data-theme="dark"]{
@@ -154,20 +156,20 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 @media(max-width:580px){.sets-grid{grid-template-columns:1fr}}
 .set-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .set-card:hover{border-color:var(--text3);box-shadow:var(--card-shadow)}
-.set-stripe{height:3px;background:var(--border)}
-.set-body{padding:14px}
-.set-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px}
-.set-name{font-weight:700;font-size:14px;color:var(--text);line-height:1.25}
-.set-type{font-size:11px;color:var(--text3);margin-top:2px}
-.set-for-offers{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid rgba(78,203,113,.3);color:var(--green);background:rgba(78,203,113,.08);flex-shrink:0;margin-top:1px}
-.set-pieces{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
-.set-piece-wrap{display:flex;flex-direction:row;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
-.set-piece-canvas{image-rendering:pixelated;display:block;flex-shrink:0}
-.set-piece-name{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:700;white-space:nowrap}
-.set-piece-tag{font-size:9px;padding:2px 6px;border-radius:4px;border:1px solid;font-weight:700;white-space:nowrap;display:inline-block}
-.set-foot{display:flex;align-items:center;justify-content:space-between}
-.set-cats{display:flex;gap:4px;flex-wrap:wrap}
-.set-ts{font-size:10px;color:var(--text3)}
+.set-card-inner{display:flex;min-height:240px}
+.set-card-model{flex-shrink:0;width:120px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:8px 0}
+.set-card-model canvas{display:block}
+.set-card-right{flex:1;min-width:0;padding:14px;display:flex;flex-direction:column;gap:8px}
+.set-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
+.set-name{font-weight:700;font-size:13px;color:var(--text);line-height:1.25}
+.set-type{font-size:10px;color:var(--text3);margin-top:1px}
+.set-for-offers{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;border:1px solid rgba(78,203,113,.3);color:var(--green);background:rgba(78,203,113,.08);flex-shrink:0}
+.set-pieces{display:flex;flex-direction:column;gap:3px;flex:1}
+.set-piece-row{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:5px;background:var(--bg3);border:1px solid var(--border)}
+.set-piece-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:inset 0 1px 2px rgba(0,0,0,.3)}
+.set-piece-name{font-size:9px;color:var(--text2);font-weight:600;flex:1;white-space:nowrap;text-transform:uppercase;letter-spacing:.05em}
+.set-piece-tag{font-size:8px;padding:1px 5px;border-radius:3px;border:1px solid;font-weight:700;white-space:nowrap}
+.set-foot{display:flex;align-items:center;justify-content:space-between;margin-top:2px}
 
 /* ── Add set card ────────────────────────────────────────────────────── */
 .set-card-add{border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:32px 16px;color:var(--text3);font-size:13px;cursor:pointer;transition:all .15s}
@@ -899,7 +901,352 @@ function getPieceMaterial(armourType, piece){
 }
 function isPieceDyeable(armourType, piece){ return getPieceMaterial(armourType, piece) === 'leather'; }
 
-// Skull lookup now handled inside drawLeatherPreview via SKULL_TEXTURES map
+/* ════════════════════════════════════════════════════════════════════
+   PLAYER RENDERER — skinview3d + tinted armor_layer compositing
+   
+   Each set is shown as a full Minecraft player wearing the armour.
+   The museum owner's skin is fetched from mc-heads.net.
+   The armour colours are tinted from armor_layer_1/2 UV maps and
+   composited on top of the skin texture before passing to skinview3d.
+   
+   skinview3d CDN: https://cdn.jsdelivr.net/npm/skinview3d@3.4.1/bundles/skinview3d.bundle.js
+════════════════════════════════════════════════════════════════════ */
+
+// Embedded armor layer textures (greyscale, for tinting)
+// leather_layer_1.png (64×32): helmet, chestplate, boots
+// leather_layer_2.png (64×32): leggings
+const ARMOR_LAYERS = {
+  'leather_layer_1':'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAABFElEQVR42u2YMQ6DMAxF7QqkwMLCSVjgECwsXJMFBm7AGRiZmYEtHSpVdUVSIlqagL/E4MRE/EdsEbDrOgkajeOom4Y8z/E1/vZ6v9YNLi4GcHUAuLdmp2kicZIkj4URV6+2bUl+HMfa9YuiQKd2gJRSOa6aO30J2Gj8MAA2mwcA8MIw1CZ8qtFhGLTGEdFuAFuShBCr48uyKM3bbtwIAABAEAQknufZ2LzzTVAIodwNrvaCQ5qgzY3QM0lW1bzO/CmaoK7mXTa/GcAZ3/wTwPu3fJZl5MnrupYm5/++7/96vufTIANgAGb/A6qqIjWcpilJaJqGxFEUkdj3fdhzf1mWyDuAATAABsAAGAADYLFYrMN1B1ETcmNhYIFDAAAAAElFTkSuQmCC',
+  'leather_layer_2':'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAbklEQVR42u3ToQ0AIQxAUXozsEwFQ2CYEVfVCdiLO0s1ISf4zzVQ8wMyxnjTopQi62xm4bzWGs539//2pMsR4PYA0nsPf1RVwwV3D3POOcxzzrSz31oTXgABCEAAAhCAAAQgAAEIAAAAAAAAcNwHZ6gdH64g+14AAAAASUVORK5CYII=',
+};
+
+// Skin URL helper
+const SKIN_URL = uuid => `https://mc-heads.net/skin/${uuid}`;
+
+// Image cache (shared)
+const imgCache = {};
+function loadImg(url){
+  if(imgCache[url]) return Promise.resolve(imgCache[url]);
+  return new Promise(res=>{
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>{ imgCache[url]=img; res(img); };
+    img.onerror=()=>res(null);
+    img.src=url;
+  });
+}
+
+// UV regions in armor_layer_1.png (64×32) for each piece
+// These are the body/model UV coords, not the inventory icon UV
+const UV_LAYER1 = {
+  // Helmet: front face at sx=8,sy=8 w=8 h=8; top at sx=0,sy=0 w=8 h=8; left at sx=0,sy=8 w=8 h=8
+  Helmet:     { front:{sx:8,sy:8,sw:8,sh:8},   top:{sx:2,sy:0,sw:8,sh:4},   right:{sx:16,sy:8,sw:8,sh:8} },
+  Chestplate: { front:{sx:20,sy:4,sw:8,sh:12},  top:{sx:20,sy:0,sw:8,sh:4},  right:{sx:28,sy:4,sw:4,sh:12} },
+  Boots:      { front:{sx:4,sy:20,sw:4,sh:8},   top:{sx:0,sy:16,sw:4,sh:4},  right:{sx:8,sy:20,sw:4,sh:8} },
+};
+const UV_LAYER2 = {
+  Leggings:   { front:{sx:4,sy:4,sw:4,sh:12},   top:{sx:4,sy:0,sw:4,sh:4},   right:{sx:8,sy:4,sw:4,sh:12} },
+};
+
+// Tint pixels: greyscale brightness × colour
+function tintImageData(id, hexStr){
+  const h=normHex(hexStr)||BLEACHED_HEX;
+  const tR=parseInt(h.slice(1,3),16), tG=parseInt(h.slice(3,5),16), tB=parseInt(h.slice(5,7),16);
+  const d=id.data;
+  for(let i=0;i<d.length;i+=4){
+    if(d[i+3]<10) continue;
+    const bright=(d[i]+d[i+1]+d[i+2])/3/255;
+    d[i]=Math.round(tR*bright); d[i+1]=Math.round(tG*bright); d[i+2]=Math.round(tB*bright);
+  }
+}
+
+// Minecraft skin UV: where each armor piece paints onto the 64×64 skin
+// We paint the armor layer directly onto these regions of the skin texture
+// so skinview3d renders it correctly without needing to know about armor separately.
+// Values are [skinX, skinY, width, height] — pixel coords in the 64×64 skin texture
+// for the FRONT face of each body part
+const SKIN_ARMOR_UV = {
+  // Head front face in skin = x:8,y:8 w:8 h:8  (in 64×64 skin)
+  Helmet:     { src:{sx:8,sy:8,sw:8,sh:8},   dst:{dx:8,dy:8,dw:8,dh:8},   layer:'leather_layer_1' },
+  // Body front face in skin = x:20,y:20 w:8 h:12
+  Chestplate: { src:{sx:20,sy:4,sw:8,sh:12},  dst:{dx:20,dy:20,dw:8,dh:12}, layer:'leather_layer_1' },
+  // Leg front face (right) in skin = x:4,y:20 w:4 h:12
+  Leggings:   { src:{sx:4,sy:4,sw:4,sh:12},   dst:{dx:4,dy:20,dw:4,dh:12},  layer:'leather_layer_2' },
+  // Boot front face (right) in skin = x:4,y:20 same slot as leg but boots use different layer region
+  Boots:      { src:{sx:4,sy:20,sw:4,sh:8},   dst:{dx:4,dy:20,dw:4,dh:8},   layer:'leather_layer_1' },
+};
+
+// Map piece name → skin region for additional faces (sides/top)  
+// Each armor layer covers the full body part wrapping — we composite ALL faces
+// of the body part into the skin to make skinview3d show the full colour.
+// Minecraft skin UV layout (64×64):
+//   Head:  front(8,8,8,8), back(24,8,8,8), left(0,8,8,8), right(16,8,8,8), top(8,0,8,8)
+//   Body:  front(20,20,8,12), back(32,20,8,12), left(16,20,4,12), right(28,20,4,12)
+//   RLeg:  front(4,20,4,12), back(12,20,4,12), left(0,20,4,12), right(8,20,4,12)
+//   LLeg:  front(20,52,4,12), back(28,52,4,12), left(16,52,4,12), right(24,52,4,12) [1.8 skin]
+//   RArm:  front(44,20,4,12), back(52,20,4,12), left(40,20,4,12), right(48,20,4,12)
+//   LArm:  front(36,52,4,12), back(44,52,4,12), left(32,52,4,12), right(40,52,4,12)
+
+const SKIN_UV_FULL = {
+  Helmet: [
+    // armor_layer_1 src → skin dst (face by face)
+    { lSx:8, lSy:8, lSw:8, lSh:8, sSx:8, sSy:8 },   // front
+    { lSx:24, lSy:8, lSw:8, lSh:8, sSx:24, sSy:8 },  // back
+    { lSx:0,  lSy:8, lSw:8, lSh:8, sSx:0,  sSy:8 },  // left
+    { lSx:16, lSy:8, lSw:8, lSh:8, sSx:16, sSy:8 },  // right
+    { lSx:8,  lSy:0, lSw:8, lSh:8, sSx:8,  sSy:0 },  // top
+  ],
+  Chestplate: [
+    { lSx:20, lSy:4, lSw:8, lSh:12, sSx:20, sSy:20 }, // body front
+    { lSx:32, lSy:4, lSw:8, lSh:12, sSx:32, sSy:20 }, // body back
+    { lSx:16, lSy:4, lSw:4, lSh:12, sSx:16, sSy:20 }, // body left
+    { lSx:28, lSy:4, lSw:4, lSh:12, sSx:28, sSy:20 }, // body right
+    // Arms - approximate (right arm front/back)
+    { lSx:44, lSy:4, lSw:4, lSh:12, sSx:44, sSy:20 }, // right arm front
+    { lSx:52, lSy:4, lSw:4, lSh:12, sSx:52, sSy:20 }, // right arm back
+    { lSx:36, lSy:52,lSw:4, lSh:12, sSx:36, sSy:52},  // left arm front (1.8)
+  ],
+  Leggings: [
+    { lSx:4,  lSy:4, lSw:4, lSh:12, sSx:4,  sSy:20 }, // right leg front
+    { lSx:12, lSy:4, lSw:4, lSh:12, sSx:12, sSy:20 }, // right leg back
+    { lSx:0,  lSy:4, lSw:4, lSh:12, sSx:0,  sSy:20 }, // right leg left
+    { lSx:8,  lSy:4, lSw:4, lSh:12, sSx:8,  sSy:20 }, // right leg right
+    { lSx:20, lSy:52,lSw:4, lSh:12, sSx:20, sSy:52 }, // left leg front (1.8)
+    { lSx:28, lSy:52,lSw:4, lSh:12, sSx:28, sSy:52 }, // left leg back
+    { lSx:16, lSy:52,lSw:4, lSh:12, sSx:16, sSy:52 }, // left leg left
+    { lSx:24, lSy:52,lSw:4, lSh:12, sSx:24, sSy:52 }, // left leg right
+  ],
+  Boots: [
+    { lSx:4,  lSy:20,lSw:4, lSh:8, sSx:4,  sSy:20 }, // right boot front (over leg)
+    { lSx:12, lSy:20,lSw:4, lSh:8, sSx:12, sSy:20 }, // right boot back
+    { lSx:0,  lSy:20,lSw:4, lSh:8, sSx:0,  sSy:20 }, // right boot left
+    { lSx:8,  lSy:20,lSw:4, lSh:8, sSx:8,  sSy:20 }, // right boot right
+    { lSx:20, lSy:20,lSw:4, lSh:8, sSx:20, sSy:52 }, // left boot front (1.8)
+    { lSx:28, lSy:20,lSw:4, lSh:8, sSx:28, sSy:52 }, // left boot back
+    { lSx:16, lSy:20,lSw:4, lSh:8, sSx:16, sSy:52 }, // left boot left
+    { lSx:24, lSy:20,lSw:4, lSh:8, sSx:24, sSy:52 }, // left boot right
+  ],
+};
+
+// Non-leather material solid colours for skin compositing
+const MATERIAL_COLOURS = {
+  chainmail:'#a0a8b0', iron:'#d4d4d4', gold:'#f5c542',
+  diamond:'#5deafe',   netherite:'#5a4a5a',
+};
+
+// Skull helmets: UUID → use mc-heads face image (no tinting needed)
+const SKULL_IDS = {
+  'superior dragon': 'd4981ca4-723e-3237-8099-7c8f5637b3c3',
+};
+
+// ── Core: build a composite skin texture (64×64) with armour painted on ──
+// ownerUuid: the museum owner's MC UUID (for their skin)
+// pieces: [{piece, hex, material, dyeable}]
+// armourType: e.g. 'Superior Dragon Armour'
+// Returns a data URL (PNG) of the merged skin+armor texture
+async function buildArmorSkin(ownerUuid, pieces, armourType){
+  // Load skin (64×64)
+  const skinImg = await loadImg(SKIN_URL(ownerUuid));
+  
+  const c = document.createElement('canvas'); c.width=64; c.height=64;
+  const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled=false;
+  
+  // Draw base skin (or grey placeholder if skin fails)
+  if(skinImg){
+    ctx.drawImage(skinImg, 0, 0, 64, 64);
+  } else {
+    // Simple grey skin placeholder
+    ctx.fillStyle='#888'; ctx.fillRect(8,8,8,8); // head
+    ctx.fillStyle='#777'; ctx.fillRect(20,20,8,12); // body
+    ctx.fillStyle='#888'; ctx.fillRect(4,20,4,12); ctx.fillRect(20,20,4,12); // legs
+    ctx.fillStyle='#777'; ctx.fillRect(44,20,4,12); ctx.fillRect(36,52,4,12); // arms
+  }
+  
+  // Load armor layer textures
+  const [layer1, layer2] = await Promise.all([
+    loadImg(ARMOR_LAYERS['leather_layer_1']),
+    loadImg(ARMOR_LAYERS['leather_layer_2']),
+  ]);
+  
+  // For each piece, composite tinted armor onto skin
+  const al = (armourType||'').toLowerCase();
+  
+  for(const p of pieces){
+    const piece = p.piece;
+    const uvList = SKIN_UV_FULL[piece];
+    if(!uvList) continue;
+    
+    // Determine material
+    const mat = getPieceMaterial(armourType||'', piece);
+    
+    if(mat !== 'leather'){
+      // Solid colour for non-leather
+      const solidCol = MATERIAL_COLOURS[mat] || '#888';
+      ctx.fillStyle = solidCol + 'cc'; // slight transparency to show skin underneath
+      for(const uv of uvList){
+        ctx.fillRect(uv.sSx, uv.sSy, uv.lSw, uv.lSh);
+      }
+      continue;
+    }
+    
+    const layerImg = piece==='Leggings' ? layer2 : layer1;
+    if(!layerImg) continue;
+    
+    const col = normHex(p.hex) || BLEACHED_HEX;
+    
+    // For each face of this body part
+    for(const uv of uvList){
+      // Crop the armor layer region
+      const fc = document.createElement('canvas'); fc.width=uv.lSw; fc.height=uv.lSh;
+      const fx = fc.getContext('2d'); fx.imageSmoothingEnabled=false;
+      fx.drawImage(layerImg, uv.lSx, uv.lSy, uv.lSw, uv.lSh, 0, 0, uv.lSw, uv.lSh);
+      const id = fx.getImageData(0,0,uv.lSw,uv.lSh);
+      tintImageData(id, col);
+      fx.putImageData(id,0,0);
+      // Paste onto skin canvas at skin UV position
+      ctx.drawImage(fc, uv.sSx, uv.sSy, uv.lSw, uv.lSh);
+    }
+  }
+  
+  return c.toDataURL('image/png');
+}
+
+// ── Skinview3d viewer registry ────────────────────────────────────────────
+// We keep a map of element ID → SkinViewer instance to reuse/update them
+const _viewers = new Map();
+
+// Create or update a skinview3d viewer in the given container div
+// containerEl: the div to render into
+// skinDataUrl: the composite skin PNG data URL
+// opts: {width, height, background, zoom, autoRotate}
+async function renderPlayerViewer(containerEl, skinDataUrl, opts={}){
+  if(typeof skinview3d === 'undefined') return; // library not loaded yet
+  
+  const id = containerEl.dataset.viewerId || (containerEl.dataset.viewerId = Math.random().toString(36).slice(2));
+  const w = opts.width||140, h = opts.height||200;
+  
+  let viewer = _viewers.get(id);
+  if(!viewer){
+    // Create canvas inside container
+    containerEl.innerHTML='';
+    const canvas = document.createElement('canvas');
+    canvas.width=w; canvas.height=h;
+    canvas.style.cssText=`width:${w}px;height:${h}px;display:block`;
+    containerEl.appendChild(canvas);
+    
+    viewer = new skinview3d.SkinViewer({
+      canvas,
+      width: w,
+      height: h,
+      skin: skinDataUrl,
+    });
+    viewer.autoRotate = false;
+    viewer.animation = null;
+    // Nice isometric-ish angle — tilt slightly like the MC character screen
+    viewer.camera.rotation.x = -0.28;
+    viewer.camera.rotation.y = 0.52;
+    viewer.fov = 30;
+    viewer.zoom = 0.9;
+    // Transparent background
+    viewer.renderer.setClearColor(0x000000, 0);
+    viewer.globalLight.intensity = 2.8;
+    viewer.cameraLight.intensity = 0.4;
+    _viewers.set(id, viewer);
+  } else {
+    viewer.loadSkin(skinDataUrl);
+  }
+  
+  if(opts.width)  viewer.width  = opts.width;
+  if(opts.height) viewer.height = opts.height;
+  viewer.render();
+}
+
+// High-level: given a set listing and owner UUID, render full player into a div
+async function renderSetPlayer(containerEl, s, ownerUuid, opts={}){
+  try{
+    const pieces = s.pieces||[];
+    const skinDataUrl = await buildArmorSkin(ownerUuid, pieces, s.armour_type||'');
+    await renderPlayerViewer(containerEl, skinDataUrl, opts);
+  }catch(e){
+    containerEl.innerHTML=`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:11px">Preview<br>unavailable</div>`;
+  }
+}
+
+// Fallback for drawLeatherPreview (used in form piece previews)
+async function drawLeatherPreview(canvas, piece, hex, armourType){
+  const ctx=canvas.getContext('2d');
+  const cw=canvas.width, ch=canvas.height;
+  ctx.clearRect(0,0,cw,ch);
+  const mat = armourType ? getPieceMaterial(armourType,piece) : 'leather';
+  const col = normHex(hex)||BLEACHED_HEX;
+  
+  // Simple 3-face isometric box — just for form previews, not card display
+  const fw=Math.round(cw*.65), fh=Math.round(ch*.70), th=Math.round(ch*.25), rw=cw-fw;
+  
+  if(mat!=='leather'){
+    const fc=MATERIAL_COLOURS[mat]||'#888';
+    drawBox(ctx,fw,fh,th,rw,fc,adjustCol(fc,1.25),adjustCol(fc,0.65));
+    return;
+  }
+  
+  const layer = await loadImg(ARMOR_LAYERS[piece==='Leggings'?'leather_layer_2':'leather_layer_1']);
+  if(!layer){ drawBox(ctx,fw,fh,th,rw,col,adjustCol(col,1.25),adjustCol(col,0.65)); return; }
+  
+  const uvMap = piece==='Leggings'?UV_LAYER2:UV_LAYER1;
+  const uv = uvMap[piece];
+  if(!uv){ drawBox(ctx,fw,fh,th,rw,col,adjustCol(col,1.25),adjustCol(col,0.65)); return; }
+  
+  function getTinted(entry,dk){
+    const {sx,sy,sw,sh}=entry;
+    const fc=document.createElement('canvas'); fc.width=sw; fc.height=sh;
+    const x=fc.getContext('2d'); x.imageSmoothingEnabled=false;
+    x.drawImage(layer,sx,sy,sw,sh,0,0,sw,sh);
+    const id=x.getImageData(0,0,sw,sh);
+    tintImageData(id,col);
+    if(dk<1){const d=id.data;for(let i=0;i<d.length;i+=4){d[i]=Math.round(d[i]*dk);d[i+1]=Math.round(d[i+1]*dk);d[i+2]=Math.round(d[i+2]*dk);}}
+    x.putImageData(id,0,0);
+    return fc;
+  }
+  
+  const frontFace=getTinted(uv.front,1.0), topFace=getTinted(uv.top,0.80), rightFace=getTinted(uv.right,0.62);
+  
+  // Top face
+  ctx.save(); ctx.imageSmoothingEnabled=false;
+  const {sw:tw,sh:tsh}=uv.top;
+  ctx.transform(fw/2/tw,th/2/tw,-fw/2/tsh,th/2/tsh,fw/2,0);
+  ctx.drawImage(topFace,0,0,tw,tsh);
+  ctx.restore();
+  // Front face
+  ctx.save(); ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(frontFace,0,th,fw,fh,0,th,fw,fh);
+  ctx.restore();
+  // Right face
+  ctx.save(); ctx.imageSmoothingEnabled=false;
+  const {sw:rsw,sh:rsh}=uv.right;
+  ctx.transform(rw/rsw,(th/2)/rsw,0,fh/rsh,fw,th/2);
+  ctx.drawImage(rightFace,0,0,rsw,rsh);
+  ctx.restore();
+}
+
+function drawBox(ctx,fw,fh,th,rw,front,top,right){
+  ctx.fillStyle=front; ctx.fillRect(0,th,fw,fh);
+  ctx.save(); ctx.transform(0.5,0.25,-0.5,0.25,fw/2,0); ctx.fillStyle=top; ctx.fillRect(0,0,fw*2,th*4); ctx.restore();
+  ctx.save(); ctx.transform(1,-0.25,0,1,fw,th/2); ctx.fillStyle=right; ctx.fillRect(0,0,rw,fh); ctx.restore();
+}
+
+function adjustCol(hex,f){
+  const h=normHex(hex)||'#888888';
+  const r=Math.min(255,Math.round(parseInt(h.slice(1,3),16)*f));
+  const g=Math.min(255,Math.round(parseInt(h.slice(3,5),16)*f));
+  const b=Math.min(255,Math.round(parseInt(h.slice(5,7),16)*f));
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+// Legacy size constants (still used for form piece preview canvases)
+const CARD_SIZES  = {Helmet:{w:56,h:56},Chestplate:{w:56,h:64},Leggings:{w:56,h:64},Boots:{w:56,h:56}};
+const PANEL_SIZES = {Helmet:{w:56,h:56},Chestplate:{w:56,h:64},Leggings:{w:56,h:64},Boots:{w:56,h:56}};
+
+// renderCanvasQueue: no-op now (form previews use drawLeatherPreview directly)
+function renderCanvasQueue(){ }
 
 const ARMOUR_DEFAULTS = {
   'superior dragon':{h:'#f2df11',c:'#f2df11',l:'#f2df11',b:'#f25d18'},
@@ -1475,7 +1822,7 @@ async function loadMuseumHeader(uuid){
   const isOwn = currentUser && currentUser.uuid === uuid;
   const shareUrl = `${window.location.origin}${window.location.pathname}?museum=${uuid}`;
   header.innerHTML = `
-    <img class="mh-avatar" src="${HEAD(uuid)}" alt="${esc(ign)}">
+    <div id="mh-player" style="width:64px;height:96px;flex-shrink:0;display:flex;align-items:center;justify-content:center"><div class="spinner" style="width:16px;height:16px;border-width:2px"></div></div>
     <div class="mh-info">
       <div class="mh-name">${esc(ign || uuid.slice(0,8))}</div>
       ${discord ? `<div class="mh-discord">Discord: ${esc(discord)}</div>` : ''}
@@ -1486,6 +1833,20 @@ async function loadMuseumHeader(uuid){
         ${!isOwn ? `<button class="btn btn-danger" onclick="openReport('user','${esc(uuid)}','${esc(ign)}')">Report</button>` : ''}
       </div>
     </div>`;
+  // Render owner player in header
+  requestAnimationFrame(async () => {
+    const el = document.getElementById('mh-player');
+    if(el){
+      const skinUrl = SKIN_URL(uuid);
+      try{
+        const skinData = await loadImg(skinUrl);
+        const c2 = document.createElement('canvas'); c2.width=64; c2.height=64;
+        const cx=c2.getContext('2d'); cx.imageSmoothingEnabled=false;
+        if(skinData) cx.drawImage(skinData,0,0,64,64);
+        await renderPlayerViewer(el, c2.toDataURL('image/png'), {width:64,height:96});
+      }catch(e){}
+    }
+  });
 }
 
 async function loadMuseumPages(uuid){
@@ -1554,14 +1915,499 @@ function renderSets(){
   </div>`;
   if(!sets.length && !isOwn) html = '<div class="empty-state"><div class="empty-icon">🏺</div><div class="empty-title">No sets here yet</div></div>';
   grid.innerHTML = html;
-  // Render canvases
-  requestAnimationFrame(() => {
-    grid.querySelectorAll('[data-piece]').forEach(c => {
-      if(!c.dataset.rendered){ c.dataset.rendered='1'; drawLeatherPreview(c, c.dataset.piece, c.dataset.hex, c.dataset.armourtype||''); }
+  // Render 3D character models
+  requestAnimationFrame(() => initCardModels(viewingUuid, sets));
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   THREE.JS MINECRAFT CHARACTER RENDERER
+   Renders a full 3D player model wearing the armour set.
+   - Skin loaded from mc-heads.net (owner's UUID)
+   - Armour tinted from embedded leather_layer_1/2 textures  
+   - Skull helmets use mc-heads avatar
+   - Fixed isometric-ish camera matching MC inventory screen
+════════════════════════════════════════════════════════════════════ */
+
+const DEFAULT_SKIN_URL = 'https://mc-heads.net/skin/MHF_Steve';
+const modelRenderers = {}; // cache of renderers per set id
+
+// Convert hex colour string to Three.js Color
+function hexToThree(hex){
+  const h = normHex(hex)||BLEACHED_HEX;
+  return new THREE.Color(
+    parseInt(h.slice(1,3),16)/255,
+    parseInt(h.slice(3,5),16)/255,
+    parseInt(h.slice(5,7),16)/255
+  );
+}
+
+// Build a tinted canvas texture from ARMOR_LAYERS + UV region + colour
+function makeArmorTex(layerKey, uvRegions, colourMap){
+  // colourMap: { front: hexStr, top: hexStr } or just one hex for all
+  return new Promise(async resolve => {
+    const layerImg = await loadImg(ARMOR_LAYERS[layerKey]);
+    if(!layerImg){ resolve(null); return; }
+
+    // Build a 64x32 RGBA canvas with the tinted armour pixels
+    const out = document.createElement('canvas'); out.width=64; out.height=32;
+    const ctx = out.getContext('2d'); ctx.imageSmoothingEnabled=false;
+    // Draw source
+    ctx.drawImage(layerImg,0,0);
+    const id = ctx.getImageData(0,0,64,32);
+
+    // For each UV region, tint its pixels with the given colour
+    Object.entries(uvRegions).forEach(([face, {sx,sy,sw,sh,hex}]) => {
+      const h = normHex(hex)||BLEACHED_HEX;
+      const tR=parseInt(h.slice(1,3),16), tG=parseInt(h.slice(3,5),16), tB=parseInt(h.slice(5,7),16);
+      for(let py=sy;py<sy+sh;py++){
+        for(let px=sx;px<sx+sw;px++){
+          const i=(py*64+px)*4;
+          if(id.data[i+3]===0) continue;
+          const bright=(id.data[i]+id.data[i+1]+id.data[i+2])/3/255;
+          id.data[i]=Math.round(tR*bright);
+          id.data[i+1]=Math.round(tG*bright);
+          id.data[i+2]=Math.round(tB*bright);
+        }
+      }
     });
+    ctx.putImageData(id,0,0);
+    const tex = new THREE.CanvasTexture(out);
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestFilter;
+    resolve(tex);
   });
 }
 
+// Make a skin texture from an image URL (for player body)
+function makeSkinTex(url){
+  return new Promise(resolve => {
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin('anonymous');
+    loader.load(url,
+      tex => { tex.magFilter=THREE.NearestFilter; tex.minFilter=THREE.NearestFilter; resolve(tex); },
+      undefined,
+      () => resolve(null)
+    );
+  });
+}
+
+// UV helper: map a sub-region of a 64x64 (or 64x32) texture
+// Returns [u0,v0, u1,v1] in 0..1 space for a 64×h texture
+function uv64(x,y,w,h, texH=64){
+  return [x/64, 1-y/texH, (x+w)/64, 1-(y+h)/texH];
+}
+function uv64_32(x,y,w,h){ return uv64(x,y,w,h,32); }
+
+// Build UV attribute for a BoxGeometry face
+// BoxGeometry face order: +x, -x, +y, -y, +z, -z (right, left, top, bottom, front, back)
+function applyFaceUV(geo, faceIdx, u0,v0,u1,v1){
+  const pos = geo.attributes.uv;
+  // Each face has 2 triangles = 4 vertices but BoxGeometry gives 6 vertices per face
+  // Actually BoxGeometry with no segments: 4 verts per face = indices faceIdx*4..faceIdx*4+3
+  // But THREE r128 uses index buffer — simpler to just set via uvs array on non-indexed
+  // We rebuild UVs using the groups
+}
+
+// Build a textured box mesh with per-face UV mapping
+// faceUVs: array of 6 entries [u0,v0,u1,v1] for faces: +x,-x,+y,-y,+z,-z
+function makeBox(w,h,d, texture, faceUVs){
+  // Use separate geometries per face for easy UV control
+  const mats = faceUVs.map(([u0,v0,u1,v1]) => {
+    const mat = new THREE.MeshLambertMaterial({map:texture, transparent:true, alphaTest:0.1});
+    // We'll apply UV per-face via a custom approach
+    return mat;
+  });
+
+  // Build geometry manually with correct UVs
+  const geo = new THREE.BoxGeometry(w,h,d);
+  // BoxGeometry UV default: each face maps 0,0->1,1 left-to-right, bottom-to-top
+  // We need to remap each face's UV to its sub-region
+
+  // The UV attribute has 4 vertices per face (24 total for 6 faces)
+  // Order: right(+x), left(-x), top(+y), bottom(-y), front(+z), back(-z)
+  const uvs = geo.attributes.uv;
+  
+  faceUVs.forEach(([u0,v0,u1,v1], fi) => {
+    const base = fi * 4;
+    // BoxGeometry UV order per face: BL, BR, TL, TR
+    uvs.setXY(base+0, u0, v0);   // BL
+    uvs.setXY(base+1, u1, v0);   // BR
+    uvs.setXY(base+2, u0, v1);   // TL
+    uvs.setXY(base+3, u1, v1);   // TR
+  });
+  uvs.needsUpdate = true;
+
+  // Single material using the texture
+  const mat = new THREE.MeshLambertMaterial({
+    map: texture, transparent:true, alphaTest:0.1,
+    side: THREE.FrontSide,
+  });
+  return new THREE.Mesh(geo, mat);
+}
+
+// Skin UV regions for each body part (64x64 skin texture, Steve layout)
+// Format: [right, left, top, bottom, front, back] — same order as BoxGeometry faces
+const SKIN_UV = {
+  // Head (8x8 box): texture region at (0,0)
+  head: {
+    right:  uv64( 0,8, 8,8),   // left side of head on texture
+    left:   uv64(16,8, 8,8),   // right side
+    top:    uv64( 8,0, 8,8),   // top
+    bottom: uv64(16,0, 8,8),   // bottom
+    front:  uv64( 8,8, 8,8),   // front face
+    back:   uv64(24,8, 8,8),   // back
+  },
+  // Body (8x12 box): region at (16,16)
+  body: {
+    right:  uv64(16,20, 4,12),
+    left:   uv64(28,20, 4,12),
+    top:    uv64(20,16, 8, 4),
+    bottom: uv64(28,16, 8, 4),
+    front:  uv64(20,20, 8,12),
+    back:   uv64(32,20, 8,12),
+  },
+  // Right arm (4x12): region at (40,16)
+  arm_r: {
+    right:  uv64(40,20, 4,12),
+    left:   uv64(48,20, 4,12),
+    top:    uv64(44,16, 4, 4),
+    bottom: uv64(48,16, 4, 4),
+    front:  uv64(44,20, 4,12),
+    back:   uv64(52,20, 4,12),
+  },
+  // Left arm (4x12): region at (32,48) in new-format skin, else mirror of right
+  arm_l: {
+    right:  uv64(32,52, 4,12),
+    left:   uv64(40,52, 4,12),
+    top:    uv64(36,48, 4, 4),
+    bottom: uv64(40,48, 4, 4),
+    front:  uv64(36,52, 4,12),
+    back:   uv64(44,52, 4,12),
+  },
+  // Right leg (4x12): region at (0,16)
+  leg_r: {
+    right:  uv64( 0,20, 4,12),
+    left:   uv64( 8,20, 4,12),
+    top:    uv64( 4,16, 4, 4),
+    bottom: uv64( 8,16, 4, 4),
+    front:  uv64( 4,20, 4,12),
+    back:   uv64(12,20, 4,12),
+  },
+  // Left leg (4x12): region at (16,48)
+  leg_l: {
+    right:  uv64(16,52, 4,12),
+    left:   uv64(24,52, 4,12),
+    top:    uv64(20,48, 4, 4),
+    bottom: uv64(24,48, 4, 4),
+    front:  uv64(20,52, 4,12),
+    back:   uv64(28,52, 4,12),
+  },
+};
+
+// Armour UV regions per piece on armor_layer textures (64x32)
+// Each piece maps to sub-regions: right(+x), left(-x), top(+y), bottom(-y), front(+z), back(-z)
+// armor_layer_1: helmet(0,0), body(16,4), boots(0,16 right / 16,16 left)
+// armor_layer_2: leggings(0,0 right / 16,0 left)
+const ARMOR_UV_L1 = {
+  Helmet: {
+    right:  uv64_32( 0,8, 8,8),
+    left:   uv64_32(16,8, 8,8),
+    top:    uv64_32( 8,0, 8,8),
+    bottom: uv64_32(16,0, 8,8),
+    front:  uv64_32( 8,8, 8,8),
+    back:   uv64_32(24,8, 8,8),
+  },
+  Chestplate: {
+    right:  uv64_32(16,4, 4,12),
+    left:   uv64_32(28,4, 4,12),
+    top:    uv64_32(20,0, 8, 4),
+    bottom: uv64_32(28,0, 8, 4),
+    front:  uv64_32(20,4, 8,12),
+    back:   uv64_32(32,4, 8,12),
+  },
+  // Boots — right leg region
+  Boots_R: {
+    right:  uv64_32( 0,20, 4,8),
+    left:   uv64_32( 8,20, 4,8),
+    top:    uv64_32( 4,16, 4,4),
+    bottom: uv64_32( 8,16, 4,4),
+    front:  uv64_32( 4,20, 4,8),
+    back:   uv64_32(12,20, 4,8),
+  },
+  // Boots — left leg region
+  Boots_L: {
+    right:  uv64_32(16,20, 4,8),
+    left:   uv64_32(24,20, 4,8),
+    top:    uv64_32(20,16, 4,4),
+    bottom: uv64_32(24,16, 4,4),
+    front:  uv64_32(20,20, 4,8),
+    back:   uv64_32(28,20, 4,8),
+  },
+};
+const ARMOR_UV_L2 = {
+  Leggings_R: {
+    right:  uv64_32( 0,4, 4,12),
+    left:   uv64_32( 8,4, 4,12),
+    top:    uv64_32( 4,0, 4, 4),
+    bottom: uv64_32( 8,0, 4, 4),
+    front:  uv64_32( 4,4, 4,12),
+    back:   uv64_32(12,4, 4,12),
+  },
+  Leggings_L: {
+    right:  uv64_32(16,4, 4,12),
+    left:   uv64_32(24,4, 4,12),
+    top:    uv64_32(20,0, 4, 4),
+    bottom: uv64_32(24,0, 4, 4),
+    front:  uv64_32(20,4, 4,12),
+    back:   uv64_32(28,4, 4,12),
+  },
+};
+
+function uvArrayToFaceList(uvPart){
+  // Returns [right, left, top, bottom, front, back] arrays
+  return [uvPart.right, uvPart.left, uvPart.top, uvPart.bottom, uvPart.front, uvPart.back];
+}
+
+// Build the full player model scene and render to canvas
+async function renderPlayerModel(canvas, ownerUuid, pieces, armourType){
+  const W=canvas.width, H=canvas.height;
+
+  // ── Scene setup ───────────────────────────────────────────────────
+  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:false});
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(1);
+  renderer.setClearColor(0x000000, 0);
+
+  const scene = new THREE.Scene();
+
+  // Camera: isometric-ish perspective matching MC inventory
+  const camera = new THREE.PerspectiveCamera(30, W/H, 0.1, 100);
+  // Position camera at ~30° azimuth, ~15° elevation, looking at body center
+  const dist = 18;
+  const azimuth = -Math.PI/6;    // -30° horizontal
+  const elevation = Math.PI/10;  // 18° vertical
+  camera.position.set(
+    dist * Math.sin(azimuth) * Math.cos(elevation),
+    dist * Math.sin(elevation) + 1,
+    dist * Math.cos(azimuth) * Math.cos(elevation)
+  );
+  camera.lookAt(0, 1, 0);
+
+  // Lighting to match MC inventory: ambient + directional
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(-2, 4, 3);
+  scene.add(dirLight);
+  const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+  dirLight2.position.set(2, -1, -2);
+  scene.add(dirLight2);
+
+  // ── Load skin ─────────────────────────────────────────────────────
+  const skinUrl = ownerUuid
+    ? `https://mc-heads.net/skin/${ownerUuid}`
+    : DEFAULT_SKIN_URL;
+  const skinTex = await makeSkinTex(skinUrl);
+
+  // ── Build body parts ──────────────────────────────────────────────
+  // Minecraft scale: 1 block = 1 unit, player is 1.8 blocks tall
+  // Head: 8px = 1 block, so scale: body = 8px wide = 1u, 12px tall = 1.5u
+  // We scale everything so total height ≈ 5u (fitting nicely in viewport)
+  // MC proportions in pixels: head 8x8x8, body 8x12x4, arm 4x12x4, leg 4x12x4
+  // Scale factor: 0.5 (so head=4u wide, body height=6u, arms=2u wide, total ~11u)
+  const S = 0.5;
+  const headW=8*S, headH=8*S, headD=8*S;
+  const bodyW=8*S, bodyH=12*S, bodyD=4*S;
+  const armW=4*S, armH=12*S, armD=4*S;
+  const legW=4*S, legH=12*S, legD=4*S;
+
+  // Y positions (from bottom of model = 0)
+  const legBot = 0;
+  const legTop = legH;           // = 6*S = 3
+  const bodyBot = legTop;
+  const bodyTop = bodyBot + bodyH; // = 3 + 6 = 9*S
+  const headBot = bodyTop;
+  const headTop = headBot + headH; // = 9*S + 4 = 13*S
+
+  // Center vertically: shift so mid-body is at y=0 → total height = 13*S
+  const yOff = -headTop/2 + headH*0.2; // slight upward offset for aesthetics
+
+  function makeBodyMesh(w,h,d, tex, uvPart){
+    const m = makeBox(w,h,d, tex, uvArrayToFaceList(uvPart));
+    return m;
+  }
+
+  if(skinTex){
+    // Head
+    const head = makeBodyMesh(headW,headH,headD, skinTex, SKIN_UV.head);
+    head.position.set(0, headBot+headH/2+yOff, 0);
+    scene.add(head);
+
+    // Body
+    const body = makeBodyMesh(bodyW,bodyH,bodyD, skinTex, SKIN_UV.body);
+    body.position.set(0, bodyBot+bodyH/2+yOff, 0);
+    scene.add(body);
+
+    // Arms — slight angle like MC inventory pose
+    const armAngleL = 0.1, armAngleR = -0.1;
+    const arm_r = makeBodyMesh(armW,armH,armD, skinTex, SKIN_UV.arm_r);
+    arm_r.position.set(-(bodyW/2+armW/2), bodyBot+armH/2+yOff, 0);
+    arm_r.rotation.z = armAngleR;
+    scene.add(arm_r);
+
+    const arm_l = makeBodyMesh(armW,armH,armD, skinTex, SKIN_UV.arm_l);
+    arm_l.position.set((bodyW/2+armW/2), bodyBot+armH/2+yOff, 0);
+    arm_l.rotation.z = armAngleL;
+    scene.add(arm_l);
+
+    // Legs — slight spread
+    const leg_r = makeBodyMesh(legW,legH,legD, skinTex, SKIN_UV.leg_r);
+    leg_r.position.set(-legW/2, legBot+legH/2+yOff, 0);
+    scene.add(leg_r);
+
+    const leg_l = makeBodyMesh(legW,legH,legD, skinTex, SKIN_UV.leg_l);
+    leg_l.position.set(legW/2, legBot+legH/2+yOff, 0);
+    scene.add(leg_l);
+  }
+
+  // ── Armour overlays ───────────────────────────────────────────────
+  // Build a tinted armor_layer texture and overlay armour meshes slightly larger than body
+  const pieceMap = {};
+  (pieces||[]).forEach(p => { pieceMap[p.piece] = p; });
+
+  const ARMOR_SCALE = 1.06; // Armour sits slightly outside the skin
+
+  // Helper: build armor layer texture for a hex colour
+  async function armorLayerTex(layerKey, uvPart, hex){
+    const layerImg = await loadImg(ARMOR_LAYERS[layerKey]);
+    if(!layerImg) return null;
+    const out=document.createElement('canvas'); out.width=64; out.height=32;
+    const ctx2=out.getContext('2d'); ctx2.imageSmoothingEnabled=false;
+    ctx2.drawImage(layerImg,0,0);
+    const id=ctx2.getImageData(0,0,64,32);
+    const h=normHex(hex)||BLEACHED_HEX;
+    const tR=parseInt(h.slice(1,3),16), tG=parseInt(h.slice(3,5),16), tB=parseInt(h.slice(5,7),16);
+    // Tint all non-transparent pixels
+    for(let i=0;i<id.data.length;i+=4){
+      if(id.data[i+3]===0) continue;
+      const bright=(id.data[i]+id.data[i+1]+id.data[i+2])/3/255;
+      id.data[i]=Math.round(tR*bright);
+      id.data[i+1]=Math.round(tG*bright);
+      id.data[i+2]=Math.round(tB*bright);
+    }
+    ctx2.putImageData(id,0,0);
+    const tex=new THREE.CanvasTexture(out);
+    tex.magFilter=THREE.NearestFilter; tex.minFilter=THREE.NearestFilter;
+    return tex;
+  }
+
+  // HELMET
+  const helmetPiece = pieceMap['Helmet'];
+  if(helmetPiece){
+    if(isPieceDyeable(armourType,'Helmet') && helmetPiece.hex){
+      const tex = await armorLayerTex('leather_layer_1', ARMOR_UV_L1.Helmet, helmetPiece.hex);
+      if(tex){
+        const A=ARMOR_SCALE;
+        const m=makeBox(headW*A, headH*A, headD*A, tex, uvArrayToFaceList(ARMOR_UV_L1.Helmet));
+        m.position.set(0, headBot+headH/2+yOff, 0);
+        scene.add(m);
+      }
+    } else {
+      // Skull helmet: load from mc-heads
+      const skullUuid = (() => { const al=armourType.toLowerCase(); for(const [k,v] of Object.entries(SKULL_TEXTURES)){ if(al.includes(k)) return v; } return null; })();
+      if(skullUuid){
+        const skullTex = await makeSkinTex(`https://mc-heads.net/avatar/${skullUuid}/64`);
+        if(skullTex){
+          const mat=new THREE.MeshLambertMaterial({map:skullTex,transparent:true,alphaTest:0.1});
+          const m=new THREE.Mesh(new THREE.BoxGeometry(headW*1.1,headH*1.1,headD*1.1),mat);
+          m.position.set(0,headBot+headH/2+yOff,0);
+          scene.add(m);
+        }
+      }
+    }
+  }
+
+  // CHESTPLATE
+  const chestPiece = pieceMap['Chestplate'];
+  if(chestPiece && isPieceDyeable(armourType,'Chestplate') && chestPiece.hex){
+    const tex = await armorLayerTex('leather_layer_1', ARMOR_UV_L1.Chestplate, chestPiece.hex);
+    if(tex){
+      const A=ARMOR_SCALE;
+      const m=makeBox(bodyW*A,bodyH*A,bodyD*A, tex, uvArrayToFaceList(ARMOR_UV_L1.Chestplate));
+      m.position.set(0,bodyBot+bodyH/2+yOff,0);
+      scene.add(m);
+      // Shoulder armour on arms
+      const armChestL = makeBox(armW*A,armH*0.4,armD*A, tex, uvArrayToFaceList(ARMOR_UV_L1.Chestplate));
+      armChestL.position.set((bodyW/2+armW/2),bodyBot+armH*0.8+yOff,0);
+      scene.add(armChestL);
+      const armChestR = makeBox(armW*A,armH*0.4,armD*A, tex, uvArrayToFaceList(ARMOR_UV_L1.Chestplate));
+      armChestR.position.set(-(bodyW/2+armW/2),bodyBot+armH*0.8+yOff,0);
+      scene.add(armChestR);
+    }
+  }
+
+  // LEGGINGS
+  const legPiece = pieceMap['Leggings'];
+  if(legPiece && isPieceDyeable(armourType,'Leggings') && legPiece.hex){
+    const tex = await armorLayerTex('leather_layer_2', ARMOR_UV_L2.Leggings_R, legPiece.hex);
+    const texL = await armorLayerTex('leather_layer_2', ARMOR_UV_L2.Leggings_L, legPiece.hex);
+    if(tex){
+      const A=ARMOR_SCALE;
+      const legR=makeBox(legW*A,legH*A,legD*A, tex, uvArrayToFaceList(ARMOR_UV_L2.Leggings_R));
+      legR.position.set(-legW/2,legBot+legH/2+yOff,0);
+      scene.add(legR);
+    }
+    if(texL){
+      const A=ARMOR_SCALE;
+      const legL=makeBox(legW*A,legH*A,legD*A, texL, uvArrayToFaceList(ARMOR_UV_L2.Leggings_L));
+      legL.position.set(legW/2,legBot+legH/2+yOff,0);
+      scene.add(legL);
+    }
+  }
+
+  // BOOTS
+  const bootPiece = pieceMap['Boots'];
+  if(bootPiece && isPieceDyeable(armourType,'Boots') && bootPiece.hex){
+    const tex = await armorLayerTex('leather_layer_1', ARMOR_UV_L1.Boots_R, bootPiece.hex);
+    const texL = await armorLayerTex('leather_layer_1', ARMOR_UV_L1.Boots_L, bootPiece.hex);
+    if(tex){
+      const A=ARMOR_SCALE;
+      const bootH=legH*0.55;
+      const bR=makeBox(legW*A,bootH,legD*A, tex, uvArrayToFaceList(ARMOR_UV_L1.Boots_R));
+      bR.position.set(-legW/2,legBot+bootH/2+yOff,0);
+      scene.add(bR);
+    }
+    if(texL){
+      const A=ARMOR_SCALE;
+      const bootH=legH*0.55;
+      const bL=makeBox(legW*A,bootH,legD*A, texL, uvArrayToFaceList(ARMOR_UV_L1.Boots_L));
+      bL.position.set(legW/2,legBot+bootH/2+yOff,0);
+      scene.add(bL);
+    }
+  }
+
+  // ── Render ────────────────────────────────────────────────────────
+  renderer.render(scene, camera);
+
+  // Store renderer for cleanup
+  return renderer;
+}
+
+// Called after renderSets() inserts cards into DOM
+function initCardModels(ownerUuid, sets){
+  sets.forEach(s => {
+    const wrap = document.getElementById(`model-${s.id}`);
+    if(!wrap) return;
+    const canvas = wrap.querySelector('canvas');
+    if(!canvas || canvas.dataset.rendered) return;
+    canvas.dataset.rendered = '1';
+    renderPlayerModel(canvas, ownerUuid, s.pieces||[], s.armour_type||'')
+      .catch(()=>{});
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   SET CARD HTML
+════════════════════════════════════════════════════════════════════ */
 function setCard(s){
   const pieces = s.pieces || [];
   const armourType = s.armour_type || '';
@@ -1570,35 +2416,39 @@ function setCard(s){
   const stripeGrad = pieceColours.length > 1
     ? `linear-gradient(90deg,${pieceColours.map((c,i)=>`${c} ${Math.round(i/pieceColours.length*100)}%,${c} ${Math.round((i+1)/pieceColours.length*100)}%`).join(',')})`
     : (pieceColours[0]||'var(--border)');
-  const piecesHtml = pieces.map((p,i) => {
-    const sz = CARD_SIZES[p.piece]||{w:72,h:72};
+
+  const piecesHtml = pieces.map(p => {
     const cls = classifyHex(p.hex, armourType, p.piece);
     const col = cls?.colour || '#888';
-    const dispW = Math.round(sz.w/2), dispH = Math.round(sz.h/2);
-    return `<div class="set-piece-wrap">
-      <canvas width="${sz.w}" height="${sz.h}" style="width:${dispW}px;height:${dispH}px"
-        data-piece="${esc(p.piece)}" data-hex="${esc(p.hex||BLEACHED_HEX)}" data-armourtype="${esc(armourType)}" id="sc-${esc(s.id)}-${i}"></canvas>
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <span class="set-piece-name">${esc(p.piece)}</span>
-        <span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}12">${cls?esc(cls.label):'—'}</span>
-      </div>
+    return `<div class="set-piece-row">
+      <div class="set-piece-dot" style="background:${p.hex||'transparent'};border-color:${col}66"></div>
+      <span class="set-piece-name">${esc(p.piece)}</span>
+      ${p.hex?`<span style="font-size:8px;color:var(--text3);font-family:monospace">${esc(p.hex.toUpperCase())}</span>`:''}
+      <span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${cls?esc(cls.label):'N/A'}</span>
     </div>`;
   }).join('');
-  const catPills = cats.map(c=>`<span style="font-size:9px;padding:2px 6px;border-radius:4px;border:1px solid ${c.colour}44;color:${c.colour};font-weight:600;background:${c.colour}12">${esc(c.label)}</span>`).join('');
+
+  const catPills = cats.map(c=>`<span style="font-size:9px;padding:2px 5px;border-radius:4px;border:1px solid ${c.colour}44;color:${c.colour};font-weight:600;background:${c.colour}10">${esc(c.label)}</span>`).join('');
+
   return `<div class="set-card" onclick="openSetPanel('${esc(s.id)}')">
-    <div class="set-stripe" style="background:${stripeGrad}"></div>
-    <div class="set-body">
-      <div class="set-top">
-        <div>
-          <div class="set-name">${esc(s.set_name||s.armour_type||'Unnamed Set')}</div>
-          <div class="set-type">${esc(s.armour_type||'')}</div>
-        </div>
-        ${s.for_offers?'<div class="set-for-offers">For Sale</div>':''}
+    <div style="height:3px;background:${stripeGrad}"></div>
+    <div class="set-card-inner">
+      <div class="set-card-model" id="model-${esc(s.id)}">
+        <canvas width="240" height="440" style="width:120px;height:220px"></canvas>
       </div>
-      <div class="set-pieces">${piecesHtml}</div>
-      <div class="set-foot">
-        <div class="set-cats">${catPills}</div>
-        <div class="set-ts">${ago(s.ts||Date.now())}</div>
+      <div class="set-card-right">
+        <div class="set-top">
+          <div style="min-width:0">
+            <div class="set-name">${esc(s.set_name||s.armour_type||'Unnamed Set')}</div>
+            <div class="set-type">${esc(s.armour_type||'')}</div>
+          </div>
+          ${s.for_offers?'<div class="set-for-offers">For Sale</div>':''}
+        </div>
+        <div class="set-pieces">${piecesHtml}</div>
+        <div class="set-foot">
+          <div class="set-cats">${catPills}</div>
+          <div class="set-ts">${ago(s.ts||Date.now())}</div>
+        </div>
       </div>
     </div>
   </div>`;
@@ -1648,24 +2498,30 @@ window.openSetPanel = function(id){
   const pieces = s.pieces || [];
   const isOwn = currentUser && currentUser.uuid === s.uuid;
 
-  // Left col – large pieces
-  const spPieces = pieces.map((p,i) => {
-    const sz = PANEL_SIZES[p.piece]||{w:160,h:160};
+  // Left col – full 3D player viewer
+  const spEl = document.getElementById('spPieces');
+  spEl.innerHTML = '<div id="sp-player" style="width:160px;height:240px;display:flex;align-items:center;justify-content:center"><div class="spinner"></div></div>';
+  // Update sp-pieces CSS for player size
+  spEl.style.cssText = 'width:180px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:16px;background:var(--bg3);overflow-y:auto';
+  
+  // Piece detail list below the player
+  const pieceListHtml = pieces.map(p => {
     const cls = classifyHex(p.hex, armourType, p.piece);
     const col = cls?.colour||'#888';
-    return `<div class="sp-piece-wrap">
-      <canvas id="spp-${i}" width="${sz.w}" height="${sz.h}" style="width:${Math.round(sz.w/2)}px;height:${Math.round(sz.h/2)}px;image-rendering:pixelated"
-        data-piece="${esc(p.piece)}" data-hex="${esc(p.hex||BLEACHED_HEX)}" data-armourtype="${esc(armourType)}"></canvas>
-      <span class="sp-piece-name">${esc(p.piece)}</span>
-      <span class="sp-piece-tag" style="color:${col};border-color:${col}55;background:${col}12">${cls?cls.label:'—'}</span>
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;gap:8px">
+      <span style="font-weight:600;color:var(--text2)">${esc(p.piece)}</span>
+      <span style="font-family:monospace;color:var(--text3);font-size:10px">${p.hex?esc(p.hex):''}</span>
+      <span style="color:${col};font-weight:700;font-size:10px">${cls?esc(cls.label):'—'}</span>
     </div>`;
   }).join('');
-  document.getElementById('spPieces').innerHTML = spPieces || '<div style="color:var(--text3);font-size:12px">No pieces</div>';
-  requestAnimationFrame(() => {
-    pieces.forEach((p,i) => {
-      const c = document.getElementById(`spp-${i}`);
-      if(c) drawLeatherPreview(c, p.piece, p.hex||BLEACHED_HEX, armourType);
-    });
+  spEl.innerHTML = `
+    <div id="sp-player" style="width:160px;height:240px;display:flex;align-items:center;justify-content:center"><div class="spinner"></div></div>
+    <div style="width:100%;margin-top:12px">${pieceListHtml}</div>`;
+  
+  // Render player
+  requestAnimationFrame(async () => {
+    const playerEl = document.getElementById('sp-player');
+    if(playerEl) renderSetPlayer(playerEl, s, viewingUuid, {width:160,height:240});
   });
 
   // Right col – info

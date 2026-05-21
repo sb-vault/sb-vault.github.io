@@ -41,9 +41,10 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .btn:disabled{opacity:.4;cursor:not-allowed}
 
 /* User pill */
-.user-pill{display:flex;align-items:center;gap:8px;padding:3px 10px 3px 3px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .15s;position:relative;user-select:none}
+.user-pill{display:flex;align-items:center;gap:8px;padding:3px 12px 3px 3px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .15s;position:relative;user-select:none}
 .user-pill:hover,.user-pill.open{border-color:var(--text3)}
-.user-avatar{width:28px;height:28px;border-radius:5px;image-rendering:pixelated}
+.user-avatar{width:30px;height:30px;border-radius:6px;image-rendering:pixelated;flex-shrink:0;display:block}
+.user-ign{font-size:13px;font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .user-ign{font-size:13px;font-weight:600}
 .disc-badge{background:rgba(232,85,85,.15);color:var(--red);border:1px solid rgba(232,85,85,.3);border-radius:4px;font-size:9px;font-weight:700;padding:1px 4px}
 .user-drop{position:absolute;right:0;top:calc(100% + 6px);background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:6px;width:190px;box-shadow:0 8px 32px rgba(0,0,0,.35);z-index:200;display:none}
@@ -284,7 +285,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
         <button class="tm active" id="tmLight" onclick="setTheme('light')">Light</button>
       </div>
       <div class="chat-wrap" id="chatWrap" style="display:none">
-        <button class="btn btn-icon" onclick="openChatPanel()">💬</button>
+        <button class="btn" onclick="openChatPanel()" style="gap:6px">Messages</button>
         <div class="chat-badge" id="chatBadge"></div>
       </div>
       <div id="authArea">
@@ -716,6 +717,21 @@ function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplat
 ───────────────────────────────────────────────────── */
 
 /* ─────────────────────────────────────────────────────
+   IMAGE LOADER (with CORS + cache)
+───────────────────────────────────────────────────── */
+const _imgCache = {};
+function loadImg(url){
+  if(_imgCache[url]) return Promise.resolve(_imgCache[url]);
+  return new Promise(res=>{
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=()=>{ _imgCache[url]=img; res(img); };
+    img.onerror=()=>res(null);
+    img.src=url;
+  });
+}
+
+/* ─────────────────────────────────────────────────────
    2D CHARACTER RENDERER
    Draws a flat Minecraft-style character sprite on canvas.
    No external library needed — pure canvas 2D.
@@ -726,123 +742,146 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
   const W=opts.width||120, H=opts.height||220;
   containerEl.innerHTML='';
   const canvas=document.createElement('canvas');
+  // 2x resolution for sharpness
   canvas.width=W*2; canvas.height=H*2;
-  canvas.style.cssText=`width:${W}px;height:${H}px;display:block;image-rendering:pixelated`;
+  canvas.style.cssText=`width:${W}px;height:${H}px;display:block`;
   containerEl.appendChild(canvas);
   const ctx=canvas.getContext('2d');
   ctx.imageSmoothingEnabled=false;
   const cw=canvas.width, ch=canvas.height;
 
-  // Build piece colour map
+  // Piece colour lookup
   const pc={};
   (pieces||[]).forEach(p=>{ if(p.hex) pc[p.piece]=normHex(p.hex)||BLEACHED; });
 
-  // Scale: draw character proportionally in canvas
-  // MC proportions: head 8px, body 8×12, arms 4×12, legs 4×12
-  // We scale so total height = ch, with some padding
-  const pad=Math.round(ch*0.04);
-  const totalH=ch-pad*2;
-  const unit=totalH/28; // 28 units total: head8 + body12 + legs12 = 32, but we squish a bit
-  const U=Math.round(totalH/28);
+  // ── Layout (Minecraft proportions, scaled to fit canvas) ──────────
+  // MC pixel ratios: head=8, neck=0, body=12, arm=12, leg=12 (heights)
+  // widths: head=8, body=8, arm=4, leg=4
+  // Total height = head(8) + body(12) + leg(12) = 32 units
+  // Total width  = arm(4) + body(8) + arm(4) = 16 units
+  const PAD = Math.round(ch * 0.03);
+  const totalH = ch - PAD * 2;
+  const U = totalH / 32;  // pixels per MC unit (float OK, we round per rect)
 
-  const headW=8*U, headH=8*U;
-  const bodyW=8*U, bodyH=10*U;
-  const armW=4*U, armH=10*U;
-  const legW=4*U, legH=10*U;
-  const totalBodyW=armW+bodyW+armW;
-  const xOff=Math.round((cw-totalBodyW)/2);
-  const yHead=pad;
-  const yBody=yHead+headH;
-  const yArm=yBody;
-  const yLeg=yBody+bodyH;
-  const xBody=xOff+armW;
-  const xArmL=xOff;
-  const xArmR=xOff+armW+bodyW;
-  const xLegL=xBody;
-  const xLegR=xBody+legW;
+  const hH = Math.round(8*U),  hW = Math.round(8*U);   // head
+  const bH = Math.round(12*U), bW = Math.round(8*U);   // body
+  const aH = Math.round(12*U), aW = Math.round(4*U);   // arm
+  const lH = Math.round(12*U), lW = Math.round(4*U);   // leg
 
-  function fillRect(x,y,w,h,col,shade=1){
-    const hex=normHex(col)||'#888888';
-    const r=Math.min(255,Math.round(parseInt(hex.slice(1,3),16)*shade));
-    const g=Math.min(255,Math.round(parseInt(hex.slice(3,5),16)*shade));
-    const b=Math.min(255,Math.round(parseInt(hex.slice(5,7),16)*shade));
+  // X positions: centre the 16-unit-wide figure
+  const figW = aW + bW + aW;
+  const x0 = Math.round((cw - figW) / 2);
+  const xAL = x0;           // left arm
+  const xB  = x0 + aW;     // body
+  const xAR = x0 + aW + bW;// right arm
+  const xLL = x0 + aW;     // left leg
+  const xLR = x0 + aW + lW;// right leg
+
+  // Y positions
+  const yH  = PAD;          // head top
+  const yB  = yH + hH;      // body top
+  const yA  = yB;           // arm top (same as body)
+  const yL  = yB + bH;      // leg top
+
+  // ── Helper: fill a rect with a hex colour + brightness multiplier ─
+  function fillR(x,y,w,h,hex,bright=1){
+    if(w<=0||h<=0) return;
+    const c=normHex(hex)||'#888888';
+    const r=Math.min(255,Math.round(parseInt(c.slice(1,3),16)*bright));
+    const g=Math.min(255,Math.round(parseInt(c.slice(3,5),16)*bright));
+    const b=Math.min(255,Math.round(parseInt(c.slice(5,7),16)*bright));
     ctx.fillStyle=`rgb(${r},${g},${b})`;
-    ctx.fillRect(x,y,w,h);
+    ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));
   }
 
-  // Default skin colours for unarmoured parts
-  const SKIN='#c8966c', SKIN_D='#a0724a';
-  const CLOTH='#4a4a6a', CLOTH_D='#333350';
+  // ── Colours ───────────────────────────────────────────────────────
+  const SKIN    = '#c8936a';
+  const SKIN_DK = '#a07050';
+  const LEG_DEF = '#3d3d5c';
+  const ARM_DEF = '#3d3d5c';
 
-  // LEGS
-  const legCol=pc['Leggings']||CLOTH;
-  fillRect(xLegL, yLeg, legW, legH, legCol);
-  fillRect(xLegL+legW, yLeg, legW, legH, legCol, 0.82);
-  // leg shading line
-  ctx.fillStyle='rgba(0,0,0,0.08)'; ctx.fillRect(xLegL+legW-1,yLeg,1,legH);
+  const cHelm  = pc['Helmet'];
+  const cChest = pc['Chestplate'];
+  const cLegs  = pc['Leggings'];
+  const cBoots = pc['Boots'];
 
-  // BOOTS  
-  const bootH=Math.round(legH*0.4);
-  const bootCol=pc['Boots']||SKIN_D;
-  fillRect(xLegL, yLeg+legH-bootH, legW, bootH, bootCol, 1.0);
-  fillRect(xLegL+legW, yLeg+legH-bootH, legW, bootH, bootCol, 0.78);
+  // ── Draw back-to-front ────────────────────────────────────────────
+
+  // LEGS (left then right, slightly different shade)
+  const legBase = cLegs || LEG_DEF;
+  fillR(xLL, yL, lW, lH, legBase, 1.0);
+  fillR(xLR, yL, lW, lH, legBase, 0.78);
+  // leg gap line
+  ctx.fillStyle='rgba(0,0,0,0.15)';
+  ctx.fillRect(Math.round(xLL+lW)-1, Math.round(yL), 2, Math.round(lH));
+
+  // BOOTS over leg bottoms
+  const bootH = Math.round(lH * 0.38);
+  const bootBase = cBoots || SKIN_DK;
+  fillR(xLL, yL+lH-bootH, lW, bootH, bootBase, 1.0);
+  fillR(xLR, yL+lH-bootH, lW, bootH, bootBase, 0.78);
 
   // BODY
-  const bodyCol=pc['Chestplate']||CLOTH;
-  fillRect(xBody, yBody, bodyW, bodyH, bodyCol);
-  // body right-edge shadow
-  ctx.fillStyle='rgba(0,0,0,0.12)'; ctx.fillRect(xBody+bodyW-2,yBody,2,bodyH);
+  const bodyBase = cChest || '#4a4460';
+  fillR(xB, yB, bW, bH, bodyBase, 1.0);
+  // right-side body shadow strip
+  ctx.fillStyle='rgba(0,0,0,0.12)';
+  ctx.fillRect(Math.round(xB+bW-2), Math.round(yB), 2, Math.round(bH));
 
-  // ARMS
-  const armCol=pc['Chestplate']||CLOTH;
-  fillRect(xArmL, yArm, armW, armH, armCol, 0.88);
-  fillRect(xArmR, yArm, armW, armH, armCol, 0.72);
-  // arm skin at wrist
-  const wristH=Math.round(armH*0.2);
-  fillRect(xArmL, yArm+armH-wristH, armW, wristH, SKIN, 0.88);
-  fillRect(xArmR, yArm+armH-wristH, armW, wristH, SKIN, 0.72);
+  // ARMS — left arm slightly lighter (lit), right arm darker (shadow)
+  const armBase = cChest || ARM_DEF;
+  fillR(xAL, yA, aW, aH, armBase, 0.85);
+  fillR(xAR, yA, aW, aH, armBase, 0.65);
+  // wrist skin peek
+  const wH = Math.round(aH * 0.18);
+  fillR(xAL, yA+aH-wH, aW, wH, SKIN, 0.85);
+  fillR(xAR, yA+aH-wH, aW, wH, SKIN, 0.65);
 
-  // HEAD — try to load owner's face from mc-heads
-  const headX=xOff+armW, headY=yHead;
-  // Draw placeholder first
-  fillRect(headX, headY, headW, headH, SKIN);
+  // HEAD placeholder (skin tone) — drawn before face image loads
+  const hX = xB, hY = yH;  // head x aligns with body x
+  fillR(hX, hY, hW, hH, SKIN, 1.0);
 
-  // Helmet overlay
-  const helmCol=pc['Helmet'];
-  if(helmCol){
-    fillRect(headX-1, headY-1, headW+2, headH+2, helmCol, 0.95);
-    // visor strip
-    fillRect(headX, headY+Math.round(headH*0.35), headW, Math.round(headH*0.22), '#000', 0.18);
+  // HELMET solid colour (drawn over placeholder, face goes on top)
+  if(cHelm){
+    fillR(hX-1, hY-1, hW+2, hH+2, cHelm, 0.92);
   }
 
-  // Load face from mc-heads and draw it on the head area
-  if(ownerUuid){
+  // ── Load face asynchronously and redraw head area ─────────────────
+  // mc-heads.net supports CORS with crossOrigin=anonymous
+  const faceUrl = ownerUuid
+    ? `https://mc-heads.net/avatar/${ownerUuid}/128`
+    : null;
+
+  if(faceUrl){
     try{
-      const faceImg=await loadImg(`https://mc-heads.net/avatar/${ownerUuid}/64`);
-      if(faceImg){
-        // Draw face over head area (with helmet still on top)
-        ctx.imageSmoothingEnabled=false;
-        if(!helmCol){
-          ctx.drawImage(faceImg,headX,headY,headW,headH);
+      const face = await loadImg(faceUrl);
+      if(face){
+        ctx.imageSmoothingEnabled = false;
+        if(!cHelm){
+          // No helmet — draw full face
+          ctx.drawImage(face, Math.round(hX), Math.round(hY), Math.round(hW), Math.round(hH));
         } else {
-          // Draw face slightly inset under helmet
-          const inset=Math.round(U*0.5);
-          ctx.drawImage(faceImg,headX+inset,headY+inset,headW-inset*2,headH-inset*2);
-          // Re-draw helmet rim
-          fillRect(headX-1, headY-1, headW+2, Math.round(headH*0.15), helmCol, 0.95);
-          fillRect(headX-1, headY+headH-Math.round(headH*0.1), headW+2, Math.round(headH*0.12)+1, helmCol, 0.95);
-          fillRect(headX-1, headY-1, Math.round(headW*0.1), headH+2, helmCol, 0.88);
-          fillRect(headX+headW-Math.round(headW*0.1)+1, headY-1, Math.round(headW*0.1), headH+2, helmCol, 0.72);
+          // Face inset, helmet border around it
+          const ins = Math.max(1, Math.round(U * 0.6));
+          ctx.drawImage(face, Math.round(hX+ins), Math.round(hY+ins), Math.round(hW-ins*2), Math.round(hH-ins*2));
+          // Redraw helmet border strips
+          const rimT = Math.max(1, Math.round(hH*0.12));
+          const rimS = Math.max(1, Math.round(hW*0.12));
+          fillR(hX-1, hY-1,    hW+2, rimT,  cHelm, 0.92); // top rim
+          fillR(hX-1, hY+hH-rimT+1, hW+2, rimT, cHelm, 0.78); // bottom rim
+          fillR(hX-1, hY-1,    rimS, hH+2, cHelm, 0.88); // left rim
+          fillR(hX+hW-rimS+1, hY-1, rimS, hH+2, cHelm, 0.68); // right rim (dark)
         }
       }
-    }catch(e){}
+    }catch(e){
+      // face failed — leave placeholder
+    }
   }
 
-  // Subtle outline on whole figure
-  ctx.strokeStyle='rgba(0,0,0,0.06)';
-  ctx.lineWidth=1;
-  ctx.strokeRect(headX-0.5, headY-0.5, headW+1, headH+1);
-  ctx.strokeRect(xBody-0.5, yBody-0.5, bodyW+1, bodyH+1);
+  // ── Subtle ambient-occlusion-style darkening at joints ────────────
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.fillRect(Math.round(xB), Math.round(yB), Math.round(bW), 2);   // neck shadow
+  ctx.fillRect(Math.round(xB), Math.round(yL), Math.round(bW), 2);   // waist shadow
 }
 
 /* ─────────────────────────────────────────────────────

@@ -202,7 +202,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .msg-bub.theirs{background:var(--bg3);border-bottom-left-radius:3px}
 .msg-bub.mine{background:var(--text);color:var(--bg);border-bottom-right-radius:3px}
 .msg-time{font-size:10px;color:var(--text3);padding:3px 3px 0}
-.msg-img{max-width:200px;max-height:200px;border-radius:8px;cursor:pointer;display:block;margin-top:3px;border:1px solid var(--border)}
+.msg-img{max-width:220px;max-height:220px;border-radius:10px;cursor:pointer;display:block;border:1px solid var(--border);object-fit:cover}
 .chat-empty{padding:60px 24px;text-align:center;color:var(--text3);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:13px}
 .chat-input-area{padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:7px;align-items:flex-end}
 .chat-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;padding:7px 11px;outline:none;resize:none;max-height:100px;min-height:34px;transition:border-color .15s;line-height:1.5}
@@ -652,11 +652,15 @@ function setUser(user){
 
 async function saveDiscord(){
   const v=document.getElementById('discordInput').value.trim();
+  const btn=document.querySelector('#discordModal .btn-p');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
   try{
-    await fetch(`${API}/users/preferences`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({discord:v})});
+    const res=await fetch(`${API}/users/preferences`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({discord:v})});
+    if(!res.ok){ const d=await res.json().catch(()=>{}); toast('Failed: '+(d?.error||res.status)); return; }
     closeModal('discordModal'); toast('Discord saved!');
     if(currentUser) setUser(currentUser);
-  }catch(e){ toast('Failed to save.'); }
+  }catch(e){ toast('Network error — check connection.'); }
+  finally{ if(btn){btn.disabled=false;btn.textContent='Save';} }
 }
 
 window.togglePill=function(e){
@@ -798,9 +802,17 @@ const _viewers = new Map();
 
 async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
   const w=opts.width||120, h=opts.height||220;
-  const SkinViewer = window.SkinViewer || window.skinview3d?.SkinViewer;
+  
+  // Wait up to 5s for the 3D library to load
+  let SkinViewer = null;
+  for(let i=0;i<10;i++){
+    SkinViewer = window.SkinViewer || window.skinview3d?.SkinViewer || window.skin3d?.SkinViewer;
+    if(SkinViewer) break;
+    await new Promise(r=>setTimeout(r,500));
+  }
+  
   if(!SkinViewer){
-    containerEl.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:11px;padding:8px;text-align:center">Loading<br>viewer…</div>`;
+    containerEl.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:11px;padding:8px;text-align:center">3D viewer<br>unavailable</div>`;
     return;
   }
   try{
@@ -816,18 +828,22 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
       viewer=new SkinViewer({canvas,width:w*2,height:h*2,skin:skinData});
       viewer.autoRotate=false;
       viewer.animation=null;
-      viewer.camera.rotation.x=-0.26;
-      viewer.camera.rotation.y=0.5;
-      viewer.zoom=0.85;
-      viewer.renderer.setClearColor(0x000000,0);
+      // Camera angle matching MC character screen
+      if(viewer.camera){
+        viewer.camera.rotation.x=-0.26;
+        viewer.camera.rotation.y=0.5;
+      }
+      if(typeof viewer.zoom!=='undefined') viewer.zoom=0.85;
+      if(viewer.renderer) viewer.renderer.setClearColor(0x000000,0);
       if(viewer.globalLight) viewer.globalLight.intensity=2.4;
       if(viewer.cameraLight) viewer.cameraLight.intensity=0.5;
       _viewers.set(id,viewer);
     } else {
-      viewer.loadSkin(skinData);
-      viewer.render?.();
+      if(viewer.loadSkin) viewer.loadSkin(skinData);
+      if(viewer.render) viewer.render();
     }
   }catch(e){
+    console.warn('renderPlayerInto error:', e);
     containerEl.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:11px;padding:8px;text-align:center">Preview<br>unavailable</div>`;
   }
 }
@@ -1333,11 +1349,15 @@ window.openChat=async function(id){
     const isClosed=!!(isSel?chat.archived_seller:chat.archived_buyer);
     const msgsHtml=(messages||[]).filter(m=>!m.content?.startsWith('__offer__')||m.image_url).map(m=>{
       const im=m.sender_uuid===currentUser?.uuid;
-      const img=m.image_url?`<img class="msg-img" src="${esc(m.image_url)}" onclick="window.open('${esc(m.image_url)}','_blank')" alt="img">`:'';
-      const txt=m.content&&!m.content.startsWith('__offer__')?`<div>${esc(m.content)}</div>`:'';
+      const txt=m.content&&!m.content.startsWith('__offer__')?esc(m.content):'';
+      const img=m.image_url?`<img class="msg-img" src="${esc(m.image_url)}" onclick="window.open('${esc(m.image_url)}','_blank')" alt="">`:'';
       return`<div class="msg-row ${im?'mine':'theirs'}">
         <img class="msg-av" src="${HEAD(m.sender_uuid||'steve')}" alt="">
-        <div><div class="msg-bub ${im?'mine':'theirs'}">${txt}${img}</div><div class="msg-time">${ago(m.ts)}</div></div>
+        <div style="display:flex;flex-direction:column;align-items:${im?'flex-end':'flex-start'}">
+          ${txt?`<div class="msg-bub ${im?'mine':'theirs'}">${txt}</div>`:''}
+          ${img}
+          <div class="msg-time">${ago(m.ts)}</div>
+        </div>
       </div>`;
     }).join('');
     lastMessageTs=messages?.length?messages[messages.length-1].ts:0;
@@ -1376,7 +1396,11 @@ window.sendMsg=async function(){
   const con=document.getElementById('chatMsgs');
   if(con&&currentUser){
     const el=document.createElement('div'); el.className='msg-row mine';
-    el.innerHTML=`<img class="msg-av" src="${HEAD(currentUser.uuid)}" alt=""><div><div class="msg-bub mine">${esc(content)}</div><div class="msg-time">just now</div></div>`;
+    el.innerHTML=`<img class="msg-av" src="${HEAD(currentUser.uuid)}" alt="">
+      <div style="display:flex;flex-direction:column;align-items:flex-end">
+        <div class="msg-bub mine">${esc(content)}</div>
+        <div class="msg-time">just now</div>
+      </div>`;
     con.appendChild(el); con.scrollTop=con.scrollHeight;
   }
   try{ await fetch(`${API}/chats/${activeChatId}/messages`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({content})}); }
@@ -1429,12 +1453,16 @@ function pollChats(){
           const con=document.getElementById('chatMsgs');
           if(con){
             newM.forEach(m=>{
-              if(m.content?.startsWith('__offer__')) return;
+              if(m.content?.startsWith('__offer__')&&!m.image_url) return;
               const im=m.sender_uuid===currentUser?.uuid;
+              const txt=m.content&&!m.content.startsWith('__offer__')?esc(m.content):'';
               const img=m.image_url?`<img class="msg-img" src="${esc(m.image_url)}" onclick="window.open('${esc(m.image_url)}','_blank')" alt="">`:'';
-              const txt=m.content&&!m.content.startsWith('__offer__')?`<div>${esc(m.content)}</div>`:'';
               const el=document.createElement('div');el.className=`msg-row ${im?'mine':'theirs'}`;
-              el.innerHTML=`<img class="msg-av" src="${HEAD(m.sender_uuid||'steve')}" alt=""><div><div class="msg-bub ${im?'mine':'theirs'}">${txt}${img}</div><div class="msg-time">${ago(m.ts)}</div></div>`;
+              el.innerHTML=`<img class="msg-av" src="${HEAD(m.sender_uuid||'steve')}" alt="">`
+                +`<div style="display:flex;flex-direction:column;align-items:${im?'flex-end':'flex-start'}">`
+                +(txt?`<div class="msg-bub ${im?'mine':'theirs'}">${txt}</div>`:'')
+                +img
+                +`<div class="msg-time">${ago(m.ts)}</div></div>`;
               con.appendChild(el);
             });
             lastMessageTs=newM[newM.length-1].ts; con.scrollTop=con.scrollHeight;

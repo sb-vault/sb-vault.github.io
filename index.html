@@ -717,14 +717,13 @@ function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplat
 ───────────────────────────────────────────────────── */
 
 /* ─────────────────────────────────────────────────────
-   IMAGE LOADER (with CORS + cache)
+   IMAGE LOADER (CORS-enabled, cached)
 ───────────────────────────────────────────────────── */
 const _imgCache = {};
 function loadImg(url){
   if(_imgCache[url]) return Promise.resolve(_imgCache[url]);
   return new Promise(res=>{
-    const img=new Image();
-    img.crossOrigin='anonymous';
+    const img=new Image(); img.crossOrigin='anonymous';
     img.onload=()=>{ _imgCache[url]=img; res(img); };
     img.onerror=()=>res(null);
     img.src=url;
@@ -732,157 +731,291 @@ function loadImg(url){
 }
 
 /* ─────────────────────────────────────────────────────
-   2D CHARACTER RENDERER
-   Draws a flat Minecraft-style character sprite on canvas.
-   No external library needed — pure canvas 2D.
-   Shows head (owner skin face), body, arms, legs, all
-   coloured with the armour hex colours.
+   THREE.JS MINECRAFT CHARACTER RENDERER
+   Full 3D player model with UV-mapped skin + armour tint.
+   Uses Three.js r128 from cdnjs (reliable CORS, UMD build).
+   
+   Skin UV layout (64×64 Steve format):
+     Head:  front=(8,8,8,8)  right=(0,8,8,8)   top=(8,0,8,8)
+     Body:  front=(20,20,8,12) right=(16,20,4,12) top=(20,16,8,4)
+     ArmR:  front=(44,20,4,12) right=(40,20,4,12) top=(44,16,4,4)
+     ArmL:  front=(36,52,4,12) right=(32,52,4,12) top=(36,48,4,4) [1.8 format]
+     LegR:  front=(4,20,4,12)  right=(0,20,4,12)  top=(4,16,4,4)
+     LegL:  front=(20,52,4,12) right=(16,52,4,12) top=(20,48,4,4) [1.8 format]
 ───────────────────────────────────────────────────── */
+
+// Load Three.js once, reuse
+let _THREE = null;
+let _threeLoading = null;
+function getThree(){
+  if(_THREE) return Promise.resolve(_THREE);
+  if(_threeLoading) return _threeLoading;
+  _threeLoading = new Promise((res,rej)=>{
+    if(window.THREE){ _THREE=window.THREE; res(_THREE); return; }
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    s.onload=()=>{ _THREE=window.THREE; res(_THREE); };
+    s.onerror=()=>rej(new Error('Three.js failed to load'));
+    document.head.appendChild(s);
+  });
+  return _threeLoading;
+}
+
+// UV helper: maps a pixel region on a 64×64 skin to [u0,v0,u1,v1] in 0..1
+function skinUV(px,py,pw,ph){ return [px/64,(64-py-ph)/64,(px+pw)/64,(64-py)/64]; }
+
+// Build a BoxGeometry with per-face UV mapping
+// faceUVs: array of 6 [u0,v0,u1,v1] for faces: +x,-x,+y,-y,+z,-z
+function uvBox(THREE, w,h,d, faceUVs){
+  const geo = new THREE.BoxGeometry(w,h,d);
+  const uv = geo.attributes.uv;
+  // BoxGeometry UV layout: 4 verts per face, 6 faces = 24 verts
+  // Face order: right(+x), left(-x), top(+y), bottom(-y), front(+z), back(-z)
+  faceUVs.forEach(([u0,v0,u1,v1], fi)=>{
+    const b = fi*4;
+    uv.setXY(b+0, u0, v0); // BL
+    uv.setXY(b+1, u1, v0); // BR
+    uv.setXY(b+2, u0, v1); // TL
+    uv.setXY(b+3, u1, v1); // TR
+  });
+  uv.needsUpdate=true;
+  return geo;
+}
+
+// Tint a skin ImageData with a hex colour (used for armour overlay)
+function tintedCanvas(skinCtx, sx,sy,sw,sh, hex){
+  const fc=document.createElement('canvas'); fc.width=sw; fc.height=sh;
+  const fx=fc.getContext('2d'); fx.imageSmoothingEnabled=false;
+  fx.drawImage(skinCtx.canvas, sx,sy,sw,sh, 0,0,sw,sh);
+  if(hex){
+    const id=fx.getImageData(0,0,sw,sh);
+    const h=normHex(hex)||BLEACHED;
+    const tR=parseInt(h.slice(1,3),16)/255;
+    const tG=parseInt(h.slice(3,5),16)/255;
+    const tB=parseInt(h.slice(5,7),16)/255;
+    for(let i=0;i<id.data.length;i+=4){
+      if(id.data[i+3]<10) continue;
+      const br=(id.data[i]+id.data[i+1]+id.data[i+2])/3/255;
+      id.data[i]  =Math.round(tR*br*255);
+      id.data[i+1]=Math.round(tG*br*255);
+      id.data[i+2]=Math.round(tB*br*255);
+    }
+    fx.putImageData(id,0,0);
+  }
+  return fc;
+}
+
+// Build a CanvasTexture from a 64×64 canvas
+function makeTexture(THREE, canvas64){
+  const t=new THREE.CanvasTexture(canvas64);
+  t.magFilter=THREE.NearestFilter;
+  t.minFilter=THREE.NearestFilter;
+  return t;
+}
+
+// The main renderer — called once per card/panel
 async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
   const W=opts.width||120, H=opts.height||220;
   containerEl.innerHTML='';
+
+  let THREE;
+  try{ THREE=await getThree(); }
+  catch(e){
+    // Three.js failed — fall back to 2D
+    render2DFallback(containerEl, ownerUuid, pieces, armourType, opts);
+    return;
+  }
+
+  // ── Canvas + Renderer ──────────────────────────────────────────────
   const canvas=document.createElement('canvas');
-  // 2x resolution for sharpness
+  canvas.width=W*2; canvas.height=H*2;
+  canvas.style.cssText=`width:${W}px;height:${H}px;display:block`;
+  containerEl.appendChild(canvas);
+
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false,powerPreference:'low-power'});
+  renderer.setSize(W*2,H*2);
+  renderer.setPixelRatio(1);
+  renderer.setClearColor(0x000000,0);
+
+  // ── Scene ──────────────────────────────────────────────────────────
+  const scene=new THREE.Scene();
+
+  // ── Camera (isometric-ish like MC inventory screen) ────────────────
+  const cam=new THREE.PerspectiveCamera(25,W/H,0.1,200);
+  const R=22, az=-Math.PI/5.5, el=Math.PI/9;
+  cam.position.set(R*Math.sin(az)*Math.cos(el), R*Math.sin(el)+1.5, R*Math.cos(az)*Math.cos(el));
+  cam.lookAt(0,1.2,0);
+
+  // ── Lighting ───────────────────────────────────────────────────────
+  scene.add(new THREE.AmbientLight(0xffffff,0.55));
+  const sun=new THREE.DirectionalLight(0xffffff,0.9); sun.position.set(-3,5,4); scene.add(sun);
+  const fill=new THREE.DirectionalLight(0xffffff,0.25); fill.position.set(3,-1,-3); scene.add(fill);
+
+  // ── Load skin texture ──────────────────────────────────────────────
+  const skinUrl=ownerUuid?`https://mc-heads.net/skin/${ownerUuid}`:null;
+  const skinImg=skinUrl?await loadImg(skinUrl):null;
+
+  // Build a 64×64 skin canvas (fallback grey if load failed)
+  const skinCanvas=document.createElement('canvas'); skinCanvas.width=64; skinCanvas.height=64;
+  const sCtx=skinCanvas.getContext('2d'); sCtx.imageSmoothingEnabled=false;
+  if(skinImg){
+    sCtx.drawImage(skinImg,0,0,64,64);
+  } else {
+    // Steve-like grey placeholder
+    sCtx.fillStyle='#888'; sCtx.fillRect(0,0,64,64);
+    sCtx.fillStyle='#c8936a'; sCtx.fillRect(8,8,8,8); // face
+    sCtx.fillStyle='#222'; sCtx.fillRect(9,10,2,2); sCtx.fillRect(13,10,2,2); // eyes
+  }
+  const skinTex=makeTexture(THREE,skinCanvas);
+  const skinMat=new THREE.MeshLambertMaterial({map:skinTex,transparent:true,alphaTest:0.1});
+
+  // ── Helper: create a body part mesh ───────────────────────────────
+  // Each box gets per-face UV mapped to the correct skin region
+  function part(w,h,d, uvs, mat){
+    const geo=uvBox(THREE,w,h,d,uvs);
+    return new THREE.Mesh(geo, mat||skinMat);
+  }
+
+  // ── MC unit = 0.5 Three.js units (player is 1.8 tall) ─────────────
+  // Head=8mc, Body=12mc, Arm=12mc, Leg=12mc → total 32mc = 16 units
+  const S=0.125; // scale: 1 MC pixel = 0.125 units → head=1u, body=1.5u etc
+
+  const headS=8*S, bodyH=12*S, bodyW=8*S, bodyD=4*S;
+  const armW=4*S, armH=12*S, armD=4*S;
+  const legW=4*S, legH=12*S, legD=4*S;
+
+  // Y baseline: feet at 0
+  const yLeg=legH/2;
+  const yBody=legH+bodyH/2;
+  const yHead=legH+bodyH+headS/2;
+  const yArm=legH+bodyH-armH/2; // arms align with top of body
+
+  // ── Skin UV for each face [right,left,top,bottom,front,back] ──────
+  const UV={
+    head:[skinUV(16,8,8,8),skinUV(0,8,8,8),skinUV(8,0,8,8),skinUV(16,0,8,8),skinUV(8,8,8,8),skinUV(24,8,8,8)],
+    body:[skinUV(28,20,8,12),skinUV(16,20,8,12),skinUV(20,16,8,4),skinUV(28,16,8,4),skinUV(20,20,8,12),skinUV(32,20,8,12)],
+    armR:[skinUV(48,20,4,12),skinUV(40,20,4,12),skinUV(44,16,4,4),skinUV(48,16,4,4),skinUV(44,20,4,12),skinUV(52,20,4,12)],
+    armL:[skinUV(40,52,4,12),skinUV(32,52,4,12),skinUV(36,48,4,4),skinUV(40,48,4,4),skinUV(36,52,4,12),skinUV(44,52,4,12)],
+    legR:[skinUV(8,20,4,12), skinUV(0,20,4,12), skinUV(4,16,4,4), skinUV(8,16,4,4), skinUV(4,20,4,12), skinUV(12,20,4,12)],
+    legL:[skinUV(24,52,4,12),skinUV(16,52,4,12),skinUV(20,48,4,4),skinUV(24,48,4,4),skinUV(20,52,4,12),skinUV(28,52,4,12)],
+  };
+
+  // ── Build body parts ───────────────────────────────────────────────
+  const meshHead=part(headS,headS,headS, UV.head); meshHead.position.set(0,yHead,0);
+  const meshBody=part(bodyW,bodyH,bodyD,  UV.body); meshBody.position.set(0,yBody,0);
+  const meshArmR=part(armW,armH,armD,    UV.armR); meshArmR.position.set(-(bodyW/2+armW/2),yArm,0);
+  const meshArmL=part(armW,armH,armD,    UV.armL); meshArmL.position.set( (bodyW/2+armW/2),yArm,0);
+  const meshLegR=part(legW,legH,legD,    UV.legR); meshLegR.position.set(-legW/2,yLeg,0);
+  const meshLegL=part(legW,legH,legD,    UV.legL); meshLegL.position.set( legW/2,yLeg,0);
+
+  // Slight arm angles (MC inventory pose)
+  meshArmR.rotation.z= 0.08;
+  meshArmL.rotation.z=-0.08;
+
+  scene.add(meshHead,meshBody,meshArmR,meshArmL,meshLegR,meshLegL);
+
+  // ── Armour overlays ────────────────────────────────────────────────
+  // Each armour piece is a slightly larger mesh with a tinted texture
+  const A=1.07; // armour sits slightly outside skin
+  const pc={}; (pieces||[]).forEach(p=>{ if(p.hex) pc[p.piece]=p.hex; });
+
+  function armorMesh(w,h,d, uvs, hex){
+    const ac=document.createElement('canvas'); ac.width=64; ac.height=64;
+    const ax=ac.getContext('2d'); ax.imageSmoothingEnabled=false;
+    // Paint white in the UV regions, then tint
+    const h6=normHex(hex)||BLEACHED;
+    const tR=parseInt(h6.slice(1,3),16)/255;
+    const tG=parseInt(h6.slice(3,5),16)/255;
+    const tB=parseInt(h6.slice(5,7),16)/255;
+    // Use the same skin texture regions but with armour tinting
+    if(skinImg) ax.drawImage(skinImg,0,0,64,64);
+    const id=ax.getImageData(0,0,64,64);
+    for(let i=0;i<id.data.length;i+=4){
+      if(id.data[i+3]<10) continue;
+      const br=(id.data[i]+id.data[i+1]+id.data[i+2])/3/255;
+      id.data[i]  =Math.min(255,Math.round(tR*br*255*1.4+tR*30));
+      id.data[i+1]=Math.min(255,Math.round(tG*br*255*1.4+tG*30));
+      id.data[i+2]=Math.min(255,Math.round(tB*br*255*1.4+tB*30));
+    }
+    ax.putImageData(id,0,0);
+    const t=makeTexture(THREE,ac);
+    const m=new THREE.MeshLambertMaterial({map:t,transparent:true,alphaTest:0.05,depthWrite:false});
+    const g=uvBox(THREE,w,h,d,uvs);
+    return new THREE.Mesh(g,m);
+  }
+
+  if(pc.Helmet){
+    const m=armorMesh(headS*A,headS*A,headS*A, UV.head, pc.Helmet);
+    m.position.copy(meshHead.position); scene.add(m);
+  }
+  if(pc.Chestplate){
+    const m=armorMesh(bodyW*A,bodyH*A,bodyD*A, UV.body, pc.Chestplate);
+    m.position.copy(meshBody.position); scene.add(m);
+    // Shoulder pads on upper arms
+    const sH=armH*0.35*A;
+    const mL=armorMesh(armW*A,sH,armD*A, UV.armL, pc.Chestplate);
+    mL.position.set(meshArmL.position.x, yArm+armH/2-sH/2, 0); scene.add(mL);
+    const mR=armorMesh(armW*A,sH,armD*A, UV.armR, pc.Chestplate);
+    mR.position.set(meshArmR.position.x, yArm+armH/2-sH/2, 0); scene.add(mR);
+  }
+  if(pc.Leggings){
+    const m=armorMesh(legW*A,legH*A,legD*A, UV.legR, pc.Leggings);
+    m.position.copy(meshLegR.position); scene.add(m);
+    const m2=armorMesh(legW*A,legH*A,legD*A, UV.legL, pc.Leggings);
+    m2.position.copy(meshLegL.position); scene.add(m2);
+    // Waist guard
+    const wg=armorMesh(bodyW*A,bodyH*0.35*A,bodyD*A, UV.body, pc.Leggings);
+    wg.position.set(0, legH+bodyH*0.175, 0); scene.add(wg);
+  }
+  if(pc.Boots){
+    const bH=legH*0.5*A;
+    const mR=armorMesh(legW*A,bH,legD*A, UV.legR, pc.Boots);
+    mR.position.set(meshLegR.position.x, bH/2, 0); scene.add(mR);
+    const mL=armorMesh(legW*A,bH,legD*A, UV.legL, pc.Boots);
+    mL.position.set(meshLegL.position.x, bH/2, 0); scene.add(mL);
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────
+  renderer.render(scene,cam);
+
+  // Dispose after render to free GPU memory
+  setTimeout(()=>{
+    scene.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material){ if(o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+    renderer.dispose();
+  }, 100);
+}
+
+// 2D fallback if Three.js fails
+function render2DFallback(containerEl, ownerUuid, pieces, armourType, opts={}){
+  const W=opts.width||120, H=opts.height||220;
+  const canvas=document.createElement('canvas');
   canvas.width=W*2; canvas.height=H*2;
   canvas.style.cssText=`width:${W}px;height:${H}px;display:block`;
   containerEl.appendChild(canvas);
   const ctx=canvas.getContext('2d');
-  ctx.imageSmoothingEnabled=false;
+  const pc={}; (pieces||[]).forEach(p=>{ if(p.hex) pc[p.piece]=normHex(p.hex)||BLEACHED; });
   const cw=canvas.width, ch=canvas.height;
-
-  // Piece colour lookup
-  const pc={};
-  (pieces||[]).forEach(p=>{ if(p.hex) pc[p.piece]=normHex(p.hex)||BLEACHED; });
-
-  // ── Layout (Minecraft proportions, scaled to fit canvas) ──────────
-  // MC pixel ratios: head=8, neck=0, body=12, arm=12, leg=12 (heights)
-  // widths: head=8, body=8, arm=4, leg=4
-  // Total height = head(8) + body(12) + leg(12) = 32 units
-  // Total width  = arm(4) + body(8) + arm(4) = 16 units
-  const PAD = Math.round(ch * 0.03);
-  const totalH = ch - PAD * 2;
-  const U = totalH / 32;  // pixels per MC unit (float OK, we round per rect)
-
-  const hH = Math.round(8*U),  hW = Math.round(8*U);   // head
-  const bH = Math.round(12*U), bW = Math.round(8*U);   // body
-  const aH = Math.round(12*U), aW = Math.round(4*U);   // arm
-  const lH = Math.round(12*U), lW = Math.round(4*U);   // leg
-
-  // X positions: centre the 16-unit-wide figure
-  const figW = aW + bW + aW;
-  const x0 = Math.round((cw - figW) / 2);
-  const xAL = x0;           // left arm
-  const xB  = x0 + aW;     // body
-  const xAR = x0 + aW + bW;// right arm
-  const xLL = x0 + aW;     // left leg
-  const xLR = x0 + aW + lW;// right leg
-
-  // Y positions
-  const yH  = PAD;          // head top
-  const yB  = yH + hH;      // body top
-  const yA  = yB;           // arm top (same as body)
-  const yL  = yB + bH;      // leg top
-
-  // ── Helper: fill a rect with a hex colour + brightness multiplier ─
-  function fillR(x,y,w,h,hex,bright=1){
-    if(w<=0||h<=0) return;
-    const c=normHex(hex)||'#888888';
-    const r=Math.min(255,Math.round(parseInt(c.slice(1,3),16)*bright));
-    const g=Math.min(255,Math.round(parseInt(c.slice(3,5),16)*bright));
-    const b=Math.min(255,Math.round(parseInt(c.slice(5,7),16)*bright));
-    ctx.fillStyle=`rgb(${r},${g},${b})`;
+  const PAD=Math.round(ch*0.03), U=(ch-PAD*2)/32;
+  const hH=Math.round(8*U),hW=Math.round(8*U),bH=Math.round(12*U),bW=Math.round(8*U);
+  const aW=Math.round(4*U),aH=Math.round(12*U),lW=Math.round(4*U),lH=Math.round(12*U);
+  const x0=Math.round((cw-aW-bW-aW)/2);
+  const xAL=x0,xB=x0+aW,xAR=x0+aW+bW;
+  const yH=PAD,yB=yH+hH,yA=yB,yL=yB+bH;
+  const S='#c8936a',C='#4a4460';
+  function fr(x,y,w,h,hex,br=1){
+    const c=normHex(hex)||'#888';
+    ctx.fillStyle=`rgb(${Math.min(255,parseInt(c.slice(1,3),16)*br|0)},${Math.min(255,parseInt(c.slice(3,5),16)*br|0)},${Math.min(255,parseInt(c.slice(5,7),16)*br|0)})`;
     ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));
   }
-
-  // ── Colours ───────────────────────────────────────────────────────
-  const SKIN    = '#c8936a';
-  const SKIN_DK = '#a07050';
-  const LEG_DEF = '#3d3d5c';
-  const ARM_DEF = '#3d3d5c';
-
-  const cHelm  = pc['Helmet'];
-  const cChest = pc['Chestplate'];
-  const cLegs  = pc['Leggings'];
-  const cBoots = pc['Boots'];
-
-  // ── Draw back-to-front ────────────────────────────────────────────
-
-  // LEGS (left then right, slightly different shade)
-  const legBase = cLegs || LEG_DEF;
-  fillR(xLL, yL, lW, lH, legBase, 1.0);
-  fillR(xLR, yL, lW, lH, legBase, 0.78);
-  // leg gap line
-  ctx.fillStyle='rgba(0,0,0,0.15)';
-  ctx.fillRect(Math.round(xLL+lW)-1, Math.round(yL), 2, Math.round(lH));
-
-  // BOOTS over leg bottoms
-  const bootH = Math.round(lH * 0.38);
-  const bootBase = cBoots || SKIN_DK;
-  fillR(xLL, yL+lH-bootH, lW, bootH, bootBase, 1.0);
-  fillR(xLR, yL+lH-bootH, lW, bootH, bootBase, 0.78);
-
-  // BODY
-  const bodyBase = cChest || '#4a4460';
-  fillR(xB, yB, bW, bH, bodyBase, 1.0);
-  // right-side body shadow strip
-  ctx.fillStyle='rgba(0,0,0,0.12)';
-  ctx.fillRect(Math.round(xB+bW-2), Math.round(yB), 2, Math.round(bH));
-
-  // ARMS — left arm slightly lighter (lit), right arm darker (shadow)
-  const armBase = cChest || ARM_DEF;
-  fillR(xAL, yA, aW, aH, armBase, 0.85);
-  fillR(xAR, yA, aW, aH, armBase, 0.65);
-  // wrist skin peek
-  const wH = Math.round(aH * 0.18);
-  fillR(xAL, yA+aH-wH, aW, wH, SKIN, 0.85);
-  fillR(xAR, yA+aH-wH, aW, wH, SKIN, 0.65);
-
-  // HEAD placeholder (skin tone) — drawn before face image loads
-  const hX = xB, hY = yH;  // head x aligns with body x
-  fillR(hX, hY, hW, hH, SKIN, 1.0);
-
-  // HELMET solid colour (drawn over placeholder, face goes on top)
-  if(cHelm){
-    fillR(hX-1, hY-1, hW+2, hH+2, cHelm, 0.92);
-  }
-
-  // ── Load face asynchronously and redraw head area ─────────────────
-  // mc-heads.net supports CORS with crossOrigin=anonymous
-  const faceUrl = ownerUuid
-    ? `https://mc-heads.net/avatar/${ownerUuid}/128`
-    : null;
-
-  if(faceUrl){
-    try{
-      const face = await loadImg(faceUrl);
-      if(face){
-        ctx.imageSmoothingEnabled = false;
-        if(!cHelm){
-          // No helmet — draw full face
-          ctx.drawImage(face, Math.round(hX), Math.round(hY), Math.round(hW), Math.round(hH));
-        } else {
-          // Face inset, helmet border around it
-          const ins = Math.max(1, Math.round(U * 0.6));
-          ctx.drawImage(face, Math.round(hX+ins), Math.round(hY+ins), Math.round(hW-ins*2), Math.round(hH-ins*2));
-          // Redraw helmet border strips
-          const rimT = Math.max(1, Math.round(hH*0.12));
-          const rimS = Math.max(1, Math.round(hW*0.12));
-          fillR(hX-1, hY-1,    hW+2, rimT,  cHelm, 0.92); // top rim
-          fillR(hX-1, hY+hH-rimT+1, hW+2, rimT, cHelm, 0.78); // bottom rim
-          fillR(hX-1, hY-1,    rimS, hH+2, cHelm, 0.88); // left rim
-          fillR(hX+hW-rimS+1, hY-1, rimS, hH+2, cHelm, 0.68); // right rim (dark)
-        }
-      }
-    }catch(e){
-      // face failed — leave placeholder
-    }
-  }
-
-  // ── Subtle ambient-occlusion-style darkening at joints ────────────
-  ctx.fillStyle = 'rgba(0,0,0,0.07)';
-  ctx.fillRect(Math.round(xB), Math.round(yB), Math.round(bW), 2);   // neck shadow
-  ctx.fillRect(Math.round(xB), Math.round(yL), Math.round(bW), 2);   // waist shadow
+  fr(x0+aW,yL,lW,lH,pc.Leggings||C); fr(x0+aW+lW,yL,lW,lH,pc.Leggings||C,0.75);
+  if(pc.Boots){fr(x0+aW,yL+lH-lH*.35,lW,lH*.35,pc.Boots);fr(x0+aW+lW,yL+lH-lH*.35,lW,lH*.35,pc.Boots,0.75);}
+  fr(xB,yB,bW,bH,pc.Chestplate||C); fr(xAL,yA,aW,aH,pc.Chestplate||C,0.82); fr(xAR,yA,aW,aH,pc.Chestplate||C,0.62);
+  fr(xB,yH,hW,hH,S);
+  if(pc.Helmet) fr(xB-1,yH-1,hW+2,hH+2,pc.Helmet,0.9);
+  // Load face
+  if(ownerUuid) loadImg(`https://mc-heads.net/avatar/${ownerUuid}/128`).then(img=>{if(img){ctx.imageSmoothingEnabled=false;ctx.drawImage(img,xB,yH,hW,hH);}});
 }
+
 
 /* ─────────────────────────────────────────────────────
    PIECE PREVIEW (for add-set form — simple 2D flat)

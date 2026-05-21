@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Vault – SkyBlock Exotic Armour Museum</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/skin3d@latest/dist/skin3d.min.js"></script>
 <style>
 :root[data-theme="dark"]{--bg:#111113;--bg2:#1a1a1e;--bg3:#222228;--border:#2e2e36;--text:#f0f0f2;--text2:#9090a0;--text3:#55555f;--green:#4ecb71;--red:#e85555;--shadow:0 2px 16px rgba(0,0,0,.5)}
 :root[data-theme="light"]{--bg:#f5f5f7;--bg2:#fff;--bg3:#ebebef;--border:#dddde8;--text:#111114;--text2:#606070;--text3:#aaaabc;--green:#1a9940;--red:#c83030;--shadow:0 2px 12px rgba(0,0,0,.08)}
@@ -195,14 +194,17 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .chat-main-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700}
 .chat-main-sub{font-size:11px;color:var(--text3);margin-top:1px}
 .chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:7px;overscroll-behavior:contain}
-.msg-row{display:flex;gap:7px;align-items:flex-end}
+.msg-row{display:flex;gap:8px;align-items:flex-end;max-width:100%}
 .msg-row.mine{flex-direction:row-reverse}
-.msg-av{width:24px;height:24px;border-radius:5px;image-rendering:pixelated;flex-shrink:0}
-.msg-bub{max-width:68%;padding:7px 11px;border-radius:12px;font-size:13px;line-height:1.5;overflow-wrap:break-word}
-.msg-bub.theirs{background:var(--bg3);border-bottom-left-radius:3px}
-.msg-bub.mine{background:var(--text);color:var(--bg);border-bottom-right-radius:3px}
-.msg-time{font-size:10px;color:var(--text3);padding:3px 3px 0}
-.msg-img{max-width:220px;max-height:220px;border-radius:10px;cursor:pointer;display:block;border:1px solid var(--border);object-fit:cover}
+.msg-av{width:26px;height:26px;border-radius:5px;image-rendering:pixelated;flex-shrink:0;align-self:flex-end}
+.msg-col{display:flex;flex-direction:column;gap:3px;max-width:72%}
+.msg-col.mine{align-items:flex-end}
+.msg-col.theirs{align-items:flex-start}
+.msg-bub{padding:8px 12px;border-radius:16px;font-size:14px;line-height:1.45;word-break:break-word;width:fit-content;max-width:100%}
+.msg-bub.mine{background:var(--text);color:var(--bg);border-bottom-right-radius:4px}
+.msg-bub.theirs{background:var(--bg3);color:var(--text);border-bottom-left-radius:4px}
+.msg-img{max-width:220px;max-height:220px;border-radius:12px;cursor:pointer;display:block;border:1px solid var(--border);object-fit:cover}
+.msg-time{font-size:10px;color:var(--text3)}
 .chat-empty{padding:60px 24px;text-align:center;color:var(--text3);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:13px}
 .chat-input-area{padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:7px;align-items:flex-end}
 .chat-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;padding:7px 11px;outline:none;resize:none;max-height:100px;min-height:34px;transition:border-color .15s;line-height:1.5}
@@ -712,140 +714,135 @@ function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplat
    Uses skinview3d library to show full 3D player model.
    Armour is composited onto the skin canvas before rendering.
 ───────────────────────────────────────────────────── */
-const ARMOR_L1 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAz0lEQVR42u2YsQqDMBBAc6X+gZL/iKvgKDgIfkS+L5nc/QAXf0KcBVe7Nh0OSqm0+N52yeWGxym5yDzPh1FYlkXbNk3TyHM8TZNab11XtV7btmJO5GYuDgKuLkA+/Qds25bEdV2r+THGJLbWqvld1wkdgAAEfI17lmVqgnNO3R/HkQ5AAAIQgAAEIOBP7wH7vicLZVkmd+9hGA5tXn+d/4uiUM9774UOQAACfuc9IISQfKNVVanze57nasF3z/d9L3QAAhCAAAQgAAEAAKfzAODfN5WAIq/hAAAAAElFTkSuQmCC';
-const ARMOR_L2 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAbUlEQVR42u3TsQ3AIAwAQZwhGMZiBkpmpLQ8BGORtLhGKAV/nQVuXiBjjDctVFXW2d3Dea01nO/u/+1JlyPA7QGk9x7+aCklXDCzMOecwzznTDv7rTXhBRCAAAQgAAEIQAACEIAAAAAAAAAAx31qSB0fIIVUTgAAAABJRU5ErkJggg==';
 
-const _imgCache = {};
-function loadImg(url){
-  if(_imgCache[url]) return Promise.resolve(_imgCache[url]);
-  return new Promise(res=>{
-    const img=new Image(); img.crossOrigin='anonymous';
-    img.onload=()=>{ _imgCache[url]=img; res(img); };
-    img.onerror=()=>res(null);
-    img.src=url;
-  });
-}
-
-function tintRegion(ctx, layerImg, lSx,lSy,lSw,lSh, dSx,dSy, hex){
-  const h=normHex(hex)||BLEACHED;
-  const tR=parseInt(h.slice(1,3),16), tG=parseInt(h.slice(3,5),16), tB=parseInt(h.slice(5,7),16);
-  const fc=document.createElement('canvas'); fc.width=lSw; fc.height=lSh;
-  const fx=fc.getContext('2d'); fx.imageSmoothingEnabled=false;
-  fx.drawImage(layerImg,lSx,lSy,lSw,lSh,0,0,lSw,lSh);
-  const id=fx.getImageData(0,0,lSw,lSh);
-  for(let i=0;i<id.data.length;i+=4){
-    if(id.data[i+3]===0) continue;
-    const br=(id.data[i]+id.data[i+1]+id.data[i+2])/3/255;
-    id.data[i]=Math.round(tR*br); id.data[i+1]=Math.round(tG*br); id.data[i+2]=Math.round(tB*br);
-  }
-  fx.putImageData(id,0,0);
-  ctx.drawImage(fc,dSx,dSy,lSw,lSh);
-}
-
-// Build a composited 64×64 skin PNG (base skin + tinted armour overlaid)
-async function buildComposite(ownerUuid, pieces, armourType){
-  const skinUrl = ownerUuid ? `https://mc-heads.net/skin/${ownerUuid}` : null;
-  const [skinImg, l1Img, l2Img] = await Promise.all([
-    skinUrl ? loadImg(skinUrl) : Promise.resolve(null),
-    loadImg(ARMOR_L1), loadImg(ARMOR_L2),
-  ]);
-  const c=document.createElement('canvas'); c.width=64; c.height=64;
-  const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false;
-  if(skinImg) ctx.drawImage(skinImg,0,0,64,64);
-  else { ctx.fillStyle='#888'; ctx.fillRect(0,0,64,64); }
-
-  const al=(armourType||'').toLowerCase();
-  for(const p of (pieces||[])){
-    const pn=p.piece, hex=p.hex;
-    if(!hex || !isDyeable(armourType||'',pn)) continue;
-    const li = pn==='Leggings' ? l2Img : l1Img;
-    if(!li) continue;
-    // Map armor layer UV → skin UV for each body part
-    // We paste the tinted armor region over the skin region
-    if(pn==='Helmet'){
-      // Helmet: armor_layer1 (0,8)-(7,15) = left, (8,8)-(15,15) = front, (16,8)-(23,15) = right, (24,8)-(31,15) = back
-      // Paint over skin head region
-      tintRegion(ctx,li, 8,8,8,8, 8,8, hex);   // front
-      tintRegion(ctx,li, 0,8,8,8, 0,8, hex);   // left
-      tintRegion(ctx,li, 16,8,8,8,16,8,hex);   // right
-      tintRegion(ctx,li, 24,8,8,8,24,8,hex);   // back
-      tintRegion(ctx,li, 8,0,8,8, 8,0, hex);   // top
-    } else if(pn==='Chestplate'){
-      tintRegion(ctx,li, 20,4,8,12,20,20,hex); // body front
-      tintRegion(ctx,li, 16,4,4,12,16,20,hex); // body left
-      tintRegion(ctx,li, 28,4,4,12,28,20,hex); // body right
-      tintRegion(ctx,li, 32,4,8,12,32,20,hex); // body back
-      tintRegion(ctx,li, 20,0,8,4, 20,16,hex); // body top
-      // Shoulders (arms top area)
-      tintRegion(ctx,li, 44,4,4,4, 44,16,hex); tintRegion(ctx,li, 52,4,4,4, 36,48,hex);
-    } else if(pn==='Leggings'){
-      tintRegion(ctx,l2Img, 4,4,4,12, 4,20,hex);  // R front
-      tintRegion(ctx,l2Img, 0,4,4,12, 0,20,hex);  // R left
-      tintRegion(ctx,l2Img, 8,4,4,12, 8,20,hex);  // R right
-      tintRegion(ctx,l2Img, 20,4,4,12,20,52,hex); // L front
-      tintRegion(ctx,l2Img, 16,4,4,12,16,52,hex); // L left
-      tintRegion(ctx,l2Img, 24,4,4,12,24,52,hex); // L right
-    } else if(pn==='Boots'){
-      tintRegion(ctx,li, 4,20,4,8, 4,20,hex);  // R front (over leg lower)
-      tintRegion(ctx,li, 0,20,4,8, 0,20,hex);  // R left
-      tintRegion(ctx,li, 8,20,4,8, 8,20,hex);  // R right
-      tintRegion(ctx,li, 20,20,4,8,20,52,hex); // L front
-      tintRegion(ctx,li, 16,20,4,8,16,52,hex); // L left
-      tintRegion(ctx,li, 24,20,4,8,24,52,hex); // L right
-    }
-  }
-  return c.toDataURL('image/png');
-}
-
-// skinview3d viewer cache
-const _viewers = new Map();
-
+/* ─────────────────────────────────────────────────────
+   2D CHARACTER RENDERER
+   Draws a flat Minecraft-style character sprite on canvas.
+   No external library needed — pure canvas 2D.
+   Shows head (owner skin face), body, arms, legs, all
+   coloured with the armour hex colours.
+───────────────────────────────────────────────────── */
 async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
-  const w=opts.width||120, h=opts.height||220;
-  
-  // Wait up to 5s for the 3D library to load
-  let SkinViewer = null;
-  for(let i=0;i<10;i++){
-    SkinViewer = window.SkinViewer || window.skinview3d?.SkinViewer || window.skin3d?.SkinViewer;
-    if(SkinViewer) break;
-    await new Promise(r=>setTimeout(r,500));
+  const W=opts.width||120, H=opts.height||220;
+  containerEl.innerHTML='';
+  const canvas=document.createElement('canvas');
+  canvas.width=W*2; canvas.height=H*2;
+  canvas.style.cssText=`width:${W}px;height:${H}px;display:block;image-rendering:pixelated`;
+  containerEl.appendChild(canvas);
+  const ctx=canvas.getContext('2d');
+  ctx.imageSmoothingEnabled=false;
+  const cw=canvas.width, ch=canvas.height;
+
+  // Build piece colour map
+  const pc={};
+  (pieces||[]).forEach(p=>{ if(p.hex) pc[p.piece]=normHex(p.hex)||BLEACHED; });
+
+  // Scale: draw character proportionally in canvas
+  // MC proportions: head 8px, body 8×12, arms 4×12, legs 4×12
+  // We scale so total height = ch, with some padding
+  const pad=Math.round(ch*0.04);
+  const totalH=ch-pad*2;
+  const unit=totalH/28; // 28 units total: head8 + body12 + legs12 = 32, but we squish a bit
+  const U=Math.round(totalH/28);
+
+  const headW=8*U, headH=8*U;
+  const bodyW=8*U, bodyH=10*U;
+  const armW=4*U, armH=10*U;
+  const legW=4*U, legH=10*U;
+  const totalBodyW=armW+bodyW+armW;
+  const xOff=Math.round((cw-totalBodyW)/2);
+  const yHead=pad;
+  const yBody=yHead+headH;
+  const yArm=yBody;
+  const yLeg=yBody+bodyH;
+  const xBody=xOff+armW;
+  const xArmL=xOff;
+  const xArmR=xOff+armW+bodyW;
+  const xLegL=xBody;
+  const xLegR=xBody+legW;
+
+  function fillRect(x,y,w,h,col,shade=1){
+    const hex=normHex(col)||'#888888';
+    const r=Math.min(255,Math.round(parseInt(hex.slice(1,3),16)*shade));
+    const g=Math.min(255,Math.round(parseInt(hex.slice(3,5),16)*shade));
+    const b=Math.min(255,Math.round(parseInt(hex.slice(5,7),16)*shade));
+    ctx.fillStyle=`rgb(${r},${g},${b})`;
+    ctx.fillRect(x,y,w,h);
   }
-  
-  if(!SkinViewer){
-    containerEl.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:11px;padding:8px;text-align:center">3D viewer<br>unavailable</div>`;
-    return;
+
+  // Default skin colours for unarmoured parts
+  const SKIN='#c8966c', SKIN_D='#a0724a';
+  const CLOTH='#4a4a6a', CLOTH_D='#333350';
+
+  // LEGS
+  const legCol=pc['Leggings']||CLOTH;
+  fillRect(xLegL, yLeg, legW, legH, legCol);
+  fillRect(xLegL+legW, yLeg, legW, legH, legCol, 0.82);
+  // leg shading line
+  ctx.fillStyle='rgba(0,0,0,0.08)'; ctx.fillRect(xLegL+legW-1,yLeg,1,legH);
+
+  // BOOTS  
+  const bootH=Math.round(legH*0.4);
+  const bootCol=pc['Boots']||SKIN_D;
+  fillRect(xLegL, yLeg+legH-bootH, legW, bootH, bootCol, 1.0);
+  fillRect(xLegL+legW, yLeg+legH-bootH, legW, bootH, bootCol, 0.78);
+
+  // BODY
+  const bodyCol=pc['Chestplate']||CLOTH;
+  fillRect(xBody, yBody, bodyW, bodyH, bodyCol);
+  // body right-edge shadow
+  ctx.fillStyle='rgba(0,0,0,0.12)'; ctx.fillRect(xBody+bodyW-2,yBody,2,bodyH);
+
+  // ARMS
+  const armCol=pc['Chestplate']||CLOTH;
+  fillRect(xArmL, yArm, armW, armH, armCol, 0.88);
+  fillRect(xArmR, yArm, armW, armH, armCol, 0.72);
+  // arm skin at wrist
+  const wristH=Math.round(armH*0.2);
+  fillRect(xArmL, yArm+armH-wristH, armW, wristH, SKIN, 0.88);
+  fillRect(xArmR, yArm+armH-wristH, armW, wristH, SKIN, 0.72);
+
+  // HEAD — try to load owner's face from mc-heads
+  const headX=xOff+armW, headY=yHead;
+  // Draw placeholder first
+  fillRect(headX, headY, headW, headH, SKIN);
+
+  // Helmet overlay
+  const helmCol=pc['Helmet'];
+  if(helmCol){
+    fillRect(headX-1, headY-1, headW+2, headH+2, helmCol, 0.95);
+    // visor strip
+    fillRect(headX, headY+Math.round(headH*0.35), headW, Math.round(headH*0.22), '#000', 0.18);
   }
-  try{
-    const skinData = await buildComposite(ownerUuid, pieces, armourType);
-    const id = containerEl.dataset.vid || (containerEl.dataset.vid=Math.random().toString(36).slice(2));
-    let viewer = _viewers.get(id);
-    if(!viewer){
-      containerEl.innerHTML='';
-      const canvas=document.createElement('canvas');
-      canvas.width=w*2; canvas.height=h*2;
-      canvas.style.cssText=`width:${w}px;height:${h}px;display:block`;
-      containerEl.appendChild(canvas);
-      viewer=new SkinViewer({canvas,width:w*2,height:h*2,skin:skinData});
-      viewer.autoRotate=false;
-      viewer.animation=null;
-      // Camera angle matching MC character screen
-      if(viewer.camera){
-        viewer.camera.rotation.x=-0.26;
-        viewer.camera.rotation.y=0.5;
+
+  // Load face from mc-heads and draw it on the head area
+  if(ownerUuid){
+    try{
+      const faceImg=await loadImg(`https://mc-heads.net/avatar/${ownerUuid}/64`);
+      if(faceImg){
+        // Draw face over head area (with helmet still on top)
+        ctx.imageSmoothingEnabled=false;
+        if(!helmCol){
+          ctx.drawImage(faceImg,headX,headY,headW,headH);
+        } else {
+          // Draw face slightly inset under helmet
+          const inset=Math.round(U*0.5);
+          ctx.drawImage(faceImg,headX+inset,headY+inset,headW-inset*2,headH-inset*2);
+          // Re-draw helmet rim
+          fillRect(headX-1, headY-1, headW+2, Math.round(headH*0.15), helmCol, 0.95);
+          fillRect(headX-1, headY+headH-Math.round(headH*0.1), headW+2, Math.round(headH*0.12)+1, helmCol, 0.95);
+          fillRect(headX-1, headY-1, Math.round(headW*0.1), headH+2, helmCol, 0.88);
+          fillRect(headX+headW-Math.round(headW*0.1)+1, headY-1, Math.round(headW*0.1), headH+2, helmCol, 0.72);
+        }
       }
-      if(typeof viewer.zoom!=='undefined') viewer.zoom=0.85;
-      if(viewer.renderer) viewer.renderer.setClearColor(0x000000,0);
-      if(viewer.globalLight) viewer.globalLight.intensity=2.4;
-      if(viewer.cameraLight) viewer.cameraLight.intensity=0.5;
-      _viewers.set(id,viewer);
-    } else {
-      if(viewer.loadSkin) viewer.loadSkin(skinData);
-      if(viewer.render) viewer.render();
-    }
-  }catch(e){
-    console.warn('renderPlayerInto error:', e);
-    containerEl.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:11px;padding:8px;text-align:center">Preview<br>unavailable</div>`;
+    }catch(e){}
   }
+
+  // Subtle outline on whole figure
+  ctx.strokeStyle='rgba(0,0,0,0.06)';
+  ctx.lineWidth=1;
+  ctx.strokeRect(headX-0.5, headY-0.5, headW+1, headH+1);
+  ctx.strokeRect(xBody-0.5, yBody-0.5, bodyW+1, bodyH+1);
 }
 
 /* ─────────────────────────────────────────────────────
@@ -1349,12 +1346,13 @@ window.openChat=async function(id){
     const isClosed=!!(isSel?chat.archived_seller:chat.archived_buyer);
     const msgsHtml=(messages||[]).filter(m=>!m.content?.startsWith('__offer__')||m.image_url).map(m=>{
       const im=m.sender_uuid===currentUser?.uuid;
+      const side=im?'mine':'theirs';
       const txt=m.content&&!m.content.startsWith('__offer__')?esc(m.content):'';
-      const img=m.image_url?`<img class="msg-img" src="${esc(m.image_url)}" onclick="window.open('${esc(m.image_url)}','_blank')" alt="">`:'';
-      return`<div class="msg-row ${im?'mine':'theirs'}">
+      const img=m.image_url?`<img class="msg-img" src="${esc(m.image_url)}" onclick="window.open('${esc(m.image_url)}','_blank')" alt="" onerror="this.style.display='none'">`:'';
+      return `<div class="msg-row ${side}">
         <img class="msg-av" src="${HEAD(m.sender_uuid||'steve')}" alt="">
-        <div style="display:flex;flex-direction:column;align-items:${im?'flex-end':'flex-start'}">
-          ${txt?`<div class="msg-bub ${im?'mine':'theirs'}">${txt}</div>`:''}
+        <div class="msg-col ${side}">
+          ${txt?`<div class="msg-bub ${side}">${txt}</div>`:''}
           ${img}
           <div class="msg-time">${ago(m.ts)}</div>
         </div>
@@ -1397,7 +1395,7 @@ window.sendMsg=async function(){
   if(con&&currentUser){
     const el=document.createElement('div'); el.className='msg-row mine';
     el.innerHTML=`<img class="msg-av" src="${HEAD(currentUser.uuid)}" alt="">
-      <div style="display:flex;flex-direction:column;align-items:flex-end">
+      <div class="msg-col mine">
         <div class="msg-bub mine">${esc(content)}</div>
         <div class="msg-time">just now</div>
       </div>`;
@@ -1455,12 +1453,13 @@ function pollChats(){
             newM.forEach(m=>{
               if(m.content?.startsWith('__offer__')&&!m.image_url) return;
               const im=m.sender_uuid===currentUser?.uuid;
+              const side=im?'mine':'theirs';
               const txt=m.content&&!m.content.startsWith('__offer__')?esc(m.content):'';
-              const img=m.image_url?`<img class="msg-img" src="${esc(m.image_url)}" onclick="window.open('${esc(m.image_url)}','_blank')" alt="">`:'';
-              const el=document.createElement('div');el.className=`msg-row ${im?'mine':'theirs'}`;
+              const img=m.image_url?`<img class="msg-img" src="${esc(m.image_url)}" onclick="window.open('${esc(m.image_url)}','_blank')" alt="" onerror="this.style.display='none'">`:''; 
+              const el=document.createElement('div');el.className=`msg-row ${side}`;
               el.innerHTML=`<img class="msg-av" src="${HEAD(m.sender_uuid||'steve')}" alt="">`
-                +`<div style="display:flex;flex-direction:column;align-items:${im?'flex-end':'flex-start'}">`
-                +(txt?`<div class="msg-bub ${im?'mine':'theirs'}">${txt}</div>`:'')
+                +`<div class="msg-col ${side}">`
+                +(txt?`<div class="msg-bub ${side}">${txt}</div>`:'')
                 +img
                 +`<div class="msg-time">${ago(m.ts)}</div></div>`;
               con.appendChild(el);

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Vault – SkyBlock Exotic Armour Museum</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/skinview3d@2.2.0/build/skinview3d.bundle.js"></script>
+<script src="https://unpkg.com/skin3d@latest/dist/skin3d.min.js"></script>
 <style>
 :root[data-theme="dark"]{--bg:#111113;--bg2:#1a1a1e;--bg3:#222228;--border:#2e2e36;--text:#f0f0f2;--text2:#9090a0;--text3:#55555f;--green:#4ecb71;--red:#e85555;--shadow:0 2px 16px rgba(0,0,0,.5)}
 :root[data-theme="light"]{--bg:#f5f5f7;--bg2:#fff;--bg3:#ebebef;--border:#dddde8;--text:#111114;--text2:#606070;--text3:#aaaabc;--green:#1a9940;--red:#c83030;--shadow:0 2px 12px rgba(0,0,0,.08)}
@@ -311,7 +311,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     <div id="browse-sec">
       <div class="section-head">
         <div class="section-title">Community Museums</div>
-        <input class="fsearch" style="max-width:220px" placeholder="Search IGN…" oninput="filterBrowse(this.value)">
+        <input class="fsearch" id="browseSearch" style="max-width:220px" placeholder="Search IGN…" oninput="filterBrowse(this.value)">
       </div>
       <div class="museum-grid" id="museumGrid">
         <div class="loading"><div class="spinner"></div>Loading…</div>
@@ -605,42 +605,48 @@ async function handleCallback(){
   }catch(e){ toast('Login failed — check connection'); setUser(null); }
 }
 
-async function setUser(user){
+function setUser(user){
   currentUser=user;
   const area=document.getElementById('authArea');
   const cw=document.getElementById('chatWrap');
   if(!user){
-    area.innerHTML=`<button class="btn btn-p" onclick="startLogin()">Login with Minecraft</button>`;
+    if(area) area.innerHTML=`<button class="btn btn-p" onclick="startLogin()">Login with Minecraft</button>`;
     if(cw) cw.style.display='none';
     return;
   }
-  // Fetch discord
-  let discord='';
-  try{
-    const r=await fetch(`${API}/users/preferences`,{headers:{Authorization:`Bearer ${getToken()}`}});
-    if(r.ok){ const d=await r.json(); discord=d.prefs?.discord||''; }
-  }catch(e){}
-  const hasDisc=!!discord;
-  area.innerHTML=`
-    <div class="user-pill" id="userPill" onclick="togglePill(event)">
-      <img class="user-avatar" src="${HEAD(user.uuid)}" alt="${esc(user.username)}">
-      <span class="user-ign">${esc(user.username)}</span>
-      ${!hasDisc?`<span class="disc-badge" title="Add Discord IGN">!</span>`:''}
-      <div class="user-drop">
-        <button class="dd" onclick="openMyMuseum()">My Museum</button>
-        <button class="dd" onclick="openAddSetModal()">+ Add Set</button>
-        <div class="dd-sep"></div>
-        <button class="dd" onclick="openModal('discordModal')">${hasDisc?'Discord: '+esc(discord):'! Add Discord IGN'}</button>
-        <div class="dd-sep"></div>
-        <button class="dd red" onclick="logout()">Log out</button>
-      </div>
-    </div>`;
+  // Render pill immediately — don't block on discord fetch
+  function renderPill(discord){
+    const hasDisc=!!discord;
+    if(!area) return;
+    const badgeHtml = hasDisc ? '' : '<span class="disc-badge" title="Add Discord IGN">!</span>';
+    const discLabel = hasDisc ? 'Discord: '+esc(discord) : '! Add Discord IGN';
+    area.innerHTML =
+      '<div class="user-pill" id="userPill" onclick="togglePill(event)">' +
+      '<img class="user-avatar" src="'+HEAD(user.uuid)+'" alt="'+esc(user.username)+'">' +
+      '<span class="user-ign">'+esc(user.username)+'</span>' +
+      badgeHtml +
+      '<div class="user-drop">' +
+      '<button class="dd" onclick="openMyMuseum()">My Museum</button>' +
+      '<button class="dd" onclick="openAddSetModal()">+ Add Set</button>' +
+      '<div class="dd-sep"></div>' +
+      '<button class="dd" onclick="openModal(\'discordModal\')">'+discLabel+'</button>' +
+      '<div class="dd-sep"></div>' +
+      '<button class="dd red" onclick="logout()">Log out</button>' +
+      '</div></div>';
+    if(!hasDisc&&!localStorage.getItem('vault_disc_prompted')){
+      localStorage.setItem('vault_disc_prompted','1');
+      setTimeout(()=>openModal('discordModal'),1500);
+    }
+  }
+  renderPill('');  // render immediately
   if(cw) cw.style.display='flex';
   loadChatList();
   pollChats();
-  if(!hasDisc && !localStorage.getItem('vault_disc_prompted')){
-    localStorage.setItem('vault_disc_prompted','1');
-    setTimeout(()=>openModal('discordModal'),1500);
+  // Then fetch discord and re-render if needed
+  if(getToken()){
+    fetch(`${API}/users/preferences`,{headers:{Authorization:`Bearer ${getToken()}`}})
+      .then(r=>r.ok?r.json():{}).then(d=>{ const disc=d.prefs?.discord||''; if(disc) renderPill(disc); })
+      .catch(()=>{});
   }
 }
 
@@ -668,7 +674,7 @@ async function logout(){
 function getToken(){ return localStorage.getItem('vault_token'); }
 function loadStoredUser(){
   const r=localStorage.getItem('vault_user');
-  if(r) try{ setUser(JSON.parse(r)); }catch(e){}
+  if(r) try{ setUser(JSON.parse(r)); }catch(e){ console.warn('stored user parse error',e); }
 }
 
 /* ─────────────────────────────────────────────────────
@@ -792,8 +798,9 @@ const _viewers = new Map();
 
 async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
   const w=opts.width||120, h=opts.height||220;
-  if(typeof skinview3d==='undefined'){
-    containerEl.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:11px">3D unavailable</div>`;
+  const SkinViewer = window.SkinViewer || window.skinview3d?.SkinViewer;
+  if(!SkinViewer){
+    containerEl.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:11px;padding:8px;text-align:center">Loading<br>viewer…</div>`;
     return;
   }
   try{
@@ -806,19 +813,19 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
       canvas.width=w*2; canvas.height=h*2;
       canvas.style.cssText=`width:${w}px;height:${h}px;display:block`;
       containerEl.appendChild(canvas);
-      viewer=new skinview3d.SkinViewer({canvas,width:w*2,height:h*2,skin:skinData});
+      viewer=new SkinViewer({canvas,width:w*2,height:h*2,skin:skinData});
       viewer.autoRotate=false;
       viewer.animation=null;
       viewer.camera.rotation.x=-0.26;
       viewer.camera.rotation.y=0.5;
       viewer.zoom=0.85;
       viewer.renderer.setClearColor(0x000000,0);
-      viewer.globalLight.intensity=2.4;
-      viewer.cameraLight.intensity=0.5;
+      if(viewer.globalLight) viewer.globalLight.intensity=2.4;
+      if(viewer.cameraLight) viewer.cameraLight.intensity=0.5;
       _viewers.set(id,viewer);
     } else {
       viewer.loadSkin(skinData);
-      viewer.render();
+      viewer.render?.();
     }
   }catch(e){
     containerEl.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:11px;padding:8px;text-align:center">Preview<br>unavailable</div>`;
@@ -892,7 +899,7 @@ function filterBrowse(q){ renderBrowse(); }
 function browseCard(m){
   const allCats=m.sets.flatMap(s=>classifyPieces(s.pieces||[],s.armour_type||'')).map(c=>c.colour);
   const uniq=[...new Set(allCats)].slice(0,4);
-  const stripe=uniq.length>1?`linear-gradient(90deg,${uniq.map((c,i)=>`${c} ${Math.round(i/uniq.length*100)}%,${c} ${Math.round((i+1)/uniq.length*100)}%`).join(',')})`:uniq[0]||'var(--border)';
+  const stripe=uniq.length>1?'linear-gradient(90deg,'+uniq.map((c,i)=>c+' '+Math.round(i/uniq.length*100)+'%,'+c+' '+Math.round((i+1)/uniq.length*100)+'%').join(',')+')':uniq[0]||'var(--border)';
   const forOffers=m.sets.some(s=>s.for_offers);
   const thumbs=m.sets.slice(0,3).map(s=>{
     const cats=classifyPieces(s.pieces||[],s.armour_type||'');
@@ -951,17 +958,19 @@ async function loadMuseumHdr(uuid){
   }catch(e){}
   const isOwn=currentUser&&currentUser.uuid===uuid;
   const shareUrl=`${location.origin}${location.pathname}?museum=${uuid}`;
-  hdr.innerHTML=`
-    <img class="museum-av" src="${HEAD(uuid)}" alt="${esc(ign)}">
-    <div class="museum-info">
-      <div class="museum-ign">${esc(ign||uuid.slice(0,8))}</div>
-      ${discord?`<div class="museum-disc">Discord: ${esc(discord)}</div>`:''}
-      <div class="museum-btns">
-        ${isOwn?`<button class="btn" onclick="openAddSetModal()">+ Add Set</button><button class="btn" onclick="openAddPageModal()">+ Add Page</button>`:''}
-        <button class="btn" onclick="copyShare('${esc(shareUrl)}')">🔗 Share</button>
-        ${!isOwn?`<button class="btn btn-d" onclick="openReport('user','${esc(uuid)}','${esc(ign)}')">Report</button>`:''}
-      </div>
-    </div>`;
+  const discHtml = discord ? '<div class="museum-disc">Discord: '+esc(discord)+'</div>' : '';
+  const ownBtns = isOwn ? '<button class="btn" onclick="openAddSetModal()">+ Add Set</button><button class="btn" onclick="openAddPageModal()">+ Add Page</button>' : '';
+  const repBtn = !isOwn ? '<button class="btn btn-d" onclick="openReport(\'user\',\''+esc(uuid)+'\',\''+esc(ign)+'\')">Report</button>' : '';
+  hdr.innerHTML =
+    '<img class="museum-av" src="'+HEAD(uuid)+'" alt="'+esc(ign)+'">' +
+    '<div class="museum-info">' +
+    '<div class="museum-ign">'+esc(ign||uuid.slice(0,8))+'</div>' +
+    discHtml +
+    '<div class="museum-btns">' +
+    ownBtns +
+    '<button class="btn" onclick="copyShare(\''+esc(shareUrl)+'\')">🔗 Share</button>' +
+    repBtn +
+    '</div></div>';
 }
 
 async function loadMuseumPages(uuid){
@@ -1017,7 +1026,7 @@ function setCard(s){
   const pieces=s.pieces||[], at=s.armour_type||'';
   const cats=classifyPieces(pieces,at);
   const pCols=pieces.map(p=>{const c=classifyHex(p.hex,at,p.piece);return c?c.colour:'#888';});
-  const stripe=pCols.length>1?`linear-gradient(90deg,${pCols.map((c,i)=>`${c} ${Math.round(i/pCols.length*100)}%,${c} ${Math.round((i+1)/pCols.length*100)}%`).join(',')})`:pCols[0]||'var(--border)';
+  const stripe=pCols.length>1?'linear-gradient(90deg,'+pCols.map((c,i)=>c+' '+Math.round(i/pCols.length*100)+'%,'+c+' '+Math.round((i+1)/pCols.length*100)+'%').join(',')+')':pCols[0]||'var(--border)';
   const pHtml=pieces.map(p=>{
     const cls=classifyHex(p.hex,at,p.piece),col=cls?.colour||'#888';
     return`<div class="set-piece-row">
@@ -1290,7 +1299,7 @@ function renderChatList(){
   function item(c,arch=false){
     const is=c.seller_uuid===currentUser?.uuid,o=is?c.buyer_ign:(c.seller_ign||'Seller');
     const pre=c.last_message&&!c.last_message.startsWith('__offer__')?c.last_message:('About: '+(c.armour_type||'').slice(0,20));
-    return`<div class="chat-item${activeChatId===c.id?' active':''}${arch?' ':''" onclick="openChat('${esc(c.id)}')" style="${arch?'opacity:.65':''}">
+    return`<div class="chat-item${activeChatId===c.id?' active':''}${arch?' ':''}" onclick="openChat('${esc(c.id)}')" style="${arch?'opacity:.65':''}">
       <div class="chat-item-name">${esc(o)}</div>
       <div class="chat-item-pre">${esc(pre.slice(0,35))}</div>
       <div class="chat-item-time">${arch?'<span style="font-size:9px">Closed · </span>':''}${ago(c.last_ts||c.created_at)}</div>

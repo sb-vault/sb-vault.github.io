@@ -711,19 +711,16 @@ const DEF_HEX={'superior dragon':{h:'#f2df11',c:'#f2df11',l:'#f2df11',b:'#f25d18
 function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'}[piece]||'h';for(const[k,v]of Object.entries(DEF_HEX)){if(key.includes(k))return v[pk]||BLEACHED;}return BLEACHED;}
 
 /* ─────────────────────────────────────────────────────
-   SKINVIEW3D CHARACTER RENDERING
-   Uses api.mineatar.io/body/full/<uuid> — proper 3D isometric render as PNG.
-   Armour is composited onto the skin canvas before rendering.
-───────────────────────────────────────────────────── */
-
-/* ─────────────────────────────────────────────────────
    MINECRAFT CHARACTER VIEWER
-   Uses api.mineatar.io/body/full/<uuid> — a proper 3D
-   isometric render served as a PNG. Zero dependencies.
-   Armour colours shown as a pill overlay below the render.
+   Step 1: Load player skin from mc-heads (64×64 PNG)
+   Step 2: Load armor_layer_1 / armor_layer_2 textures
+   Step 3: Tint armor layer pixels with the dye hex colour
+   Step 4: Composite tinted armour onto skin canvas
+   Step 5: Pass composited skin dataURL to skinview3d
+   skinview3d handles all 3D rendering, UV mapping, lighting.
 ───────────────────────────────────────────────────── */
 
-// Image cache for mc-heads face loads
+// Image loader with CORS
 const _imgCache = {};
 function loadImg(url){
   if(_imgCache[url]) return Promise.resolve(_imgCache[url]);
@@ -735,23 +732,155 @@ function loadImg(url){
   });
 }
 
-async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
-  const W = opts.width||120, H = opts.height||220;
-  containerEl.innerHTML = '';
-  containerEl.style.cssText += ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 0';
+// Embedded armor layer textures (greyscale, 64×32, correct UV layout)
+// Used for tinting — brightness × dye colour = armour pixel
+const ARMOR_L1='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAz0lEQVR42u2YsQqDMBBAc6X+gZL/iKvgKDgIfkS+L5nc/QAXf0KcBVe7Nh0OSqm0+N52yeWGxym5yDzPh1FYlkXbNk3TyHM8TZNab11XtV7btmJO5GYuDgKuLkA+/Qds25bEdV2r+THGJLbWqvld1wkdgAAEfI17lmVqgnNO3R/HkQ5AAAIQgAAEIOBP7wH7vicLZVkmd+9hGA5tXn+d/4uiUM9774UOQAACfuc9IISQfKNVVanze57nasF3z/d9L3QAAhCAAAQgAAEAAKfzAODfN5WAIq/hAAAAAElFTkSuQmCC';
+const ARMOR_L2='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAbUlEQVR42u3TsQ3AIAwAQZwhGMZiBkpmpLQ8BGORtLhGKAV/nQVuXiBjjDctVFXW2d3Dea01nO/u/+1JlyPA7QGk9x7+aCklXDCzMOecwzznTDv7rTXhBRCAAAQgAAEIQAACEIAAAAAAAAAAx31qSB0fIIVUTgAAAABJRU5ErkJggg==';
 
-  // 3D body render from mineatar
-  const uuid = ownerUuid || 'MHF_Steve';
-  const imgEl = document.createElement('img');
-  imgEl.style.cssText = `width:auto;height:${H-20}px;image-rendering:pixelated;display:block`;
-  imgEl.src = `https://api.mineatar.io/body/full/${uuid}?scale=4&overlay=true`;
-  imgEl.alt = '';
-  imgEl.onerror = () => {
-    // Fallback to mc-heads body
-    imgEl.src = `https://mc-heads.net/body/${uuid}`;
-  };
-  containerEl.appendChild(imgEl);
+// Tint pixels in a region of ImageData with a hex colour
+function tintRegion(id, sx, sy, sw, sh, texW, hex){
+  const h=normHex(hex)||BLEACHED;
+  const tR=parseInt(h.slice(1,3),16)/255;
+  const tG=parseInt(h.slice(3,5),16)/255;
+  const tB=parseInt(h.slice(5,7),16)/255;
+  for(let py=sy;py<sy+sh;py++){
+    for(let px=sx;px<sx+sw;px++){
+      const i=(py*texW+px)*4;
+      if(id.data[i+3]<20) continue;
+      const br=(id.data[i]+id.data[i+1]+id.data[i+2])/3/255;
+      id.data[i]  =Math.min(255,Math.round(tR*br*255));
+      id.data[i+1]=Math.min(255,Math.round(tG*br*255));
+      id.data[i+2]=Math.min(255,Math.round(tB*br*255));
+    }
+  }
 }
+
+// Build composited 64×64 skin with armour tinted on top
+async function buildSkin(ownerUuid, pieces, armourType){
+  const [skinImg, l1Img, l2Img] = await Promise.all([
+    loadImg(`https://mc-heads.net/skin/${ownerUuid||'MHF_Steve'}`),
+    loadImg(ARMOR_L1),
+    loadImg(ARMOR_L2),
+  ]);
+  const c=document.createElement('canvas'); c.width=64; c.height=64;
+  const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false;
+  if(skinImg) ctx.drawImage(skinImg,0,0,64,64);
+  else{ ctx.fillStyle='#888'; ctx.fillRect(0,0,64,64); }
+
+  const pc={};
+  (pieces||[]).forEach(p=>{ if(p.hex&&isDyeable(armourType||'',p.piece)) pc[p.piece]=normHex(p.hex)||BLEACHED; });
+
+  // For each piece, draw tinted armour layer pixels OVER the skin in the correct UV region
+  // armor_layer_1.png (64×32): helmet row0-15, body/arms row16-31
+  // armor_layer_2.png (64×32): leggings row0-15 right, row16-31 left
+  // We draw the tinted armour layer onto a temp canvas then composite at the correct skin UV
+
+  async function applyLayer(layerImg, hex, regions){
+    if(!layerImg||!hex) return;
+    const lc=document.createElement('canvas'); lc.width=64; lc.height=32;
+    const lx=lc.getContext('2d'); lx.imageSmoothingEnabled=false;
+    lx.drawImage(layerImg,0,0,64,32);
+    const id=lx.getImageData(0,0,64,32);
+    // Tint the whole layer with this hex
+    const h=normHex(hex)||BLEACHED;
+    const tR=parseInt(h.slice(1,3),16)/255, tG=parseInt(h.slice(3,5),16)/255, tB=parseInt(h.slice(5,7),16)/255;
+    for(let i=0;i<id.data.length;i+=4){
+      if(id.data[i+3]<20) continue;
+      const br=(id.data[i]+id.data[i+1]+id.data[i+2])/3/255;
+      id.data[i]=Math.min(255,Math.round(tR*br*255));
+      id.data[i+1]=Math.min(255,Math.round(tG*br*255));
+      id.data[i+2]=Math.min(255,Math.round(tB*br*255));
+    }
+    lx.putImageData(id,0,0);
+    // Draw the tinted layer regions onto the skin canvas at the matching skin UV coords
+    for(const [lsx,lsy,lsw,lsh,dsx,dsy] of regions){
+      ctx.drawImage(lc, lsx,lsy,lsw,lsh, dsx,dsy,lsw,lsh);
+    }
+  }
+
+  // Helmet — armor_layer_1 top (0,0)-(63,15) maps over skin head (0,0)-(63,15)
+  if(pc.Helmet){
+    await applyLayer(l1Img, pc.Helmet, [
+      [0,0,32,16, 0,0],   // head top area
+      [0,8,32,8,  0,8],   // head sides/front/back
+    ]);
+  }
+  // Chestplate — armor_layer_1 body area (16,16)-(55,31) maps over skin body
+  if(pc.Chestplate){
+    await applyLayer(l1Img, pc.Chestplate, [
+      [16,16,40,16, 16,16],  // body + arm area
+    ]);
+  }
+  // Leggings — armor_layer_2 (0,0)-(63,15) right leg, (0,16)-(63,31) left
+  if(pc.Leggings){
+    await applyLayer(l2Img, pc.Leggings, [
+      [0,0,32,16, 0,16],   // right leg area of skin
+      [0,16,32,16, 0,48],  // left leg area of skin (1.8 format)
+    ]);
+  }
+  // Boots — lower part of legs in armor_layer_1 (0,16)-(15,31) right, (16,16)-(31,31) left
+  if(pc.Boots){
+    await applyLayer(l1Img, pc.Boots, [
+      [0,16,16,16, 0,16],   // right boot maps over right leg lower
+      [16,16,16,16, 16,48], // left boot
+    ]);
+  }
+
+  return c.toDataURL('image/png');
+}
+
+// skinview3d loader
+let _svReady=null;
+(function(){
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/skinview3d@0.7.0/bundles/skinview3d.min.js';
+  _svReady=new Promise(res=>{s.onload=()=>res(!!window.skinview3d);s.onerror=()=>res(false);});
+  document.head.appendChild(s);
+})();
+
+const _viewers=new Map();
+
+async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
+  const W=opts.width||120, H=opts.height||220;
+
+  // Always show the mineatar image immediately (fast, high quality)
+  containerEl.innerHTML='';
+  const uuid=ownerUuid||'MHF_Steve';
+
+  const imgEl=document.createElement('img');
+  imgEl.style.cssText=`width:auto;max-width:${W}px;height:${H}px;image-rendering:pixelated;display:block;object-fit:contain`;
+  // scale=8 for high resolution
+  imgEl.src=`https://api.mineatar.io/body/full/${uuid}?scale=8&overlay=true`;
+  imgEl.alt='';
+  imgEl.onerror=()=>{ imgEl.src=`https://mc-heads.net/body/${uuid}/270`; };
+  containerEl.style.cssText+='display:flex;align-items:center;justify-content:center;';
+  containerEl.appendChild(imgEl);
+
+  // Then upgrade to skinview3d with armour tint once ready
+  const sv=await _svReady;
+  if(!sv||!window.skinview3d) return; // mineatar image is good enough
+
+  try{
+    const skinData=await buildSkin(ownerUuid, pieces, armourType);
+    const id=containerEl.dataset.vid||(containerEl.dataset.vid=Math.random().toString(36).slice(2));
+    containerEl.innerHTML='';
+    const canvas=document.createElement('canvas');
+    canvas.style.cssText=`display:block;width:${W}px;height:${H}px`;
+    containerEl.appendChild(canvas);
+    const viewer=new window.skinview3d.SkinViewer({canvas,width:W*2,height:H*2,skin:skinData});
+    viewer.autoRotate=false;
+    viewer.animation=null;
+    viewer.playerObject.rotation.y=0.5;
+    viewer.zoom=0.9;
+    viewer.renderer.setClearColor(0x000000,0);
+    viewer.cameraLight.intensity=0.6;
+    viewer.globalLight.intensity=2.8;
+    _viewers.set(id,viewer);
+  }catch(e){
+    // skinview3d failed — mineatar image still shown
+  }
+}
+
 
 /* ─────────────────────────────────────────────────────
    PIECE PREVIEW (for add-set form — simple 2D flat)

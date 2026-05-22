@@ -134,7 +134,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .set-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .set-card:hover{border-color:var(--text3);box-shadow:var(--shadow)}
 .set-card-inner{display:flex;min-height:240px}
-.set-card-model{flex-shrink:0;width:120px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.set-card-model{flex-shrink:0;width:120px;background:var(--bg3);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:8px 0;gap:4px}
 .set-card-model canvas{display:block}
 .set-card-right{flex:1;min-width:0;padding:14px;display:flex;flex-direction:column;gap:8px}
 .set-name{font-weight:700;font-size:13px;color:var(--text);line-height:1.25}
@@ -712,13 +712,18 @@ function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplat
 
 /* ─────────────────────────────────────────────────────
    SKINVIEW3D CHARACTER RENDERING
-   Uses skinview3d library to show full 3D player model.
+   Uses api.mineatar.io/body/full/<uuid> — proper 3D isometric render as PNG.
    Armour is composited onto the skin canvas before rendering.
 ───────────────────────────────────────────────────── */
 
 /* ─────────────────────────────────────────────────────
-   IMAGE LOADER
+   MINECRAFT CHARACTER VIEWER
+   Uses api.mineatar.io/body/full/<uuid> — a proper 3D
+   isometric render served as a PNG. Zero dependencies.
+   Armour colours shown as a pill overlay below the render.
 ───────────────────────────────────────────────────── */
+
+// Image cache for mc-heads face loads
 const _imgCache = {};
 function loadImg(url){
   if(_imgCache[url]) return Promise.resolve(_imgCache[url]);
@@ -730,96 +735,22 @@ function loadImg(url){
   });
 }
 
-/* ─────────────────────────────────────────────────────
-   MINECRAFT SKIN VIEWER
-   skinview3d via jsDelivr esm.run (works as module import)
-   Fallback to 2D canvas if WebGL fails.
-───────────────────────────────────────────────────── */
-
-// Load skinview3d as a module into an iframe-safe scope
-let _svLib = null;
-let _svLoading = null;
-
-function getSkinViewer(){
-  if(_svLib) return Promise.resolve(_svLib);
-  if(_svLoading) return _svLoading;
-  _svLoading = new Promise(res => {
-    // Use the old 0.x bundle which has a proper UMD global
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/skinview3d@0.7.0/bundles/skinview3d.min.js';
-    s.onload = () => {
-      if(window.skinview3d){ _svLib = window.skinview3d; res(_svLib); }
-      else res(null);
-    };
-    s.onerror = () => res(null);
-    document.head.appendChild(s);
-  });
-  return _svLoading;
-}
-
-const _viewers = new Map();
-
 async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
   const W = opts.width||120, H = opts.height||220;
+  containerEl.innerHTML = '';
+  containerEl.style.cssText += ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 0';
 
-  const lib = await getSkinViewer();
-  if(!lib){ render2DFallback(containerEl,ownerUuid,pieces,armourType,W,H); return; }
-
-  const skinUrl = `https://mc-heads.net/skin/${ownerUuid||'MHF_Steve'}`;
-  const id = containerEl.dataset.vid||(containerEl.dataset.vid=Math.random().toString(36).slice(2));
-  let viewer = _viewers.get(id);
-
-  if(!viewer){
-    containerEl.innerHTML='';
-    const canvas=document.createElement('canvas');
-    canvas.style.cssText=`display:block;width:${W}px;height:${H}px`;
-    containerEl.appendChild(canvas);
-    try{
-      viewer = new lib.SkinViewer({canvas, width:W, height:H, skin:skinUrl});
-      viewer.autoRotate = false;
-      viewer.animation = null;
-      // Camera: MC inventory angle
-      viewer.playerObject.rotation.y = 0.5;
-      viewer.zoom = 0.9;
-      viewer.renderer.setClearColor(0x000000, 0);
-      viewer.cameraLight.intensity = 0.6;
-      viewer.globalLight.intensity = 2.8;
-      _viewers.set(id, viewer);
-    }catch(e){
-      render2DFallback(containerEl,ownerUuid,pieces,armourType,W,H);
-    }
-  } else {
-    try{
-      viewer.loadSkin(skinUrl);
-      viewer.render();
-    }catch(e){}
-  }
-}
-
-function render2DFallback(containerEl,ownerUuid,pieces,armourType,W=120,H=220){
-  containerEl.innerHTML='';
-  const canvas=document.createElement('canvas');
-  canvas.width=W*2;canvas.height=H*2;
-  canvas.style.cssText=`width:${W}px;height:${H}px;display:block`;
-  containerEl.appendChild(canvas);
-  const ctx=canvas.getContext('2d');
-  const pc={}; (pieces||[]).forEach(p=>{if(p.hex)pc[p.piece]=normHex(p.hex)||BLEACHED;});
-  const cw=canvas.width,ch=canvas.height,PAD=Math.round(ch*.03),U=(ch-PAD*2)/32;
-  const hH=Math.round(8*U),hW=Math.round(8*U),bH=Math.round(12*U),bW=Math.round(8*U);
-  const aW=Math.round(4*U),lW=Math.round(4*U),lH=Math.round(12*U),aH=Math.round(12*U);
-  const x0=Math.round((cw-aW-bW-aW)/2),xB=x0+aW,yH=PAD,yB=yH+hH,yL=yB+bH;
-  const SK='#c8936a',C='#4a4460';
-  function fr(x,y,w,h,hex,br=1){
-    const c=normHex(hex)||'#888';
-    ctx.fillStyle=`rgb(${Math.min(255,Math.round(parseInt(c.slice(1,3),16)*br))},${Math.min(255,Math.round(parseInt(c.slice(3,5),16)*br))},${Math.min(255,Math.round(parseInt(c.slice(5,7),16)*br))})`;
-    ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));
-  }
-  fr(xB,yL,lW,lH,pc.Leggings||C);fr(xB+lW,yL,lW,lH,pc.Leggings||C,.75);
-  if(pc.Boots){fr(xB,yL+lH*.65,lW,lH*.35,pc.Boots);fr(xB+lW,yL+lH*.65,lW,lH*.35,pc.Boots,.75);}
-  fr(xB,yB,bW,bH,pc.Chestplate||C);fr(x0,yB,aW,aH,pc.Chestplate||C,.82);fr(xB+bW,yB,aW,aH,pc.Chestplate||C,.62);
-  fr(xB,yH,hW,hH,SK);
-  if(pc.Helmet)fr(xB-1,yH-1,hW+2,hH+2,pc.Helmet,.9);
-  if(ownerUuid)loadImg(`https://mc-heads.net/avatar/${ownerUuid}/128`).then(img=>{if(img){ctx.imageSmoothingEnabled=false;ctx.drawImage(img,xB,yH,hW,hH);}});
+  // 3D body render from mineatar
+  const uuid = ownerUuid || 'MHF_Steve';
+  const imgEl = document.createElement('img');
+  imgEl.style.cssText = `width:auto;height:${H-20}px;image-rendering:pixelated;display:block`;
+  imgEl.src = `https://api.mineatar.io/body/full/${uuid}?scale=4&overlay=true`;
+  imgEl.alt = '';
+  imgEl.onerror = () => {
+    // Fallback to mc-heads body
+    imgEl.src = `https://mc-heads.net/body/${uuid}`;
+  };
+  containerEl.appendChild(imgEl);
 }
 
 /* ─────────────────────────────────────────────────────

@@ -163,7 +163,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .sp-type{font-size:12px;color:var(--text2);margin-top:3px}
 .sp-body{padding:20px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px}
 .sp-model-wrap{display:flex;gap:20px;align-items:flex-start}
-.sp-player{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;width:180px;height:300px}
+.sp-player{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;width:110px;height:190px}
 .sp-pieces{flex:1;display:flex;flex-direction:column;gap:6px}
 .sp-piece{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px}
 .sp-piece-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.12)}
@@ -810,78 +810,89 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
 }
 
 function addArmorLayers(viewer, THREE, pc){
-  // The kamawarskrew technique:
-  // For each body part with armour, clone its mesh(es),
-  // replace the material with a semi-transparent coloured material,
-  // scale up slightly so it wraps the original mesh.
-  
-  const po = viewer.playerObject;
-  if(!po){ console.warn('no playerObject'); return; }
+  // Find playerObject — skin3d uses viewer.player, skinview3d uses viewer.playerObject
+  const po = viewer.player || viewer.playerObject;
+  if(!po){ console.warn('armor: no player object found on viewer'); return; }
 
-  // Map piece name → which skin sub-object(s) to clone
+  // Dump full scene structure to find correct part names
+  const allNames = [];
+  po.traverse(o => { if(o.name) allNames.push(`${o.type}:${o.name}`); });
+  console.log('Player scene objects:', allNames.join(', '));
+
+  // Try every possible path to get skin parts
+  // skinview3d/skin3d has: player.skin.{head,body,leftArm,rightArm,leftLeg,rightLeg}
+  // OR the inner skin: player.skin.innerLayer.{head,body,...}
+  // OR just directly on player: player.head, player.body etc
+  function findPart(names){
+    const tries = [
+      ()=>po.skin,
+      ()=>po.skin?.innerLayer,
+      ()=>po.skin?.outerLayer,
+      ()=>po,
+    ];
+    for(const getter of tries){
+      const obj = getter?.();
+      if(!obj) continue;
+      for(const n of names){
+        if(obj[n]) return obj[n];
+      }
+    }
+    // Last resort: traverse by name
+    let found = null;
+    po.traverse(o=>{
+      if(!found && names.some(n=>o.name?.toLowerCase()===n.toLowerCase())) found=o;
+    });
+    return found;
+  }
+
   const PIECE_PARTS = {
-    Helmet:     ['head'],
-    Chestplate: ['body','leftArm','rightArm'],
-    Leggings:   ['leftLeg','rightLeg'],
-    Boots:      ['leftLeg','rightLeg'],
+    Helmet:     [['head','Head']],
+    Chestplate: [['body','Body','torso','Torso'],['leftArm','LeftArm','left_arm'],['rightArm','RightArm','right_arm']],
+    Leggings:   [['leftLeg','LeftLeg','left_leg'],['rightLeg','RightLeg','right_leg']],
+    Boots:      [['leftLeg','LeftLeg','left_leg'],['rightLeg','RightLeg','right_leg']],
   };
-  // For boots, we only want the lower portion — handled by y-scale
   const PIECE_SCALE = {
-    Helmet:     {x:1.08, y:1.08, z:1.08},
-    Chestplate: {x:1.08, y:1.04, z:1.08},
-    Leggings:   {x:1.06, y:1.04, z:1.06},
-    Boots:      {x:1.08, y:0.42, z:1.08}, // scaleY=0.42 → bottom 42% of leg
+    Helmet:     [1.09,1.09,1.09],
+    Chestplate: [1.08,1.05,1.08],
+    Leggings:   [1.07,1.04,1.07],
+    Boots:      [1.08,1.08,1.08],
   };
 
-  const skin = po.skin;
-  if(!skin){ console.warn('no skin'); return; }
-
+  let added = 0;
   for(const [piece, hex] of Object.entries(pc)){
-    const parts = PIECE_PARTS[piece];
-    if(!parts) continue;
-    const scale = PIECE_SCALE[piece];
+    const partGroups = PIECE_PARTS[piece];
+    if(!partGroups) continue;
+    const [sx,sy,sz] = PIECE_SCALE[piece];
     const col = new THREE.Color(hex);
+    const mat = new THREE.MeshLambertMaterial({
+      color:col, transparent:true, opacity:0.80, depthWrite:false
+    });
 
-    for(const partName of parts){
-      const part = skin[partName];
-      if(!part){ console.warn('missing part:', partName); continue; }
+    for(const nameList of partGroups){
+      const part = findPart(nameList);
+      if(!part){ console.warn('armor: part not found for',nameList[0]); continue; }
+      console.log('armor: cloning', part.name||nameList[0], 'for', piece, hex);
 
-      // Clone the group
       const clone = part.clone();
-      
-      // Replace all materials in the clone with a coloured one
-      const mat = new THREE.MeshLambertMaterial({
-        color: col,
-        transparent: true,
-        opacity: 0.82,
-        depthWrite: false,
-      });
+      clone.traverse(o=>{ if(o.isMesh){ o.material=mat.clone(); o.visible=true; } });
+      clone.scale.set(sx,sy,sz);
 
-      clone.traverse(obj=>{
-        if(obj.isMesh){
-          obj.material = mat;
-        }
-      });
-
-      // Scale it up
-      clone.scale.set(scale.x, scale.y, scale.z);
-
-      // For boots: shift down so scaled leg covers the foot region
+      // Boots: position so clone covers the bottom of the leg
       if(piece==='Boots'){
-        // The leg part's local origin is at the top of the leg
-        // Scaling Y down to 0.42 keeps the top portion — we want the bottom
-        // So translate down by (1-0.42)/2 of the leg height
-        // Leg height in local space: 12 units (using skinview3d's internal scale)
-        const legH = 12; // MC pixels
-        clone.position.y -= legH * (1-scale.y) / 2;
+        // We need the bottom portion. Get bounding box and offset
+        const bb = new THREE.Box3().setFromObject(part);
+        const h = bb.max.y - bb.min.y;
+        // Move clone down so its top aligns with original bottom half
+        clone.position.y = -(h*(1-sy))/2 / sy;
       }
 
-      // Add clone to the same parent as the original part
-      po.add(clone);
+      // Add to the part's parent so it inherits the same transforms
+      part.parent ? part.parent.add(clone) : po.add(clone);
+      added++;
     }
   }
 
-  // Force re-render
+  console.log(`armor: added ${added} clones`);
   try{ viewer.renderer.render(viewer.scene, viewer.camera); }catch(e){}
 }
 
@@ -1173,7 +1184,7 @@ window.openSetPanel=function(id){
     ${ownerActions?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${ownerActions}</div>`:''}`;
   // Render player
   const el=document.getElementById('spPlayer');
-  renderPlayerInto(el,s.uuid,pieces,at,{width:180,height:300});
+  renderPlayerInto(el,s.uuid,pieces,at,{width:110,height:190});
 };
 window.closeSetPanel=function(){
   document.getElementById('panelOv').classList.remove('open');

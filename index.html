@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Vault – SkyBlock Exotic Armour Museum</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js",
+    "skinview3d": "https://cdn.jsdelivr.net/npm/skinview3d@3.4.1/dist/skinview3d.esm.js"
+  }
+}
+</script>
 <style>
 :root[data-theme="dark"]{--bg:#111113;--bg2:#1a1a1e;--bg3:#222228;--border:#2e2e36;--text:#f0f0f2;--text2:#9090a0;--text3:#55555f;--green:#4ecb71;--red:#e85555;--shadow:0 2px 16px rgba(0,0,0,.5)}
 :root[data-theme="light"]{--bg:#f5f5f7;--bg2:#fff;--bg3:#ebebef;--border:#dddde8;--text:#111114;--text2:#606070;--text3:#aaaabc;--green:#1a9940;--red:#c83030;--shadow:0 2px 12px rgba(0,0,0,.08)}
@@ -712,8 +721,10 @@ function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplat
 
 /* ─────────────────────────────────────────────────────
    MINECRAFT CHARACTER VIEWER
-   Uses api.mineatar.io — proper 3D isometric render.
-   overlay=true includes the outer skin layer (hat etc).
+   Uses skinview3d v3 (ESM) — proper Minecraft rendering:
+   - All skin layers including body overlay (jacket/sleeves)
+   - Correct UV mapping, lighting, model detection
+   - Falls back to mineatar image if WebGL fails
 ───────────────────────────────────────────────────── */
 
 const _imgCache = {};
@@ -728,22 +739,86 @@ function loadImg(url){
 }
 
 function fmtUuid(u){
-  if(!u) return 'MHF_Steve';
+  if(!u) return null;
   const s=u.replace(/-/g,'');
   if(s.length!==32) return u;
   return `${s.slice(0,8)}-${s.slice(8,12)}-${s.slice(12,16)}-${s.slice(16,20)}-${s.slice(20)}`;
 }
 
+// Load skinview3d ESM once
+let _sv3d = null;
+let _sv3dLoading = null;
+function getSv3d(){
+  if(_sv3d) return Promise.resolve(_sv3d);
+  if(_sv3dLoading) return _sv3dLoading;
+  _sv3dLoading = import('skinview3d').then(m=>{ _sv3d=m; return m; }).catch(()=>null);
+  return _sv3dLoading;
+}
+
+const _viewers = new Map();
+
 async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
   const W=opts.width||120, H=opts.height||220;
-  containerEl.innerHTML='';
   const uuid=fmtUuid(ownerUuid);
-  const img=document.createElement('img');
-  img.style.cssText=`display:block;width:auto;max-width:${W}px;height:${H}px`;
-  img.src=`https://api.mineatar.io/body/full/${uuid}?scale=8&overlay=true&format=png`;
-  img.alt='';
-  img.onerror=()=>{ img.src=`https://mc-heads.net/body/${uuid}/240`; };
-  containerEl.appendChild(img);
+
+  // Show mineatar image immediately as placeholder
+  containerEl.innerHTML='';
+  const placeholder=document.createElement('img');
+  placeholder.style.cssText=`display:block;width:auto;max-width:${W}px;height:${H}px`;
+  placeholder.src=`https://api.mineatar.io/body/full/${uuid||'MHF_Steve'}?scale=8&overlay=true&format=png`;
+  placeholder.alt='';
+  placeholder.onerror=()=>{ placeholder.src=`https://mc-heads.net/body/${uuid||'MHF_Steve'}/240`; };
+  containerEl.appendChild(placeholder);
+
+  // Load skinview3d ESM and replace with proper 3D viewer
+  const sv3d = await getSv3d();
+  if(!sv3d) return; // keep mineatar image
+
+  try{
+    const skinUrl = uuid
+      ? `https://mc-heads.net/skin/${uuid}`
+      : 'https://mc-heads.net/skin/MHF_Steve';
+
+    const vid = containerEl.dataset.vid||(containerEl.dataset.vid=Math.random().toString(36).slice(2));
+    
+    // Dispose old viewer if exists
+    const oldViewer = _viewers.get(vid);
+    if(oldViewer){ try{ oldViewer.dispose(); }catch(e){} }
+
+    containerEl.innerHTML='';
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText=`display:block;width:${W}px;height:${H}px`;
+    containerEl.appendChild(canvas);
+
+    const viewer = new sv3d.SkinViewer({
+      canvas,
+      width: W*2,
+      height: H*2,
+      skin: skinUrl,
+    });
+
+    // Transparent background
+    viewer.renderer.setClearColor(0x000000, 0);
+
+    // Camera: MC inventory angle (~30° left, ~15° up)
+    viewer.camera.rotation.order = 'YXZ';
+    viewer.camera.rotation.y = 0.5;
+    viewer.camera.rotation.x = -0.18;
+    viewer.zoom = 0.9;
+
+    // MC inventory lighting
+    viewer.globalLight.intensity = 3;
+    viewer.cameraLight.intensity = 0.6;
+
+    // Static pose, no animation
+    viewer.autoRotate = false;
+    viewer.animation = null;
+
+    _viewers.set(vid, viewer);
+  } catch(e) {
+    // Keep mineatar placeholder on error
+    console.warn('skinview3d error:', e);
+  }
 }
 
 /* ─────────────────────────────────────────────────────

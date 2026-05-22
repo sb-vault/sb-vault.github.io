@@ -163,7 +163,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .sp-type{font-size:12px;color:var(--text2);margin-top:3px}
 .sp-body{padding:20px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px}
 .sp-model-wrap{display:flex;gap:20px;align-items:flex-start}
-.sp-player{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;width:110px;height:190px}
+.sp-player{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;width:160px;height:260px}
 .sp-pieces{flex:1;display:flex;flex-direction:column;gap:6px}
 .sp-piece{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px}
 .sp-piece-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.12)}
@@ -764,17 +764,16 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
     // Always create a fresh viewer (no caching between panel opens)
     containerEl.innerHTML='';
     const canvas=document.createElement('canvas');
-    canvas.width=W*2; canvas.height=H*2;
     canvas.style.cssText=`display:block;width:${W}px;height:${H}px`;
     containerEl.appendChild(canvas);
 
-    const viewer=new skin3d.Render({canvas, width:W*2, height:H*2, skin:skinUrl});
+    const viewer=new skin3d.Render({canvas, width:W, height:H, skin:skinUrl});
     viewer.renderer.setClearColor(0x000000,0);
     viewer.autoRotate=false;
     viewer.animation=null;
-    viewer.zoom=0.9;
-    viewer.player.rotation.y=-0.5;
-    viewer.player.rotation.x=0.1;
+    viewer.zoom=0.7;
+    viewer.player.rotation.y=-0.55;
+    viewer.player.rotation.x=0.15;
     if(viewer.globalLight) viewer.globalLight.intensity=3;
     if(viewer.cameraLight) viewer.cameraLight.intensity=0.6;
 
@@ -1092,7 +1091,7 @@ window.openSetPanel=function(id){
     ${ownerActions?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${ownerActions}</div>`:''}`;
   // Render player
   const el=document.getElementById('spPlayer');
-  renderPlayerInto(el,s.uuid,pieces,at,{width:110,height:190});
+  renderPlayerInto(el,s.uuid,pieces,at,{width:160,height:260});
 };
 window.closeSetPanel=function(){
   document.getElementById('panelOv').classList.remove('open');

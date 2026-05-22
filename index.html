@@ -818,26 +818,26 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
     viewer.autoRotate = false;
     viewer.animation = null;
 
-    // Rotate player to MC inventory angle
-    viewer.player.rotation.y = -0.4;
+    // Zoom out enough to see full body including feet
+    viewer.zoom = 0.75;
+
+    // Rotate player to MC inventory angle: left turn + slight upward tilt
+    viewer.player.rotation.y = -0.6;  // turn left ~35°
+    viewer.player.rotation.x = 0.1;   // slight downward look
 
     // Lighting
     if(viewer.globalLight)  viewer.globalLight.intensity = 3;
     if(viewer.cameraLight)  viewer.cameraLight.intensity = 0.6;
 
-    viewer.zoom = 0.9;
-
     _viewers.set(vid, viewer);
 
     // Step 3: Add armour meshes if any dyeable pieces
     if(Object.keys(pc).length > 0){
-      // Wait for skin to load so THREE is available via viewer
-      await new Promise(r=>setTimeout(r,300));
-
-      const THREE = viewer.renderer.constructor?.prototype ? await import('https://esm.run/three') : null;
-      if(THREE){
+      await new Promise(r=>setTimeout(r,500)); // wait for skin to load
+      try{
+        const THREE = await import('https://esm.run/three');
         await addArmorMeshes(viewer, THREE, pc);
-      }
+      }catch(e){ console.warn('armor error:', e); }
     }
 
   }catch(e){
@@ -846,65 +846,106 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
 }
 
 async function addArmorMeshes(viewer, THREE, pc){
-  // MC player dimensions (skin3d uses these proportions internally):
-  // Head: 8x8x8 at y=1.5, Body: 8x12x4 at y=0, Arms: 4x12x4 at y=0, Legs: 4x12x4 at y=-12
-  // skin3d internally scales by 1/16 so 1 unit = 16MC pixels
-  // We add slightly enlarged transparent meshes with tinted armor texture
+  // skin3d inherits skinview3d's coordinate system:
+  // Player is centred at origin, standing upright
+  // Head top is at ~+1.5 units, feet at ~-1.5 units
+  // The player group is at viewer.playerObject or viewer.player
+  
+  // Get Three.js player parts from viewer
+  // skin3d exposes: viewer.player (the root group)
+  // Within it: head, body, leftArm, rightArm, leftLeg, rightLeg
+  // We find these by traversing the scene
 
-  const S = 1/16; // skin3d scale factor
+  const parts = {};
+  viewer.scene.traverse(obj => {
+    // skin3d names the parts like 'Head', 'Body', etc.
+    if(obj.name) parts[obj.name.toLowerCase()] = obj;
+  });
 
-  // Helper: create a flat-colored box mesh for armor
-  function armorBox(w,h,d, hex, opacity=0.88){
-    const geo = new THREE.BoxGeometry(w*S, h*S, d*S);
+  // Get actual world positions of body parts by reading their bounding boxes
+  // This way we don't need to hardcode positions
+  function getPartBbox(name){
+    const variations = [name, name.toLowerCase(), 
+      name.charAt(0).toUpperCase()+name.slice(1)];
+    for(const v of variations){
+      const p = parts[v];
+      if(p){
+        const box = new THREE.Box3().setFromObject(p);
+        return box;
+      }
+    }
+    return null;
+  }
+
+  // Create a slightly enlarged coloured box to sit over a body part
+  function armourOver(bbox, hex, scaleXZ=1.12, scaleY=1.04){
+    if(!bbox) return null;
+    const size = new THREE.Vector3();
+    bbox.getSize(size);
+    const center = new THREE.Vector3();
+    bbox.getCenter(center);
+    
+    const geo = new THREE.BoxGeometry(size.x*scaleXZ, size.y*scaleY, size.z*scaleXZ);
     const mat = new THREE.MeshLambertMaterial({
       color: new THREE.Color(hex),
       transparent: true,
-      opacity,
+      opacity: 0.78,
       depthWrite: false,
+      depthTest: true,
     });
-    return new THREE.Mesh(geo, mat);
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(center);
+    return mesh;
   }
 
-  // Find the player model group in scene
-  const scene = viewer.scene;
-
-  // Armor scale: slightly larger than body (1.06x)
-  const A = 1.06;
+  const meshes = [];
 
   if(pc.Helmet){
-    const helm = armorBox(8*A, 8*A, 8*A, pc.Helmet, 0.82);
-    // Head is at approximately y = (12 + 8/2) * S = 1.0 in skin3d coords
-    helm.position.set(0, (12 + 4)*S, 0);
-    scene.add(helm);
+    const bbox = getPartBbox('head');
+    const m = armourOver(bbox, pc.Helmet, 1.18, 1.18);
+    if(m) meshes.push(m);
   }
   if(pc.Chestplate){
-    const chest = armorBox(8*A, 12*A, 4*A, pc.Chestplate, 0.82);
-    chest.position.set(0, 6*S, 0);
-    scene.add(chest);
-    // Shoulder pads on arms
-    const sL = armorBox(4*A, 4*A, 4*A, pc.Chestplate, 0.75);
-    sL.position.set(-6*S, 10*S, 0);
-    scene.add(sL);
-    const sR = armorBox(4*A, 4*A, 4*A, pc.Chestplate, 0.75);
-    sR.position.set(6*S, 10*S, 0);
-    scene.add(sR);
+    const bbox = getPartBbox('body');
+    const m = armourOver(bbox, pc.Chestplate, 1.14, 1.04);
+    if(m) meshes.push(m);
+    // Arms
+    for(const arm of ['leftarm','rightarm','leftArm','rightArm','left_arm','right_arm']){
+      const ab = getPartBbox(arm);
+      if(ab){ const am = armourOver(ab, pc.Chestplate, 1.18, 1.04); if(am) meshes.push(am); }
+    }
   }
   if(pc.Leggings){
-    const legL = armorBox(4*A, 12*A, 4*A, pc.Leggings, 0.82);
-    legL.position.set(-2*S, -6*S, 0);
-    scene.add(legL);
-    const legR = armorBox(4*A, 12*A, 4*A, pc.Leggings, 0.82);
-    legR.position.set(2*S, -6*S, 0);
-    scene.add(legR);
+    for(const leg of ['leftleg','rightleg','leftLeg','rightLeg','left_leg','right_leg']){
+      const lb = getPartBbox(leg);
+      if(lb){ const lm = armourOver(lb, pc.Leggings, 1.12, 1.02); if(lm) meshes.push(lm); }
+    }
   }
   if(pc.Boots){
-    const bootL = armorBox(4*A, 5*A, 4*A, pc.Boots, 0.88);
-    bootL.position.set(-2*S, -14*S, 0);
-    scene.add(bootL);
-    const bootR = armorBox(4*A, 5*A, 4*A, pc.Boots, 0.88);
-    bootR.position.set(2*S, -14*S, 0);
-    scene.add(bootR);
+    for(const leg of ['leftleg','rightleg','leftLeg','rightLeg','left_leg','right_leg']){
+      const lb = getPartBbox(leg);
+      if(lb){
+        const size = new THREE.Vector3(); lb.getSize(size);
+        const center = new THREE.Vector3(); lb.getCenter(center);
+        // Only cover bottom 40% of leg
+        const bootH = size.y * 0.4;
+        const geo = new THREE.BoxGeometry(size.x*1.14, bootH, size.z*1.14);
+        const mat = new THREE.MeshLambertMaterial({
+          color: new THREE.Color(pc.Boots), transparent:true, opacity:0.82, depthWrite:false
+        });
+        const bm = new THREE.Mesh(geo, mat);
+        bm.position.set(center.x, lb.min.y + bootH/2, center.z);
+        meshes.push(bm);
+      }
+    }
   }
+
+  // Add all armour meshes to viewer's player group so they rotate with the player
+  const playerGroup = viewer.player || viewer.playerObject;
+  meshes.forEach(m => {
+    if(playerGroup) playerGroup.add(m);
+    else viewer.scene.add(m);
+  });
 
   // Force re-render
   if(viewer.renderer && viewer.scene && viewer.camera){

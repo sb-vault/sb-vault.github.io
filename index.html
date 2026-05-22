@@ -712,11 +712,8 @@ function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplat
 
 /* ─────────────────────────────────────────────────────
    MINECRAFT CHARACTER VIEWER
-   Uses mineatar.io for full 3D isometric renders.
-   - scale=12 for high resolution
-   - overlay=true for outer head/body skin layers
-   Leather armour colours shown by compositing tinted
-   leather_layer textures onto the rendered image.
+   Uses api.mineatar.io — proper 3D isometric render.
+   overlay=true includes the outer skin layer (hat etc).
 ───────────────────────────────────────────────────── */
 
 const _imgCache = {};
@@ -730,7 +727,6 @@ function loadImg(url){
   });
 }
 
-// Ensure UUID has dashes (mineatar requires standard format)
 function fmtUuid(u){
   if(!u) return 'MHF_Steve';
   const s=u.replace(/-/g,'');
@@ -738,122 +734,18 @@ function fmtUuid(u){
   return `${s.slice(0,8)}-${s.slice(8,12)}-${s.slice(12,16)}-${s.slice(16,20)}-${s.slice(20)}`;
 }
 
-// Embedded leather_layer textures as base64 (64×32 greyscale)
-// These are the actual Minecraft armor overlay textures used for tinting
-const ARMOR_L1='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAz0lEQVR42u2YsQqDMBBAc6X+gZL/iKvgKDgIfkS+L5nc/QAXf0KcBVe7Nh0OSqm0+N52yeWGxym5yDzPh1FYlkXbNk3TyHM8TZNab11XtV7btmJO5GYuDgKuLkA+/Qds25bEdV2r+THGJLbWqvld1wkdgAAEfI17lmVqgnNO3R/HkQ5AAAIQgAAEIOBP7wH7vicLZVkmd+9hGA5tXn+d/4uiUM9774UOQAACfuc9IISQfKNVVanze57nasF3z/d9L3QAAhCAAAQgAAEAAKfzAODfN5WAIq/hAAAAAElFTkSuQmCC';
-const ARMOR_L2='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAbUlEQVR42u3TsQ3AIAwAQZwhGMZiBkpmpLQ8BGORtLhGKAV/nQVuXiBjjDctVFXW2d3Dea01nO/u/+1JlyPA7QGk9x7+aCklXDCzMOecwzznTDv7rTXhBRCAAAQgAAEIQAACEIAAAAAAAAAAx31qSB0fIIVUTgAAAABJRU5ErkJggg==';
-
 async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
   const W=opts.width||120, H=opts.height||220;
   containerEl.innerHTML='';
-  containerEl.style.display='flex';
-  containerEl.style.alignItems='center';
-  containerEl.style.justifyContent='center';
-
+  containerEl.style.cssText+='display:flex;align-items:center;justify-content:center;';
   const uuid=fmtUuid(ownerUuid);
-  const pc={};
-  (pieces||[]).forEach(p=>{ if(p.hex&&isDyeable(armourType||'',p.piece)) pc[p.piece]=normHex(p.hex)||BLEACHED; });
-  const hasArmour=Object.keys(pc).length>0;
-
-  // If no armour to composite, just show the mineatar image directly
-  if(!hasArmour){
-    const img=document.createElement('img');
-    img.style.cssText=`width:auto;max-width:${W}px;height:${H}px;image-rendering:pixelated;display:block`;
-    img.src=`https://api.mineatar.io/body/full/${uuid}?scale=12&overlay=true`;
-    img.alt='';
-    img.onerror=()=>{ img.src=`https://mc-heads.net/body/${uuid}/240`; };
-    containerEl.appendChild(img);
-    return;
-  }
-
-  // With armour: load the mineatar render onto a canvas, composite armour on top
-  const canvas=document.createElement('canvas');
-  canvas.width=W*2; canvas.height=H*2;
-  canvas.style.cssText=`display:block;width:${W}px;height:${H}px;image-rendering:pixelated`;
-  containerEl.appendChild(canvas);
-  const ctx=canvas.getContext('2d'); ctx.imageSmoothingEnabled=false;
-
-  // Load base render
-  const bodyImg=await loadImg(`https://api.mineatar.io/body/full/${uuid}?scale=12&overlay=true`);
-  if(!bodyImg){
-    // Fallback
-    const img=document.createElement('img');
-    img.style.cssText=`width:auto;max-width:${W}px;height:${H}px;image-rendering:pixelated;display:block`;
-    img.src=`https://mc-heads.net/body/${uuid}/240`;
-    containerEl.innerHTML=''; containerEl.appendChild(img); return;
-  }
-
-  // Draw body at canvas size
-  ctx.drawImage(bodyImg,0,0,canvas.width,canvas.height);
-
-  // Now composite tinted leather_layer textures on top
-  // The mineatar isometric render has a known layout:
-  // Figure is roughly centred, with isometric projection
-  // We load leather_layer_1 and leather_layer_2, tint them with the hex colour,
-  // then draw them scaled to match the body regions in the render
-
-  async function overlayArmorPiece(layerB64, tileRegion, hex, destRegion){
-    // tileRegion: [sx,sy,sw,sh] from the 64×32 layer texture
-    // destRegion: [dx,dy,dw,dh] on the output canvas
-    const layerImg=await loadImg(layerB64);
-    if(!layerImg) return;
-    // Draw just that UV region of the layer onto a temp canvas, tinted
-    const tc=document.createElement('canvas'); tc.width=tileRegion[2]; tc.height=tileRegion[3];
-    const tx=tc.getContext('2d'); tx.imageSmoothingEnabled=false;
-    tx.drawImage(layerImg, tileRegion[0],tileRegion[1],tileRegion[2],tileRegion[3], 0,0,tileRegion[2],tileRegion[3]);
-    const id=tx.getImageData(0,0,tileRegion[2],tileRegion[3]);
-    const h=normHex(hex)||BLEACHED;
-    const tR=parseInt(h.slice(1,3),16)/255, tG=parseInt(h.slice(3,5),16)/255, tB=parseInt(h.slice(5,7),16)/255;
-    for(let i=0;i<id.data.length;i+=4){
-      if(id.data[i+3]<20) continue;
-      const br=(id.data[i]+id.data[i+1]+id.data[i+2])/3/255;
-      id.data[i]=Math.min(255,Math.round(tR*br*255));
-      id.data[i+1]=Math.min(255,Math.round(tG*br*255));
-      id.data[i+2]=Math.min(255,Math.round(tB*br*255));
-    }
-    tx.putImageData(id,0,0);
-    // Composite onto canvas with screen blend so skin detail shows under armour colour
-    ctx.save();
-    ctx.globalCompositeOperation='multiply';
-    ctx.globalAlpha=0.92;
-    ctx.imageSmoothingEnabled=false;
-    ctx.drawImage(tc, destRegion[0],destRegion[1],destRegion[2],destRegion[3]);
-    ctx.restore();
-  }
-
-  // The mineatar isometric render (at scale=12) for a standard player:
-  // Rendered image is 174×348px (29w × 58h blocks at scale=12 for full body)
-  // We're drawing it at canvas.width × canvas.height
-  // Figure proportions (approximate, calibrated from the actual renders):
-  // Head: top 22% of figure height, centred ~35-65% width
-  // Body: 22-50% height
-  // Legs: 50-88% height
-  const cw=canvas.width, ch=canvas.height;
-  // isometric figure bounds within the canvas
-  const fL=cw*0.14, fR=cw*0.86, fT=ch*0.03, fB=ch*0.96;
-  const fW=fR-fL, fH=fB-fT;
-
-  const headT=fT,          headB=fT+fH*0.23;
-  const bodyT=headB,       bodyB=headB+fH*0.31;
-  const legsT=bodyB,       legsB=bodyB+fH*0.38;
-  const bootsT=legsT+fH*0.20, bootsB=legsB;
-
-  // Layer 1 UV regions (64×32 texture):
-  // Helmet front face: sx=8,sy=8,sw=8,sh=8
-  // Body front: sx=20,sy=4,sw=8,sh=12
-  // Boots front: sx=4,sy=20,sw=4,sh=8
-  // Layer 2 UV regions:
-  // Leggings front: sx=4,sy=4,sw=4,sh=12
-
-  const promises=[];
-  if(pc.Helmet)     promises.push(overlayArmorPiece(ARMOR_L1, [0,0,32,16], pc.Helmet,    [fL, headT, fW, headB-headT]));
-  if(pc.Chestplate) promises.push(overlayArmorPiece(ARMOR_L1, [16,4,24,12], pc.Chestplate, [fL*0.9, bodyT, fW*1.1, bodyB-bodyT]));
-  if(pc.Leggings)   promises.push(overlayArmorPiece(ARMOR_L2, [0,0,32,16], pc.Leggings,  [fL, legsT, fW, bootsT-legsT]));
-  if(pc.Boots)      promises.push(overlayArmorPiece(ARMOR_L1, [0,16,32,16], pc.Boots,    [fL, bootsT, fW, bootsB-bootsT]));
-  await Promise.all(promises);
+  const img=document.createElement('img');
+  img.style.cssText=`width:auto;max-width:${W}px;height:${H}px;image-rendering:pixelated;display:block`;
+  img.src=`https://api.mineatar.io/body/full/${uuid}?scale=12&overlay=true`;
+  img.alt='';
+  img.onerror=()=>{ img.src=`https://mc-heads.net/body/${uuid}/240`; };
+  containerEl.appendChild(img);
 }
-
-
 
 /* ─────────────────────────────────────────────────────
    PIECE PREVIEW (for add-set form — simple 2D flat)

@@ -134,8 +134,8 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .set-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .set-card:hover{border-color:var(--text3);box-shadow:var(--shadow)}
 .set-card-inner{display:flex;min-height:140px}
-.set-card-model{flex-shrink:0;width:130px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:140px}
-.set-card-model img{display:block;width:auto;height:130px;object-fit:contain}
+.set-card-model{flex-shrink:0;width:150px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;align-self:stretch}
+.set-card-model canvas{display:block;width:100%!important;height:100%!important}
 .set-card-right{flex:1;min-width:0;padding:8px 12px;display:flex;flex-direction:column;gap:4px}
 .set-name{font-weight:700;font-size:13px;color:var(--text);line-height:1.25}
 .set-type{font-size:10px;color:var(--text3);margin-top:1px}
@@ -150,7 +150,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .set-ts{font-size:10px;color:var(--text3)}
 
 /* Add card */
-.set-card-add{border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:32px 16px;color:var(--text3);font-size:13px;min-height:160px}
+.set-card-add{border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:32px 16px;color:var(--text3);font-size:13px;min-height:200px}
 .set-card-add:hover{border-color:var(--text3);color:var(--text);background:var(--bg3)}
 
 /* Side panel */
@@ -163,7 +163,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .sp-type{font-size:12px;color:var(--text2);margin-top:3px}
 .sp-body{padding:20px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px}
 .sp-model-wrap{display:flex;gap:20px;align-items:flex-start}
-.sp-player{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;width:160px;height:260px}
+.sp-player{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;width:200px;height:320px}
 .sp-pieces{flex:1;display:flex;flex-direction:column;gap:6px}
 .sp-piece{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px}
 .sp-piece-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.12)}
@@ -764,14 +764,14 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
     // Always create a fresh viewer (no caching between panel opens)
     containerEl.innerHTML='';
     const canvas=document.createElement('canvas');
-    canvas.style.cssText=`display:block;width:${W}px;height:${H}px`;
+    canvas.style.cssText=`display:block;width:100%;height:100%`;
     containerEl.appendChild(canvas);
 
     const viewer=new skin3d.Render({canvas, width:W, height:H, skin:skinUrl});
     viewer.renderer.setClearColor(0x000000,0);
     viewer.autoRotate=false;
     viewer.animation=null;
-    viewer.zoom=0.7;
+    viewer.zoom=0.95;
     viewer.player.rotation.y=-0.55;
     viewer.player.rotation.x=0.15;
     if(viewer.globalLight) viewer.globalLight.intensity=3;
@@ -988,7 +988,7 @@ function renderSets(){
   requestAnimationFrame(()=>{
     sets.forEach(s=>{
       const el=document.getElementById(`model-${s.id}`);
-      if(el&&!el.dataset.rendered){ el.dataset.rendered='1'; renderPlayerInto(el,viewingUuid,s.pieces||[],s.armour_type||'',{width:130,height:130}); }
+      if(el&&!el.dataset.rendered){ el.dataset.rendered='1'; renderPlayerInto(el,viewingUuid,s.pieces||[],s.armour_type||'',{width:150,height:200}); }
     });
   });
 }
@@ -1091,7 +1091,7 @@ window.openSetPanel=function(id){
     ${ownerActions?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${ownerActions}</div>`:''}`;
   // Render player
   const el=document.getElementById('spPlayer');
-  renderPlayerInto(el,s.uuid,pieces,at,{width:160,height:260});
+  renderPlayerInto(el,s.uuid,pieces,at,{width:200,height:320});
 };
 window.closeSetPanel=function(){
   document.getElementById('panelOv').classList.remove('open');

@@ -163,7 +163,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .sp-type{font-size:12px;color:var(--text2);margin-top:3px}
 .sp-body{padding:20px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px}
 .sp-model-wrap{display:flex;gap:20px;align-items:flex-start}
-.sp-player{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;width:160px;height:280px}
+.sp-player{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;width:200px;height:340px}
 .sp-pieces{flex:1;display:flex;flex-direction:column;gap:6px}
 .sp-piece{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px}
 .sp-piece-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.12)}
@@ -819,7 +819,7 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
     viewer.animation = null;
 
     // Zoom out enough to see full body including feet
-    viewer.zoom = 0.75;
+    viewer.zoom = 0.65;
 
     // Rotate player to MC inventory angle: left turn + slight upward tilt
     viewer.player.rotation.y = -0.6;  // turn left ~35°
@@ -846,105 +846,84 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
 }
 
 async function addArmorMeshes(viewer, THREE, pc){
-  // skin3d (based on skinview3d) player coordinate system:
-  // Uses 1/16 scale internally (1 MC pixel = 1/16 unit)
-  // Head: 8x8x8 block, centre at y = 28/16 (above body)  
-  // Body: 8x12x4 block, centre at y = 18/16
-  // Arms: 4x12x4 each, centre at y = 18/16 (same as body)
-  //   left arm centre x = -6/16, right arm centre x = 6/16  
-  // Legs: 4x12x4 each, centre at y = 6/16
-  //   left leg centre x = -2/16, right leg centre x = 2/16
-  // All z = 0
+  // skinview3d/skin3d API: viewer.playerObject.skin has:
+  // .head, .body, .leftArm, .rightArm, .leftLeg, .rightLeg
+  // Each is a THREE.Group in LOCAL player space
+  
+  const po = viewer.playerObject;
+  if(!po){ console.warn('armor: no playerObject'); return; }
+  const skin = po.skin;
+  if(!skin){ console.warn('armor: no skin on playerObject'); return; }
 
-  // Get actual positions by finding the player group's skin sub-groups
-  // skin3d exposes viewer.player which contains the full model
-  // We find actual mesh positions by traversing
-  const player = viewer.player || viewer.playerObject;
-  if(!player) return;
+  function partBox(part){
+    if(!part) return null;
+    const b = new THREE.Box3().setFromObject(part);
+    return b.isEmpty() ? null : b;
+  }
 
-  // Collect all mesh bounding boxes by name
-  const bboxes = {};
-  player.traverse(obj => {
-    if(obj.isMesh && obj.name){
-      const b = new THREE.Box3().setFromObject(obj);
-      const n = obj.name.toLowerCase().replace(/[^a-z]/g,'');
-      if(!bboxes[n]) bboxes[n] = new THREE.Box3();
-      bboxes[n].union(b);
-    }
-    if(obj.isGroup && obj.name){
-      const b = new THREE.Box3().setFromObject(obj);
-      const n = obj.name.toLowerCase().replace(/[^a-z]/g,'');
-      if(!bboxes[n]) bboxes[n] = new THREE.Box3();
-      bboxes[n].union(b);
-    }
-  });
+  // Convert world bbox to player-local centre position
+  function worldBoxToLocalCentre(b){
+    if(!b) return null;
+    const wc = new THREE.Vector3(); b.getCenter(wc);
+    return po.worldToLocal(wc.clone());
+  }
 
-  console.log('Found parts:', Object.keys(bboxes));
-
-  function makeMesh(bbox, hex, padXZ=0.06, padY=0.03, opacity=0.80){
-    if(!bbox || bbox.isEmpty()) return null;
-    const sz = new THREE.Vector3(); bbox.getSize(sz);
-    const ct = new THREE.Vector3(); bbox.getCenter(ct);
+  function makeMesh(part, hex, padXZ=0.08, padY=0.04, opacity=0.80){
+    const b = partBox(part); if(!b) return null;
+    const sz = new THREE.Vector3(); b.getSize(sz);
+    const lc = worldBoxToLocalCentre(b);
     const geo = new THREE.BoxGeometry(sz.x*(1+padXZ), sz.y*(1+padY), sz.z*(1+padXZ));
     const mat = new THREE.MeshLambertMaterial({
-      color: new THREE.Color(hex), transparent:true, opacity, depthWrite:false
+      color:new THREE.Color(hex), transparent:true, opacity, depthWrite:false
     });
     const m = new THREE.Mesh(geo, mat);
-    // Position relative to player since we'll add to player group
-    m.position.copy(ct);
+    m.position.copy(lc);
     return m;
   }
 
   const added = [];
 
   if(pc.Helmet){
-    const names = ['head','helmet'];
-    const bbox = names.map(n=>bboxes[n]).find(b=>b&&!b.isEmpty());
-    const m = makeMesh(bbox, pc.Helmet, 0.10, 0.10, 0.80);
+    const m = makeMesh(skin.head, pc.Helmet, 0.12, 0.12, 0.82);
     if(m) added.push(m);
   }
   if(pc.Chestplate){
-    const bodyNames = ['body','torso','chest'];
-    const bbox = bodyNames.map(n=>bboxes[n]).find(b=>b&&!b.isEmpty());
-    const m = makeMesh(bbox, pc.Chestplate, 0.08, 0.04, 0.80);
-    if(m) added.push(m);
-    // Arms
-    for(const side of ['left','right']){
-      const armNames = [`${side}arm`,`${side}outerarm`];
-      const ab = armNames.map(n=>bboxes[n]).find(b=>b&&!b.isEmpty());
-      const am = makeMesh(ab, pc.Chestplate, 0.12, 0.04, 0.78);
-      if(am) added.push(am);
-    }
+    const mb = makeMesh(skin.body, pc.Chestplate, 0.10, 0.04, 0.80);
+    if(mb) added.push(mb);
+    const mL = makeMesh(skin.leftArm, pc.Chestplate, 0.14, 0.04, 0.76);
+    if(mL) added.push(mL);
+    const mR = makeMesh(skin.rightArm, pc.Chestplate, 0.14, 0.04, 0.76);
+    if(mR) added.push(mR);
   }
   if(pc.Leggings){
-    for(const side of ['left','right']){
-      const legNames = [`${side}leg`,`${side}outerleg`];
-      const lb = legNames.map(n=>bboxes[n]).find(b=>b&&!b.isEmpty());
-      const lm = makeMesh(lb, pc.Leggings, 0.08, 0.02, 0.80);
-      if(lm) added.push(lm);
-    }
+    const mL = makeMesh(skin.leftLeg, pc.Leggings, 0.10, 0.02, 0.80);
+    if(mL) added.push(mL);
+    const mR = makeMesh(skin.rightLeg, pc.Leggings, 0.10, 0.02, 0.80);
+    if(mR) added.push(mR);
   }
   if(pc.Boots){
-    for(const side of ['left','right']){
-      const legNames = [`${side}leg`,`${side}outerleg`];
-      const lb = legNames.map(n=>bboxes[n]).find(b=>b&&!b.isEmpty());
-      if(lb&&!lb.isEmpty()){
-        const sz=new THREE.Vector3(); lb.getSize(sz);
-        const ct=new THREE.Vector3(); lb.getCenter(ct);
-        const bootH = sz.y*0.42;
-        const geo=new THREE.BoxGeometry(sz.x*1.10, bootH, sz.z*1.10);
-        const mat=new THREE.MeshLambertMaterial({color:new THREE.Color(pc.Boots),transparent:true,opacity:0.82,depthWrite:false});
-        const bm=new THREE.Mesh(geo,mat);
-        bm.position.set(ct.x, lb.min.y+bootH/2, ct.z);
-        added.push(bm);
-      }
+    for(const legPart of [skin.leftLeg, skin.rightLeg]){
+      const b = partBox(legPart); if(!b) continue;
+      const sz = new THREE.Vector3(); b.getSize(sz);
+      const bootH = sz.y*0.40;
+      const bootB = new THREE.Box3(
+        new THREE.Vector3(b.min.x, b.min.y, b.min.z),
+        new THREE.Vector3(b.max.x, b.min.y+bootH, b.max.z)
+      );
+      const sz2 = new THREE.Vector3(); bootB.getSize(sz2);
+      const lc2 = worldBoxToLocalCentre(bootB);
+      const geo = new THREE.BoxGeometry(sz2.x*1.12, sz2.y*1.06, sz2.z*1.12);
+      const mat = new THREE.MeshLambertMaterial({
+        color:new THREE.Color(pc.Boots), transparent:true, opacity:0.84, depthWrite:false
+      });
+      const bm = new THREE.Mesh(geo,mat);
+      bm.position.copy(lc2);
+      added.push(bm);
     }
   }
 
-  // Add to player group so they rotate with the skin
-  added.forEach(m => player.add(m));
-  
-  // Re-render
+  console.log(`armor: adding ${added.length} meshes`);
+  added.forEach(m => po.add(m));
   try{ viewer.renderer.render(viewer.scene, viewer.camera); }catch(e){}
 }
 
@@ -1236,7 +1215,7 @@ window.openSetPanel=function(id){
     ${ownerActions?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${ownerActions}</div>`:''}`;
   // Render player
   const el=document.getElementById('spPlayer');
-  renderPlayerInto(el,s.uuid,pieces,at,{width:160,height:280});
+  renderPlayerInto(el,s.uuid,pieces,at,{width:200,height:340});
 };
 window.closeSetPanel=function(){
   document.getElementById('panelOv').classList.remove('open');

@@ -133,15 +133,15 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 /* Set card */
 .set-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .set-card:hover{border-color:var(--text3);box-shadow:var(--shadow)}
-.set-card-inner{display:flex;min-height:180px}
-.set-card-model{flex-shrink:0;width:110px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:180px}
-.set-card-model img{display:block;width:auto;height:160px;object-fit:contain}
-.set-card-right{flex:1;min-width:0;padding:10px 12px;display:flex;flex-direction:column;gap:5px}
+.set-card-inner{display:flex;min-height:140px}
+.set-card-model{flex-shrink:0;width:130px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:140px}
+.set-card-model img{display:block;width:auto;height:130px;object-fit:contain}
+.set-card-right{flex:1;min-width:0;padding:8px 12px;display:flex;flex-direction:column;gap:4px}
 .set-name{font-weight:700;font-size:13px;color:var(--text);line-height:1.25}
 .set-type{font-size:10px;color:var(--text3);margin-top:1px}
 .set-offers{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;border:1px solid rgba(78,203,113,.3);color:var(--green);background:rgba(78,203,113,.08);flex-shrink:0}
 .set-piece-list{display:flex;flex-direction:column;gap:3px;flex:1}
-.set-piece-row{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:5px;background:var(--bg3);border:1px solid var(--border)}
+.set-piece-row{display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:5px;background:var(--bg3);border:1px solid var(--border)}
 .set-piece-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.12)}
 .set-piece-name{font-size:9px;color:var(--text2);font-weight:600;flex:1;text-transform:uppercase;letter-spacing:.05em}
 .set-piece-tag{font-size:8px;padding:1px 5px;border-radius:3px;border:1px solid;font-weight:700;white-space:nowrap}
@@ -150,7 +150,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .set-ts{font-size:10px;color:var(--text3)}
 
 /* Add card */
-.set-card-add{border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:32px 16px;color:var(--text3);font-size:13px;min-height:180px}
+.set-card-add{border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:32px 16px;color:var(--text3);font-size:13px;min-height:160px}
 .set-card-add:hover{border-color:var(--text3);color:var(--text);background:var(--bg3)}
 
 /* Side panel */
@@ -163,7 +163,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .sp-type{font-size:12px;color:var(--text2);margin-top:3px}
 .sp-body{padding:20px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px}
 .sp-model-wrap{display:flex;gap:20px;align-items:flex-start}
-.sp-player{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;width:130px;height:220px}
+.sp-player{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;width:180px;height:300px}
 .sp-pieces{flex:1;display:flex;flex-direction:column;gap:6px}
 .sp-piece{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px}
 .sp-piece-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.12)}
@@ -712,12 +712,13 @@ function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplat
 
 /* ─────────────────────────────────────────────────────
    MINECRAFT CHARACTER VIEWER
-   Uses skin3d (fork of skinview3d) via ESM import.
-   - Renders ALL skin layers (inner + outer/overlay)
-   - Head overlay protrudes correctly in 3D
-   - Leather armour added as separate Three.js meshes
-     tinted with the dye hex colour (multiply blend)
-   Falls back to mineatar image if WebGL unavailable.
+   
+   Approach (from kamawarskrew creator):
+   1. Render the player skin normally with skin3d
+   2. For each armoured piece: clone the body part mesh,
+      replace its texture with a solid tinted colour,
+      scale it up 1.08x so it sits outside the skin
+   This gives proper 3D leather armour on the model.
 ───────────────────────────────────────────────────── */
 
 const _imgCache = {};
@@ -738,33 +739,6 @@ function fmtUuid(u){
   return `${s.slice(0,8)}-${s.slice(8,12)}-${s.slice(12,16)}-${s.slice(16,20)}-${s.slice(20)}`;
 }
 
-// Tint a 64×32 armor layer image with a hex colour, return data URL
-async function tintedArmorLayer(layerB64, hex){
-  const img = await loadImg(layerB64);
-  if(!img) return null;
-  const c=document.createElement('canvas'); c.width=64; c.height=32;
-  const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(img,0,0,64,32);
-  const id=ctx.getImageData(0,0,64,32);
-  const h=normHex(hex)||BLEACHED;
-  const tR=parseInt(h.slice(1,3),16)/255;
-  const tG=parseInt(h.slice(3,5),16)/255;
-  const tB=parseInt(h.slice(5,7),16)/255;
-  for(let i=0;i<id.data.length;i+=4){
-    if(id.data[i+3]<20) continue;
-    const br=(id.data[i]+id.data[i+1]+id.data[i+2])/3/255;
-    id.data[i]=Math.min(255,Math.round(tR*br*255));
-    id.data[i+1]=Math.min(255,Math.round(tG*br*255));
-    id.data[i+2]=Math.min(255,Math.round(tB*br*255));
-  }
-  ctx.putImageData(id,0,0);
-  return c.toDataURL('image/png');
-}
-
-// Embedded armor layer textures (greyscale, 64x32)
-const ARMOR_L1='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAz0lEQVR42u2YsQqDMBBAc6X+gZL/iKvgKDgIfkS+L5nc/QAXf0KcBVe7Nh0OSqm0+N52yeWGxym5yDzPh1FYlkXbNk3TyHM8TZNab11XtV7btmJO5GYuDgKuLkA+/Qds25bEdV2r+THGJLbWqvld1wkdgAAEfI17lmVqgnNO3R/HkQ5AAAIQgAAEIOBP7wH7vicLZVkmd+9hGA5tXn+d/4uiUM9774UOQAACfuc9IISQfKNVVanze57nasF3z/d9L3QAAhCAAAQgAAEAAKfzAODfN5WAIq/hAAAAAElFTkSuQmCC';
-const ARMOR_L2='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAbUlEQVR42u3TsQ3AIAwAQZwhGMZiBkpmpLQ8BGORtLhGKAV/nQVuXiBjjDctVFXW2d3Dea01nO/u/+1JlyPA7QGk9x7+aCklXDCzMOecwzznTDv7rTXhBRCAAAQgAAEIQAACEIAAAAAAAAAAx31qSB0fIIVUTgAAAABJRU5ErkJggg==';
-
 // Load skin3d ESM once
 let _skin3dPromise = null;
 function getSkin3d(){
@@ -773,13 +747,21 @@ function getSkin3d(){
   return _skin3dPromise;
 }
 
+// Load Three.js ESM once (skin3d uses it internally, but we need the module reference)
+let _threePromise = null;
+function getThree(){
+  if(_threePromise) return _threePromise;
+  _threePromise = import('https://esm.run/three').catch(()=>null);
+  return _threePromise;
+}
+
 const _viewers = new Map();
 
 async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
   const W=opts.width||120, H=opts.height||220;
   const uuid=fmtUuid(ownerUuid);
 
-  // Step 1: show mineatar immediately as fast placeholder
+  // Show mineatar immediately as placeholder
   containerEl.innerHTML='';
   const ph=document.createElement('img');
   ph.style.cssText=`display:block;width:auto;max-width:${W}px;height:${H}px`;
@@ -787,14 +769,11 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
   ph.alt=''; ph.onerror=()=>{ ph.src=`https://mc-heads.net/body/${uuid||'MHF_Steve'}/240`; };
   containerEl.appendChild(ph);
 
-  // Step 2: load skin3d and render proper 3D
-  const skin3d = await getSkin3d();
-  if(!skin3d || !skin3d.Render) return;
+  const [skin3d, THREE] = await Promise.all([getSkin3d(), getThree()]);
+  if(!skin3d||!skin3d.Render||!THREE) return;
 
   try{
     const skinUrl = `https://mc-heads.net/skin/${uuid||'MHF_Steve'}`;
-
-    // Build piece map
     const pc={};
     (pieces||[]).forEach(p=>{ if(p.hex&&isDyeable(armourType||'',p.piece)) pc[p.piece]=normHex(p.hex)||BLEACHED; });
 
@@ -808,122 +787,101 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
     containerEl.appendChild(canvas);
 
     const viewer = new skin3d.Render({
-      canvas,
-      width: W*2,
-      height: H*2,
-      skin: skinUrl,
+      canvas, width:W*2, height:H*2, skin:skinUrl,
     });
+    viewer.renderer.setClearColor(0x000000,0);
+    viewer.autoRotate=false;
+    viewer.animation=null;
+    viewer.player.rotation.y=-0.6;
+    viewer.player.rotation.x=0.1;
+    if(viewer.globalLight)  viewer.globalLight.intensity=3;
+    if(viewer.cameraLight)  viewer.cameraLight.intensity=0.6;
+    viewer.zoom=0.65;
+    _viewers.set(vid,viewer);
 
-    viewer.renderer.setClearColor(0x000000, 0);
-    viewer.autoRotate = false;
-    viewer.animation = null;
-
-    // Zoom out enough to see full body including feet
-    viewer.zoom = 0.65;
-
-    // Rotate player to MC inventory angle: left turn + slight upward tilt
-    viewer.player.rotation.y = -0.6;  // turn left ~35°
-    viewer.player.rotation.x = 0.1;   // slight downward look
-
-    // Lighting
-    if(viewer.globalLight)  viewer.globalLight.intensity = 3;
-    if(viewer.cameraLight)  viewer.cameraLight.intensity = 0.6;
-
-    _viewers.set(vid, viewer);
-
-    // Step 3: Add armour meshes if any dyeable pieces
-    if(Object.keys(pc).length > 0){
-      await new Promise(r=>setTimeout(r,500)); // wait for skin to load
-      try{
-        const THREE = await import('https://esm.run/three');
-        await addArmorMeshes(viewer, THREE, pc);
-      }catch(e){ console.warn('armor error:', e); }
+    // Wait for skin texture to load
+    if(Object.keys(pc).length>0){
+      await new Promise(r=>setTimeout(r,600));
+      addArmorLayers(viewer, THREE, pc);
     }
-
   }catch(e){
-    console.warn('skin3d error:', e);
+    console.warn('skin3d error:',e);
   }
 }
 
-async function addArmorMeshes(viewer, THREE, pc){
-  // skinview3d/skin3d API: viewer.playerObject.skin has:
-  // .head, .body, .leftArm, .rightArm, .leftLeg, .rightLeg
-  // Each is a THREE.Group in LOCAL player space
+function addArmorLayers(viewer, THREE, pc){
+  // The kamawarskrew technique:
+  // For each body part with armour, clone its mesh(es),
+  // replace the material with a semi-transparent coloured material,
+  // scale up slightly so it wraps the original mesh.
   
   const po = viewer.playerObject;
-  if(!po){ console.warn('armor: no playerObject'); return; }
+  if(!po){ console.warn('no playerObject'); return; }
+
+  // Map piece name → which skin sub-object(s) to clone
+  const PIECE_PARTS = {
+    Helmet:     ['head'],
+    Chestplate: ['body','leftArm','rightArm'],
+    Leggings:   ['leftLeg','rightLeg'],
+    Boots:      ['leftLeg','rightLeg'],
+  };
+  // For boots, we only want the lower portion — handled by y-scale
+  const PIECE_SCALE = {
+    Helmet:     {x:1.08, y:1.08, z:1.08},
+    Chestplate: {x:1.08, y:1.04, z:1.08},
+    Leggings:   {x:1.06, y:1.04, z:1.06},
+    Boots:      {x:1.08, y:0.42, z:1.08}, // scaleY=0.42 → bottom 42% of leg
+  };
+
   const skin = po.skin;
-  if(!skin){ console.warn('armor: no skin on playerObject'); return; }
+  if(!skin){ console.warn('no skin'); return; }
 
-  function partBox(part){
-    if(!part) return null;
-    const b = new THREE.Box3().setFromObject(part);
-    return b.isEmpty() ? null : b;
-  }
+  for(const [piece, hex] of Object.entries(pc)){
+    const parts = PIECE_PARTS[piece];
+    if(!parts) continue;
+    const scale = PIECE_SCALE[piece];
+    const col = new THREE.Color(hex);
 
-  // Convert world bbox to player-local centre position
-  function worldBoxToLocalCentre(b){
-    if(!b) return null;
-    const wc = new THREE.Vector3(); b.getCenter(wc);
-    return po.worldToLocal(wc.clone());
-  }
+    for(const partName of parts){
+      const part = skin[partName];
+      if(!part){ console.warn('missing part:', partName); continue; }
 
-  function makeMesh(part, hex, padXZ=0.08, padY=0.04, opacity=0.80){
-    const b = partBox(part); if(!b) return null;
-    const sz = new THREE.Vector3(); b.getSize(sz);
-    const lc = worldBoxToLocalCentre(b);
-    const geo = new THREE.BoxGeometry(sz.x*(1+padXZ), sz.y*(1+padY), sz.z*(1+padXZ));
-    const mat = new THREE.MeshLambertMaterial({
-      color:new THREE.Color(hex), transparent:true, opacity, depthWrite:false
-    });
-    const m = new THREE.Mesh(geo, mat);
-    m.position.copy(lc);
-    return m;
-  }
-
-  const added = [];
-
-  if(pc.Helmet){
-    const m = makeMesh(skin.head, pc.Helmet, 0.12, 0.12, 0.82);
-    if(m) added.push(m);
-  }
-  if(pc.Chestplate){
-    const mb = makeMesh(skin.body, pc.Chestplate, 0.10, 0.04, 0.80);
-    if(mb) added.push(mb);
-    const mL = makeMesh(skin.leftArm, pc.Chestplate, 0.14, 0.04, 0.76);
-    if(mL) added.push(mL);
-    const mR = makeMesh(skin.rightArm, pc.Chestplate, 0.14, 0.04, 0.76);
-    if(mR) added.push(mR);
-  }
-  if(pc.Leggings){
-    const mL = makeMesh(skin.leftLeg, pc.Leggings, 0.10, 0.02, 0.80);
-    if(mL) added.push(mL);
-    const mR = makeMesh(skin.rightLeg, pc.Leggings, 0.10, 0.02, 0.80);
-    if(mR) added.push(mR);
-  }
-  if(pc.Boots){
-    for(const legPart of [skin.leftLeg, skin.rightLeg]){
-      const b = partBox(legPart); if(!b) continue;
-      const sz = new THREE.Vector3(); b.getSize(sz);
-      const bootH = sz.y*0.40;
-      const bootB = new THREE.Box3(
-        new THREE.Vector3(b.min.x, b.min.y, b.min.z),
-        new THREE.Vector3(b.max.x, b.min.y+bootH, b.max.z)
-      );
-      const sz2 = new THREE.Vector3(); bootB.getSize(sz2);
-      const lc2 = worldBoxToLocalCentre(bootB);
-      const geo = new THREE.BoxGeometry(sz2.x*1.12, sz2.y*1.06, sz2.z*1.12);
+      // Clone the group
+      const clone = part.clone();
+      
+      // Replace all materials in the clone with a coloured one
       const mat = new THREE.MeshLambertMaterial({
-        color:new THREE.Color(pc.Boots), transparent:true, opacity:0.84, depthWrite:false
+        color: col,
+        transparent: true,
+        opacity: 0.82,
+        depthWrite: false,
       });
-      const bm = new THREE.Mesh(geo,mat);
-      bm.position.copy(lc2);
-      added.push(bm);
+
+      clone.traverse(obj=>{
+        if(obj.isMesh){
+          obj.material = mat;
+        }
+      });
+
+      // Scale it up
+      clone.scale.set(scale.x, scale.y, scale.z);
+
+      // For boots: shift down so scaled leg covers the foot region
+      if(piece==='Boots'){
+        // The leg part's local origin is at the top of the leg
+        // Scaling Y down to 0.42 keeps the top portion — we want the bottom
+        // So translate down by (1-0.42)/2 of the leg height
+        // Leg height in local space: 12 units (using skinview3d's internal scale)
+        const legH = 12; // MC pixels
+        clone.position.y -= legH * (1-scale.y) / 2;
+      }
+
+      // Add clone to the same parent as the original part
+      po.add(clone);
     }
   }
 
-  console.log(`armor: adding ${added.length} meshes`);
-  added.forEach(m => po.add(m));
+  // Force re-render
   try{ viewer.renderer.render(viewer.scene, viewer.camera); }catch(e){}
 }
 
@@ -1112,7 +1070,7 @@ function renderSets(){
   requestAnimationFrame(()=>{
     sets.forEach(s=>{
       const el=document.getElementById(`model-${s.id}`);
-      if(el&&!el.dataset.rendered){ el.dataset.rendered='1'; renderPlayerInto(el,viewingUuid,s.pieces||[],s.armour_type||'',{width:110,height:160}); }
+      if(el&&!el.dataset.rendered){ el.dataset.rendered='1'; renderPlayerInto(el,viewingUuid,s.pieces||[],s.armour_type||'',{width:130,height:130}); }
     });
   });
 }
@@ -1215,7 +1173,7 @@ window.openSetPanel=function(id){
     ${ownerActions?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${ownerActions}</div>`:''}`;
   // Render player
   const el=document.getElementById('spPlayer');
-  renderPlayerInto(el,s.uuid,pieces,at,{width:130,height:220});
+  renderPlayerInto(el,s.uuid,pieces,at,{width:180,height:300});
 };
 window.closeSetPanel=function(){
   document.getElementById('panelOv').classList.remove('open');

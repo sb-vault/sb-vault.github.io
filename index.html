@@ -134,8 +134,8 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .set-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .set-card:hover{border-color:var(--text3);box-shadow:var(--shadow)}
 .set-card-inner{display:flex;min-height:240px}
-.set-card-model{flex-shrink:0;width:120px;background:var(--bg3);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:8px 0;gap:4px}
-.set-card-model canvas{display:block}
+.set-card-model{flex-shrink:0;width:120px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:240px}
+.set-card-model img{display:block;width:auto;height:220px;object-fit:contain}
 .set-card-right{flex:1;min-width:0;padding:14px;display:flex;flex-direction:column;gap:8px}
 .set-name{font-weight:700;font-size:13px;color:var(--text);line-height:1.25}
 .set-type{font-size:10px;color:var(--text3);margin-top:1px}
@@ -737,11 +737,10 @@ function fmtUuid(u){
 async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
   const W=opts.width||120, H=opts.height||220;
   containerEl.innerHTML='';
-  containerEl.style.cssText+='display:flex;align-items:center;justify-content:center;';
   const uuid=fmtUuid(ownerUuid);
   const img=document.createElement('img');
-  img.style.cssText=`width:auto;max-width:${W}px;height:${H}px;image-rendering:pixelated;display:block`;
-  img.src=`https://api.mineatar.io/body/full/${uuid}?scale=12&overlay=true`;
+  img.style.cssText=`display:block;width:auto;max-width:${W}px;height:${H}px`;
+  img.src=`https://api.mineatar.io/body/full/${uuid}?scale=8&overlay=true&format=png`;
   img.alt='';
   img.onerror=()=>{ img.src=`https://mc-heads.net/body/${uuid}/240`; };
   containerEl.appendChild(img);

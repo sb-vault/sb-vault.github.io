@@ -134,7 +134,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .set-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .set-card:hover{border-color:var(--text3);box-shadow:var(--shadow)}
 .set-card-inner{display:flex;min-height:240px}
-.set-card-model{flex-shrink:0;width:120px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:240px}
+.set-card-model{flex-shrink:0;width:160px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:240px}
 .set-card-model img{display:block;width:auto;height:220px;object-fit:contain}
 .set-card-right{flex:1;min-width:0;padding:14px;display:flex;flex-direction:column;gap:8px}
 .set-name{font-weight:700;font-size:13px;color:var(--text);line-height:1.25}
@@ -846,111 +846,106 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
 }
 
 async function addArmorMeshes(viewer, THREE, pc){
-  // skin3d inherits skinview3d's coordinate system:
-  // Player is centred at origin, standing upright
-  // Head top is at ~+1.5 units, feet at ~-1.5 units
-  // The player group is at viewer.playerObject or viewer.player
-  
-  // Get Three.js player parts from viewer
-  // skin3d exposes: viewer.player (the root group)
-  // Within it: head, body, leftArm, rightArm, leftLeg, rightLeg
-  // We find these by traversing the scene
+  // skin3d (based on skinview3d) player coordinate system:
+  // Uses 1/16 scale internally (1 MC pixel = 1/16 unit)
+  // Head: 8x8x8 block, centre at y = 28/16 (above body)  
+  // Body: 8x12x4 block, centre at y = 18/16
+  // Arms: 4x12x4 each, centre at y = 18/16 (same as body)
+  //   left arm centre x = -6/16, right arm centre x = 6/16  
+  // Legs: 4x12x4 each, centre at y = 6/16
+  //   left leg centre x = -2/16, right leg centre x = 2/16
+  // All z = 0
 
-  const parts = {};
-  viewer.scene.traverse(obj => {
-    // skin3d names the parts like 'Head', 'Body', etc.
-    if(obj.name) parts[obj.name.toLowerCase()] = obj;
+  // Get actual positions by finding the player group's skin sub-groups
+  // skin3d exposes viewer.player which contains the full model
+  // We find actual mesh positions by traversing
+  const player = viewer.player || viewer.playerObject;
+  if(!player) return;
+
+  // Collect all mesh bounding boxes by name
+  const bboxes = {};
+  player.traverse(obj => {
+    if(obj.isMesh && obj.name){
+      const b = new THREE.Box3().setFromObject(obj);
+      const n = obj.name.toLowerCase().replace(/[^a-z]/g,'');
+      if(!bboxes[n]) bboxes[n] = new THREE.Box3();
+      bboxes[n].union(b);
+    }
+    if(obj.isGroup && obj.name){
+      const b = new THREE.Box3().setFromObject(obj);
+      const n = obj.name.toLowerCase().replace(/[^a-z]/g,'');
+      if(!bboxes[n]) bboxes[n] = new THREE.Box3();
+      bboxes[n].union(b);
+    }
   });
 
-  // Get actual world positions of body parts by reading their bounding boxes
-  // This way we don't need to hardcode positions
-  function getPartBbox(name){
-    const variations = [name, name.toLowerCase(), 
-      name.charAt(0).toUpperCase()+name.slice(1)];
-    for(const v of variations){
-      const p = parts[v];
-      if(p){
-        const box = new THREE.Box3().setFromObject(p);
-        return box;
-      }
-    }
-    return null;
-  }
+  console.log('Found parts:', Object.keys(bboxes));
 
-  // Create a slightly enlarged coloured box to sit over a body part
-  function armourOver(bbox, hex, scaleXZ=1.12, scaleY=1.04){
-    if(!bbox) return null;
-    const size = new THREE.Vector3();
-    bbox.getSize(size);
-    const center = new THREE.Vector3();
-    bbox.getCenter(center);
-    
-    const geo = new THREE.BoxGeometry(size.x*scaleXZ, size.y*scaleY, size.z*scaleXZ);
+  function makeMesh(bbox, hex, padXZ=0.06, padY=0.03, opacity=0.80){
+    if(!bbox || bbox.isEmpty()) return null;
+    const sz = new THREE.Vector3(); bbox.getSize(sz);
+    const ct = new THREE.Vector3(); bbox.getCenter(ct);
+    const geo = new THREE.BoxGeometry(sz.x*(1+padXZ), sz.y*(1+padY), sz.z*(1+padXZ));
     const mat = new THREE.MeshLambertMaterial({
-      color: new THREE.Color(hex),
-      transparent: true,
-      opacity: 0.78,
-      depthWrite: false,
-      depthTest: true,
+      color: new THREE.Color(hex), transparent:true, opacity, depthWrite:false
     });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.copy(center);
-    return mesh;
+    const m = new THREE.Mesh(geo, mat);
+    // Position relative to player since we'll add to player group
+    m.position.copy(ct);
+    return m;
   }
 
-  const meshes = [];
+  const added = [];
 
   if(pc.Helmet){
-    const bbox = getPartBbox('head');
-    const m = armourOver(bbox, pc.Helmet, 1.18, 1.18);
-    if(m) meshes.push(m);
+    const names = ['head','helmet'];
+    const bbox = names.map(n=>bboxes[n]).find(b=>b&&!b.isEmpty());
+    const m = makeMesh(bbox, pc.Helmet, 0.10, 0.10, 0.80);
+    if(m) added.push(m);
   }
   if(pc.Chestplate){
-    const bbox = getPartBbox('body');
-    const m = armourOver(bbox, pc.Chestplate, 1.14, 1.04);
-    if(m) meshes.push(m);
+    const bodyNames = ['body','torso','chest'];
+    const bbox = bodyNames.map(n=>bboxes[n]).find(b=>b&&!b.isEmpty());
+    const m = makeMesh(bbox, pc.Chestplate, 0.08, 0.04, 0.80);
+    if(m) added.push(m);
     // Arms
-    for(const arm of ['leftarm','rightarm','leftArm','rightArm','left_arm','right_arm']){
-      const ab = getPartBbox(arm);
-      if(ab){ const am = armourOver(ab, pc.Chestplate, 1.18, 1.04); if(am) meshes.push(am); }
+    for(const side of ['left','right']){
+      const armNames = [`${side}arm`,`${side}outerarm`];
+      const ab = armNames.map(n=>bboxes[n]).find(b=>b&&!b.isEmpty());
+      const am = makeMesh(ab, pc.Chestplate, 0.12, 0.04, 0.78);
+      if(am) added.push(am);
     }
   }
   if(pc.Leggings){
-    for(const leg of ['leftleg','rightleg','leftLeg','rightLeg','left_leg','right_leg']){
-      const lb = getPartBbox(leg);
-      if(lb){ const lm = armourOver(lb, pc.Leggings, 1.12, 1.02); if(lm) meshes.push(lm); }
+    for(const side of ['left','right']){
+      const legNames = [`${side}leg`,`${side}outerleg`];
+      const lb = legNames.map(n=>bboxes[n]).find(b=>b&&!b.isEmpty());
+      const lm = makeMesh(lb, pc.Leggings, 0.08, 0.02, 0.80);
+      if(lm) added.push(lm);
     }
   }
   if(pc.Boots){
-    for(const leg of ['leftleg','rightleg','leftLeg','rightLeg','left_leg','right_leg']){
-      const lb = getPartBbox(leg);
-      if(lb){
-        const size = new THREE.Vector3(); lb.getSize(size);
-        const center = new THREE.Vector3(); lb.getCenter(center);
-        // Only cover bottom 40% of leg
-        const bootH = size.y * 0.4;
-        const geo = new THREE.BoxGeometry(size.x*1.14, bootH, size.z*1.14);
-        const mat = new THREE.MeshLambertMaterial({
-          color: new THREE.Color(pc.Boots), transparent:true, opacity:0.82, depthWrite:false
-        });
-        const bm = new THREE.Mesh(geo, mat);
-        bm.position.set(center.x, lb.min.y + bootH/2, center.z);
-        meshes.push(bm);
+    for(const side of ['left','right']){
+      const legNames = [`${side}leg`,`${side}outerleg`];
+      const lb = legNames.map(n=>bboxes[n]).find(b=>b&&!b.isEmpty());
+      if(lb&&!lb.isEmpty()){
+        const sz=new THREE.Vector3(); lb.getSize(sz);
+        const ct=new THREE.Vector3(); lb.getCenter(ct);
+        const bootH = sz.y*0.42;
+        const geo=new THREE.BoxGeometry(sz.x*1.10, bootH, sz.z*1.10);
+        const mat=new THREE.MeshLambertMaterial({color:new THREE.Color(pc.Boots),transparent:true,opacity:0.82,depthWrite:false});
+        const bm=new THREE.Mesh(geo,mat);
+        bm.position.set(ct.x, lb.min.y+bootH/2, ct.z);
+        added.push(bm);
       }
     }
   }
 
-  // Add all armour meshes to viewer's player group so they rotate with the player
-  const playerGroup = viewer.player || viewer.playerObject;
-  meshes.forEach(m => {
-    if(playerGroup) playerGroup.add(m);
-    else viewer.scene.add(m);
-  });
-
-  // Force re-render
-  if(viewer.renderer && viewer.scene && viewer.camera){
-    viewer.renderer.render(viewer.scene, viewer.camera);
-  }
+  // Add to player group so they rotate with the skin
+  added.forEach(m => player.add(m));
+  
+  // Re-render
+  try{ viewer.renderer.render(viewer.scene, viewer.camera); }catch(e){}
 }
 
 /* ─────────────────────────────────────────────────────
@@ -1138,7 +1133,7 @@ function renderSets(){
   requestAnimationFrame(()=>{
     sets.forEach(s=>{
       const el=document.getElementById(`model-${s.id}`);
-      if(el&&!el.dataset.rendered){ el.dataset.rendered='1'; renderPlayerInto(el,viewingUuid,s.pieces||[],s.armour_type||'',{width:120,height:220}); }
+      if(el&&!el.dataset.rendered){ el.dataset.rendered='1'; renderPlayerInto(el,viewingUuid,s.pieces||[],s.armour_type||'',{width:160,height:220}); }
     });
   });
 }

@@ -712,13 +712,6 @@ function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplat
 
 /* ─────────────────────────────────────────────────────
    MINECRAFT CHARACTER VIEWER
-   
-   Approach (from kamawarskrew creator):
-   1. Render the player skin normally with skin3d
-   2. For each armoured piece: clone the body part mesh,
-      replace its texture with a solid tinted colour,
-      scale it up 1.08x so it sits outside the skin
-   This gives proper 3D leather armour on the model.
 ───────────────────────────────────────────────────── */
 
 const _imgCache = {};
@@ -739,128 +732,77 @@ function fmtUuid(u){
   return `${s.slice(0,8)}-${s.slice(8,12)}-${s.slice(12,16)}-${s.slice(16,20)}-${s.slice(20)}`;
 }
 
-// Load skin3d ESM once
-let _skin3dPromise = null;
-function getSkin3d(){
-  if(_skin3dPromise) return _skin3dPromise;
-  _skin3dPromise = import('https://esm.run/skin3d').catch(()=>null);
-  return _skin3dPromise;
-}
-
-// Load Three.js ESM once (skin3d uses it internally, but we need the module reference)
-let _threePromise = null;
-function getThree(){
-  if(_threePromise) return _threePromise;
-  _threePromise = import('https://esm.run/three').catch(()=>null);
-  return _threePromise;
-}
-
-const _viewers = new Map();
+let _skin3dPromise=null, _threePromise=null;
+function getSkin3d(){ return _skin3dPromise||(_skin3dPromise=import('https://esm.run/skin3d').catch(()=>null)); }
+function getThree(){ return _threePromise||(_threePromise=import('https://esm.run/three').catch(()=>null)); }
 
 async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
   const W=opts.width||120, H=opts.height||220;
   const uuid=fmtUuid(ownerUuid);
 
-  // Show mineatar immediately as placeholder
+  // Always reset container fully
   containerEl.innerHTML='';
+  containerEl.style.width=W+'px';
+  containerEl.style.height=H+'px';
+
+  // Show mineatar placeholder immediately
   const ph=document.createElement('img');
-  ph.style.cssText=`display:block;width:auto;max-width:${W}px;height:${H}px`;
+  ph.style.cssText=`display:block;width:${W}px;height:${H}px;object-fit:contain`;
   ph.src=`https://api.mineatar.io/body/full/${uuid||'MHF_Steve'}?scale=8&overlay=true&format=png`;
-  ph.alt=''; ph.onerror=()=>{ ph.src=`https://mc-heads.net/body/${uuid||'MHF_Steve'}/240`; };
+  ph.onerror=()=>{ ph.src=`https://mc-heads.net/body/${uuid||'MHF_Steve'}/240`; };
   containerEl.appendChild(ph);
 
+  // Load libs
   const [skin3d, THREE] = await Promise.all([getSkin3d(), getThree()]);
-  if(!skin3d||!skin3d.Render||!THREE) return;
+  if(!skin3d?.Render || !THREE) return; // keep mineatar image
 
   try{
-    const skinUrl = `https://mc-heads.net/skin/${uuid||'MHF_Steve'}`;
+    const skinUrl=`https://mc-heads.net/skin/${uuid||'MHF_Steve'}`;
     const pc={};
     (pieces||[]).forEach(p=>{ if(p.hex&&isDyeable(armourType||'',p.piece)) pc[p.piece]=normHex(p.hex)||BLEACHED; });
 
-    const vid=containerEl.dataset.vid||(containerEl.dataset.vid=Math.random().toString(36).slice(2));
-    const old=_viewers.get(vid);
-    if(old){ try{ old.dispose(); }catch(e){} }
-
+    // Always create a fresh viewer (no caching between panel opens)
     containerEl.innerHTML='';
     const canvas=document.createElement('canvas');
+    canvas.width=W*2; canvas.height=H*2;
     canvas.style.cssText=`display:block;width:${W}px;height:${H}px`;
     containerEl.appendChild(canvas);
 
-    const viewer = new skin3d.Render({
-      canvas, width:W*2, height:H*2, skin:skinUrl,
-    });
+    const viewer=new skin3d.Render({canvas, width:W*2, height:H*2, skin:skinUrl});
     viewer.renderer.setClearColor(0x000000,0);
     viewer.autoRotate=false;
     viewer.animation=null;
-    viewer.player.rotation.y=-0.6;
+    viewer.zoom=0.9;
+    viewer.player.rotation.y=-0.5;
     viewer.player.rotation.x=0.1;
-    if(viewer.globalLight)  viewer.globalLight.intensity=3;
-    if(viewer.cameraLight)  viewer.cameraLight.intensity=0.6;
-    viewer.zoom=0.65;
-    _viewers.set(vid,viewer);
+    if(viewer.globalLight) viewer.globalLight.intensity=3;
+    if(viewer.cameraLight) viewer.cameraLight.intensity=0.6;
 
-    // Wait for skin texture to load
+    // Armour: wait for skin, then add coloured clones
     if(Object.keys(pc).length>0){
-      await new Promise(r=>setTimeout(r,600));
-      addArmorLayers(viewer, THREE, pc);
+      await new Promise(r=>setTimeout(r,800));
+      const skin=viewer.player?.skin;
+      if(skin){
+        const PARTS={Helmet:['head'],Chestplate:['body','leftArm','rightArm'],Leggings:['leftLeg','rightLeg'],Boots:['leftLeg','rightLeg']};
+        const SCALE={Helmet:[1.09,1.09,1.09],Chestplate:[1.08,1.04,1.08],Leggings:[1.07,1.03,1.07],Boots:[1.08,1.08,1.08]};
+        for(const [piece,hex] of Object.entries(pc)){
+          const [sx,sy,sz]=SCALE[piece]||[1.08,1.08,1.08];
+          const mat=new THREE.MeshLambertMaterial({color:new THREE.Color(hex),transparent:true,opacity:0.82,depthWrite:false});
+          for(const name of (PARTS[piece]||[])){
+            const part=skin[name]; if(!part) continue;
+            const clone=part.clone(true);
+            clone.traverse(o=>{ if(o.isMesh) o.material=mat.clone(); });
+            clone.scale.set(sx,sy,sz);
+            (part.parent||viewer.player).add(clone);
+          }
+        }
+        try{ viewer.render(); }catch(e){}
+      }
     }
   }catch(e){
     console.warn('skin3d error:',e);
   }
 }
-
-function addArmorLayers(viewer, THREE, pc){
-  // EXACT skin3d API (official docs):
-  // viewer.player          → PlayerObject
-  // viewer.player.skin     → SkinObject
-  // viewer.player.skin.{head,body,leftArm,rightArm,leftLeg,rightLeg} → BodyPart
-
-  const player = viewer.player;
-  if(!player){ console.warn('armor: viewer.player not found'); return; }
-  const skin = player.skin;
-  if(!skin){ console.warn('armor: viewer.player.skin not found'); return; }
-
-  const PIECE_PARTS = {
-    Helmet:     ['head'],
-    Chestplate: ['body','leftArm','rightArm'],
-    Leggings:   ['leftLeg','rightLeg'],
-    Boots:      ['leftLeg','rightLeg'],
-  };
-  const SCALE = {
-    Helmet:     [1.08,1.08,1.08],
-    Chestplate: [1.07,1.04,1.07],
-    Leggings:   [1.06,1.03,1.06],
-    Boots:      [1.07,1.07,1.07],
-  };
-
-  let added = 0;
-  for(const [piece, hex] of Object.entries(pc)){
-    const partNames = PIECE_PARTS[piece];
-    if(!partNames) continue;
-    const [sx,sy,sz] = SCALE[piece];
-    const mat = new THREE.MeshLambertMaterial({
-      color: new THREE.Color(hex), transparent:true, opacity:0.82, depthWrite:false
-    });
-
-    for(const name of partNames){
-      const part = skin[name];
-      if(!part){ console.warn('armor: skin.'+name+' not found'); continue; }
-      const clone = part.clone(true);
-      clone.traverse(o=>{ if(o.isMesh) o.material = mat.clone(); });
-      clone.scale.set(sx, sy, sz);
-      if(piece==='Boots'){
-        const h = part.height || 12;
-        clone.position.y -= h*(1-sy)*0.5;
-      }
-      part.parent ? part.parent.add(clone) : player.add(clone);
-      added++;
-    }
-  }
-
-  console.log('armor: added', added, 'clones');
-  try{ viewer.render(); }catch(e){}
-}
-
 
 /* ─────────────────────────────────────────────────────
    PIECE PREVIEW (for add-set form — simple 2D flat)

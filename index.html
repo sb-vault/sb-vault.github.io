@@ -731,25 +731,39 @@ function loadImg(url){
 }
 
 /* ─────────────────────────────────────────────────────
-   SKIN VIEWER — skin3d
-   Shows the player's skin in 3D using skin3d (skinview3d fork).
-   Colour dots on the right show the armour hex colours.
+   MINECRAFT SKIN VIEWER
+   skinview3d via jsDelivr esm.run (works as module import)
+   Fallback to 2D canvas if WebGL fails.
 ───────────────────────────────────────────────────── */
-let _skin3dReady = null;
-(function(){
-  const s = document.createElement('script');
-  s.src = 'https://unpkg.com/skin3d@latest/dist/skin3d.min.js';
-  _skin3dReady = new Promise(res => { s.onload=()=>res(true); s.onerror=()=>res(false); });
-  document.head.appendChild(s);
-})();
+
+// Load skinview3d as a module into an iframe-safe scope
+let _svLib = null;
+let _svLoading = null;
+
+function getSkinViewer(){
+  if(_svLib) return Promise.resolve(_svLib);
+  if(_svLoading) return _svLoading;
+  _svLoading = new Promise(res => {
+    // Use the old 0.x bundle which has a proper UMD global
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/skinview3d@0.7.0/bundles/skinview3d.min.js';
+    s.onload = () => {
+      if(window.skinview3d){ _svLib = window.skinview3d; res(_svLib); }
+      else res(null);
+    };
+    s.onerror = () => res(null);
+    document.head.appendChild(s);
+  });
+  return _svLoading;
+}
 
 const _viewers = new Map();
 
 async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
-  const W=opts.width||120, H=opts.height||220;
+  const W = opts.width||120, H = opts.height||220;
 
-  const ok = await _skin3dReady;
-  if(!ok || !window.SkinViewer){ render2DFallback(containerEl,ownerUuid,pieces,armourType,W,H); return; }
+  const lib = await getSkinViewer();
+  if(!lib){ render2DFallback(containerEl,ownerUuid,pieces,armourType,W,H); return; }
 
   const skinUrl = `https://mc-heads.net/skin/${ownerUuid||'MHF_Steve'}`;
   const id = containerEl.dataset.vid||(containerEl.dataset.vid=Math.random().toString(36).slice(2));
@@ -760,20 +774,25 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
     const canvas=document.createElement('canvas');
     canvas.style.cssText=`display:block;width:${W}px;height:${H}px`;
     containerEl.appendChild(canvas);
-    viewer=new window.SkinViewer({canvas,width:W,height:H,skin:skinUrl});
-    viewer.autoRotate=false;
-    viewer.animation=null;
-    viewer.camera.rotation.order='YXZ';
-    viewer.camera.rotation.y=0.5;
-    viewer.camera.rotation.x=-0.2;
-    viewer.zoom=0.9;
-    viewer.renderer.setClearColor(0x000000,0);
-    if(viewer.globalLight) viewer.globalLight.intensity=3;
-    if(viewer.cameraLight) viewer.cameraLight.intensity=0.6;
-    _viewers.set(id,viewer);
+    try{
+      viewer = new lib.SkinViewer({canvas, width:W, height:H, skin:skinUrl});
+      viewer.autoRotate = false;
+      viewer.animation = null;
+      // Camera: MC inventory angle
+      viewer.playerObject.rotation.y = 0.5;
+      viewer.zoom = 0.9;
+      viewer.renderer.setClearColor(0x000000, 0);
+      viewer.cameraLight.intensity = 0.6;
+      viewer.globalLight.intensity = 2.8;
+      _viewers.set(id, viewer);
+    }catch(e){
+      render2DFallback(containerEl,ownerUuid,pieces,armourType,W,H);
+    }
   } else {
-    viewer.loadSkin(skinUrl);
-    viewer.render();
+    try{
+      viewer.loadSkin(skinUrl);
+      viewer.render();
+    }catch(e){}
   }
 }
 
@@ -784,7 +803,7 @@ function render2DFallback(containerEl,ownerUuid,pieces,armourType,W=120,H=220){
   canvas.style.cssText=`width:${W}px;height:${H}px;display:block`;
   containerEl.appendChild(canvas);
   const ctx=canvas.getContext('2d');
-  const pc={};(pieces||[]).forEach(p=>{if(p.hex)pc[p.piece]=normHex(p.hex)||BLEACHED;});
+  const pc={}; (pieces||[]).forEach(p=>{if(p.hex)pc[p.piece]=normHex(p.hex)||BLEACHED;});
   const cw=canvas.width,ch=canvas.height,PAD=Math.round(ch*.03),U=(ch-PAD*2)/32;
   const hH=Math.round(8*U),hW=Math.round(8*U),bH=Math.round(12*U),bW=Math.round(8*U);
   const aW=Math.round(4*U),lW=Math.round(4*U),lH=Math.round(12*U),aH=Math.round(12*U);

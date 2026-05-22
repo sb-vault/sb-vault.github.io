@@ -810,91 +810,57 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
 }
 
 function addArmorLayers(viewer, THREE, pc){
-  // Find playerObject — skin3d uses viewer.player, skinview3d uses viewer.playerObject
-  const po = viewer.player || viewer.playerObject;
-  if(!po){ console.warn('armor: no player object found on viewer'); return; }
+  // EXACT skin3d API (official docs):
+  // viewer.player          → PlayerObject
+  // viewer.player.skin     → SkinObject
+  // viewer.player.skin.{head,body,leftArm,rightArm,leftLeg,rightLeg} → BodyPart
 
-  // Dump full scene structure to find correct part names
-  const allNames = [];
-  po.traverse(o => { if(o.name) allNames.push(`${o.type}:${o.name}`); });
-  console.log('Player scene objects:', allNames.join(', '));
-
-  // Try every possible path to get skin parts
-  // skinview3d/skin3d has: player.skin.{head,body,leftArm,rightArm,leftLeg,rightLeg}
-  // OR the inner skin: player.skin.innerLayer.{head,body,...}
-  // OR just directly on player: player.head, player.body etc
-  function findPart(names){
-    const tries = [
-      ()=>po.skin,
-      ()=>po.skin?.innerLayer,
-      ()=>po.skin?.outerLayer,
-      ()=>po,
-    ];
-    for(const getter of tries){
-      const obj = getter?.();
-      if(!obj) continue;
-      for(const n of names){
-        if(obj[n]) return obj[n];
-      }
-    }
-    // Last resort: traverse by name
-    let found = null;
-    po.traverse(o=>{
-      if(!found && names.some(n=>o.name?.toLowerCase()===n.toLowerCase())) found=o;
-    });
-    return found;
-  }
+  const player = viewer.player;
+  if(!player){ console.warn('armor: viewer.player not found'); return; }
+  const skin = player.skin;
+  if(!skin){ console.warn('armor: viewer.player.skin not found'); return; }
 
   const PIECE_PARTS = {
-    Helmet:     [['head','Head']],
-    Chestplate: [['body','Body','torso','Torso'],['leftArm','LeftArm','left_arm'],['rightArm','RightArm','right_arm']],
-    Leggings:   [['leftLeg','LeftLeg','left_leg'],['rightLeg','RightLeg','right_leg']],
-    Boots:      [['leftLeg','LeftLeg','left_leg'],['rightLeg','RightLeg','right_leg']],
+    Helmet:     ['head'],
+    Chestplate: ['body','leftArm','rightArm'],
+    Leggings:   ['leftLeg','rightLeg'],
+    Boots:      ['leftLeg','rightLeg'],
   };
-  const PIECE_SCALE = {
-    Helmet:     [1.09,1.09,1.09],
-    Chestplate: [1.08,1.05,1.08],
-    Leggings:   [1.07,1.04,1.07],
-    Boots:      [1.08,1.08,1.08],
+  const SCALE = {
+    Helmet:     [1.08,1.08,1.08],
+    Chestplate: [1.07,1.04,1.07],
+    Leggings:   [1.06,1.03,1.06],
+    Boots:      [1.07,1.07,1.07],
   };
 
   let added = 0;
   for(const [piece, hex] of Object.entries(pc)){
-    const partGroups = PIECE_PARTS[piece];
-    if(!partGroups) continue;
-    const [sx,sy,sz] = PIECE_SCALE[piece];
-    const col = new THREE.Color(hex);
+    const partNames = PIECE_PARTS[piece];
+    if(!partNames) continue;
+    const [sx,sy,sz] = SCALE[piece];
     const mat = new THREE.MeshLambertMaterial({
-      color:col, transparent:true, opacity:0.80, depthWrite:false
+      color: new THREE.Color(hex), transparent:true, opacity:0.82, depthWrite:false
     });
 
-    for(const nameList of partGroups){
-      const part = findPart(nameList);
-      if(!part){ console.warn('armor: part not found for',nameList[0]); continue; }
-      console.log('armor: cloning', part.name||nameList[0], 'for', piece, hex);
-
-      const clone = part.clone();
-      clone.traverse(o=>{ if(o.isMesh){ o.material=mat.clone(); o.visible=true; } });
-      clone.scale.set(sx,sy,sz);
-
-      // Boots: position so clone covers the bottom of the leg
+    for(const name of partNames){
+      const part = skin[name];
+      if(!part){ console.warn('armor: skin.'+name+' not found'); continue; }
+      const clone = part.clone(true);
+      clone.traverse(o=>{ if(o.isMesh) o.material = mat.clone(); });
+      clone.scale.set(sx, sy, sz);
       if(piece==='Boots'){
-        // We need the bottom portion. Get bounding box and offset
-        const bb = new THREE.Box3().setFromObject(part);
-        const h = bb.max.y - bb.min.y;
-        // Move clone down so its top aligns with original bottom half
-        clone.position.y = -(h*(1-sy))/2 / sy;
+        const h = part.height || 12;
+        clone.position.y -= h*(1-sy)*0.5;
       }
-
-      // Add to the part's parent so it inherits the same transforms
-      part.parent ? part.parent.add(clone) : po.add(clone);
+      part.parent ? part.parent.add(clone) : player.add(clone);
       added++;
     }
   }
 
-  console.log(`armor: added ${added} clones`);
-  try{ viewer.renderer.render(viewer.scene, viewer.camera); }catch(e){}
+  console.log('armor: added', added, 'clones');
+  try{ viewer.render(); }catch(e){}
 }
+
 
 /* ─────────────────────────────────────────────────────
    PIECE PREVIEW (for add-set form — simple 2D flat)

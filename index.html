@@ -712,6 +712,13 @@ function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplat
 
 /* ─────────────────────────────────────────────────────
    MINECRAFT CHARACTER VIEWER
+   
+   Implementation based on research:
+   - skin3d (skinview3d fork) for 3D player rendering
+   - THREE.js MeshStandardMaterial(map * color) = exact Minecraft tint
+   - leather_layer_1.png / leather_layer_2.png as armour textures
+   - Armour meshes added to viewer.playerObject.skin.* body parts
+   - Three.js imported from same source as skin3d to share instances
 ───────────────────────────────────────────────────── */
 
 const _imgCache = {};
@@ -732,42 +739,162 @@ function fmtUuid(u){
   return `${s.slice(0,8)}-${s.slice(8,12)}-${s.slice(12,16)}-${s.slice(16,20)}-${s.slice(20)}`;
 }
 
-let _skin3dPromise=null;
+// Leather layer textures (64x32, greyscale with per-face brightness shading)
+// Tint algorithm: MeshStandardMaterial color * map = Minecraft's leather tint
+const LEATHER_L1='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAApklEQVR42u2XsQnAIBBFNWQEN7BxHRvHdQit3cDGCUytEEUSi5D3ukNzyONy8KWYEEKoo/OUUlNrrcXK/R5rrVx5T99v9n3PIX4OAv4uQD7dATnnpjbGDPvFGJu6lDK8r5Qa9p/1c85JJgABCLjl9N7XlX9wtgOYAAQgAAEIQAACvpsFnubtt/M6E4AABOzdAX0WWM3bu/M6E4AABCAAAQhAAADAFi6nIkhwgQCrlgAAAABJRU5ErkJggg==';
+const LEATHER_L2='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAbUlEQVR42u3ToRHAIAxA0aQzZIisg2HcDAGaIZigtU1FDdca/nM5iPkHKg+ttfM+jzHSeSlF5cXq/t8O2RwBdg+gEZH+rLunC733NM8502xmsrJfa1VeAAEIQAACEIAABCAAAQgAAAAAAADwuQt7pR4fNoSs9QAAAABJRU5ErkJggg==';
+
+// Load skin3d and three from same CDN (critical: same module instance)
+let _skin3dPromise=null, _threePromise=null;
 function getSkin3d(){ return _skin3dPromise||(_skin3dPromise=import('https://esm.run/skin3d').catch(()=>null)); }
+function getThree(){ return _threePromise||(_threePromise=import('https://esm.run/three').catch(()=>null)); }
+
+// Cache loaded textures
+let _l1tex=null, _l2tex=null;
+function getArmorTex(THREE, b64){
+  const cache = b64===LEATHER_L1 ? '_l1tex' : '_l2tex';
+  if(window[cache]) return window[cache];
+  const img = new Image();
+  img.src = b64;
+  const tex = new THREE.Texture(img);
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  tex.needsUpdate = true;
+  window[cache] = tex;
+  return tex;
+}
+
+// UV assignment for armour boxes on a 64x32 texture
+// Matches skinview3d's setUVs logic but with textureW=64, textureH=32
+function setArmorUVs(geo, u, v, w, h, d){
+  const TW=64, TH=32;
+  const top    = geo.groups.find(g=>g.materialIndex===2) || null;
+  // BoxGeometry UV attribute — 4 verts per face, order: +x,-x,+y,-y,+z,-z
+  const uv = geo.attributes.uv;
+  function face(fi, u0,v0,uw,vh){
+    const b=fi*4;
+    const [u0n,v0n,u1n,v1n] = [u0/TW, 1-(v0+vh)/TH, (u0+uw)/TW, 1-v0/TH];
+    uv.setXY(b+0,u0n,v0n); uv.setXY(b+1,u1n,v0n);
+    uv.setXY(b+2,u0n,v1n); uv.setXY(b+3,u1n,v1n);
+  }
+  // BoxGeometry face order: +x(right), -x(left), +y(top), -y(bottom), +z(front), -z(back)
+  face(0, u+d+w, v+d,      d, h); // right face
+  face(1, u,     v+d,      d, h); // left face
+  face(2, u+d,   v,        w, d); // top face
+  face(3, u+d+w, v,        w, d); // bottom face
+  face(4, u+d,   v+d,      w, h); // front face
+  face(5, u+d+w+d, v+d,   w, h); // back face
+  uv.needsUpdate=true;
+}
+
+function addArmorMeshes(THREE, playerObject, pc){
+  const skin = playerObject?.skin;
+  if(!skin){ console.warn('armor: no playerObject.skin'); return; }
+
+  // Hide skinview3d outer layers where armour will cover (prevent z-fighting)
+  if(pc.Helmet)     { if(skin.head?.outerLayer)     skin.head.outerLayer.visible=false; }
+  if(pc.Chestplate) { if(skin.body?.outerLayer)     skin.body.outerLayer.visible=false;
+                       if(skin.rightArm?.outerLayer) skin.rightArm.outerLayer.visible=false;
+                       if(skin.leftArm?.outerLayer)  skin.leftArm.outerLayer.visible=false; }
+  if(pc.Leggings)   { if(skin.rightLeg?.outerLayer) skin.rightLeg.outerLayer.visible=false;
+                       if(skin.leftLeg?.outerLayer)  skin.leftLeg.outerLayer.visible=false; }
+
+  function armorMat(hex, useL2=false){
+    const tex = getArmorTex(THREE, useL2?LEATHER_L2:LEATHER_L1);
+    return new THREE.MeshStandardMaterial({
+      map: tex,
+      color: new THREE.Color(normHex(hex)||BLEACHED),
+      transparent: true, alphaTest: 0.01,
+      depthWrite: true,
+    });
+  }
+
+  function box(w,h,d, u,v, hex, useL2=false){
+    const geo = new THREE.BoxGeometry(w/16, h/16, d/16);
+    setArmorUVs(geo, u,v, w,h,d);
+    return new THREE.Mesh(geo, armorMat(hex,useL2));
+  }
+
+  // === HELMET: 9x9x9 box around 8x8x8 head, layer1 UV (0,0) ===
+  if(pc.Helmet && skin.head){
+    const m = box(9,9,9, 0,0, pc.Helmet);
+    skin.head.add(m);
+  }
+
+  // === CHESTPLATE: body 9x13x5 at (16,16), arms 5x13x5 at (40,16) ===
+  if(pc.Chestplate){
+    if(skin.body){
+      const m = box(9,13,5, 16,16, pc.Chestplate);
+      skin.body.add(m);
+    }
+    if(skin.rightArm){
+      const m = box(5,13,5, 40,16, pc.Chestplate);
+      skin.rightArm.add(m);
+    }
+    if(skin.leftArm){
+      // Left arm mirrors right arm in legacy 64x32 (same UV, model handles mirror)
+      const m = box(5,13,5, 40,16, pc.Chestplate);
+      skin.leftArm.add(m);
+    }
+  }
+
+  // === LEGGINGS: 5x13x5 legs from layer2 at (0,16) and (16,16) ===
+  if(pc.Leggings){
+    if(skin.rightLeg){
+      const m = box(5,13,5, 0,16, pc.Leggings, true);
+      skin.rightLeg.add(m);
+    }
+    if(skin.leftLeg){
+      const m = box(5,13,5, 16,16, pc.Leggings, true);
+      skin.leftLeg.add(m);
+    }
+  }
+
+  // === BOOTS: 5x7x5 lower box on legs from layer1 ===
+  if(pc.Boots){
+    if(skin.rightLeg){
+      const m = box(5,7,5, 0,16, pc.Boots);
+      m.position.y = -3/16; // shift to lower leg
+      skin.rightLeg.add(m);
+    }
+    if(skin.leftLeg){
+      const m = box(5,7,5, 0,16, pc.Boots);
+      m.position.y = -3/16;
+      skin.leftLeg.add(m);
+    }
+  }
+}
+
+const _viewers = new Map();
 
 async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
   const W=opts.width||120, H=opts.height||220;
   const uuid=fmtUuid(ownerUuid);
 
-  // Always reset container fully
   containerEl.innerHTML='';
-  containerEl.style.width=W+'px';
-  containerEl.style.height=H+'px';
-
-  // Show mineatar placeholder immediately
+  // Show mineatar immediately as placeholder
   const ph=document.createElement('img');
   ph.style.cssText=`display:block;width:${W}px;height:${H}px;object-fit:contain`;
   ph.src=`https://api.mineatar.io/body/full/${uuid||'MHF_Steve'}?scale=8&overlay=true&format=png`;
   ph.onerror=()=>{ ph.src=`https://mc-heads.net/body/${uuid||'MHF_Steve'}/240`; };
   containerEl.appendChild(ph);
 
-  // Load libs
-  const [skin3d] = await Promise.all([getSkin3d()]);
-  if(!skin3d?.Render) return;
+  const [skin3d, THREE] = await Promise.all([getSkin3d(), getThree()]);
+  if(!skin3d?.Render || !THREE) return;
 
   try{
     const skinUrl=`https://mc-heads.net/skin/${uuid||'MHF_Steve'}`;
+
+    // Build piece colour map (dyeable pieces only)
     const pc={};
     (pieces||[]).forEach(p=>{ if(p.hex&&isDyeable(armourType||'',p.piece)) pc[p.piece]=normHex(p.hex)||BLEACHED; });
 
-    // Always create a fresh viewer (no caching between panel opens)
     containerEl.innerHTML='';
     const canvas=document.createElement('canvas');
-    canvas.style.cssText=`display:block;width:100%;height:100%`;
+    canvas.style.cssText=`display:block;width:${W}px;height:${H}px`;
     containerEl.appendChild(canvas);
 
-    let finalSkinUrl=skinUrl;
-    const viewer=new skin3d.Render({canvas, width:W, height:H, skin:finalSkinUrl});
+    const viewer=new skin3d.Render({canvas, width:W, height:H, skin:skinUrl});
     viewer.renderer.setClearColor(0x000000,0);
     viewer.autoRotate=false;
     viewer.animation=null;
@@ -777,6 +904,16 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
     viewer.player.position.y=-0.15;
     if(viewer.globalLight) viewer.globalLight.intensity=3;
     if(viewer.cameraLight) viewer.cameraLight.intensity=0.6;
+
+    // Add armour meshes after skin loads
+    if(Object.keys(pc).length>0){
+      await new Promise(r=>setTimeout(r,600));
+      // viewer.playerObject is skinview3d API, viewer.player is skin3d API
+      const po = viewer.playerObject || viewer.player;
+      addArmorMeshes(THREE, po, pc);
+      try{ viewer.renderer.render(viewer.scene, viewer.camera); }catch(e){}
+    }
+
   }catch(e){
     console.warn('skin3d error:',e);
   }

@@ -713,12 +713,15 @@ function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplat
 /* ─────────────────────────────────────────────────────
    MINECRAFT CHARACTER VIEWER
    
-   Implementation based on research:
-   - skin3d (skinview3d fork) for 3D player rendering
-   - THREE.js MeshStandardMaterial(map * color) = exact Minecraft tint
-   - leather_layer_1.png / leather_layer_2.png as armour textures
-   - Armour meshes added to viewer.playerObject.skin.* body parts
-   - Three.js imported from same source as skin3d to share instances
+   Card view: shows mineatar.io image (no 3D, fast)
+   Panel view: full 3D with skinview3d + leather armour overlay
+   
+   Leather armour approach:
+   - Load the actual leather_layer_1.png / leather_layer_2.png textures
+   - Create a SECOND skinview3d viewer with a blank white skin
+   - Replace the skin texture on every mesh with the leather layer texture
+   - Set MeshStandardMaterial.color = dye hex (Three.js map*color = MC tint)
+   - Overlay this second viewer's canvas on top of the first
 ───────────────────────────────────────────────────── */
 
 const _imgCache = {};
@@ -739,184 +742,178 @@ function fmtUuid(u){
   return `${s.slice(0,8)}-${s.slice(8,12)}-${s.slice(12,16)}-${s.slice(16,20)}-${s.slice(20)}`;
 }
 
-// Leather layer textures (64x32, greyscale with per-face brightness shading)
-// Tint algorithm: MeshStandardMaterial color * map = Minecraft's leather tint
-const LEATHER_L1='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAApklEQVR42u2XsQnAIBBFNWQEN7BxHRvHdQit3cDGCUytEEUSi5D3ukNzyONy8KWYEEKoo/OUUlNrrcXK/R5rrVx5T99v9n3PIX4OAv4uQD7dATnnpjbGDPvFGJu6lDK8r5Qa9p/1c85JJgABCLjl9N7XlX9wtgOYAAQgAAEIQAACvpsFnubtt/M6E4AABOzdAX0WWM3bu/M6E4AABCAAAQhAAADAFi6nIkhwgQCrlgAAAABJRU5ErkJggg==';
-const LEATHER_L2='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAbUlEQVR42u3ToRHAIAxA0aQzZIisg2HcDAGaIZigtU1FDdca/nM5iPkHKg+ttfM+jzHSeSlF5cXq/t8O2RwBdg+gEZH+rLunC733NM8502xmsrJfa1VeAAEIQAACEIAABCAAAQgAAAAAAADwuQt7pR4fNoSs9QAAAABJRU5ErkJggg==';
+// The actual Minecraft leather layer textures (64x32, uploaded by user)
+const LEATHER_L1_B64 = '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';
+const LEATHER_L2_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAABCGlDQ1BJQ0MgUHJvZmlsZQAAeJxjYGA8wQAELAYMDLl5JUVB7k4KEZFRCuwPGBiBEAwSk4sLGHADoKpv1yBqL+viUYcLcKakFicD6Q9ArFIEtBxopAiQLZIOYWuA2EkQtg2IXV5SUAJkB4DYRSFBzkB2CpCtkY7ETkJiJxcUgdT3ANk2uTmlyQh3M/Ck5oUGA2kOIJZhKGYIYnBncAL5H6IkfxEDg8VXBgbmCQixpJkMDNtbGRgkbiHEVBYwMPC3MDBsO48QQ4RJQWJRIliIBYiZ0tIYGD4tZ2DgjWRgEL7AwMAVDQsIHG5TALvNnSEfCNMZchhSgSKeDHkMyQx6QJYRgwGDIYMZAKbWPz9HbOBQAAAEhklEQVR4nO2YvY7TShiGnxlPPI6zS/7ELigCEQQSLc1K1FwCV4BouCkKargGKhoaKiQkRLGK2CUbVk5iO/HfjH0KyJyDDt2ePRbn7CNNYWtkv99rfz+2ABr+x8i2BbTNlQFtC2ibKwPaFtA2Vwa0LaBtrgxoW0DbXBnQtoC2uTKgbQFtc2VA2wLaRnmeh7UWz/PwfZ+XL19ijMEYQ6/X48mTJ3ieh1KKsixpmj9/H0gpqeu6RfkXR1lr3UGWZWitOTo6oigK3rx5g9aaoijY7VNK0TQN1trfPnj4kQKDwcAFGMcxRVFwfHzsgv8rxhjqukbK/0b2KIDVauVOZFnGu3fvXFrskFLSNI1bALv0+Z0Rr169agCCIGC9XpOmKcPhECEEcRwzHo9J05Sqquh2u/i+T1VV5HmOtZZnz561HcOFkEopPM9jNBpRliXj8Zhbt25x//59V/Sm0yn37t1DSom1lps3bzKZTNrW/o8gv337xmAwwBjDYDCgrmtGoxHWWu7cuUMcx4xGIw4ODijLks1mQ7/f5/DwkE6n07b+C6PG4zFCCIIgwBhDHMdEUQTA169fCcOQJEmw1tI0Dd1uF8/zEELQ6/Valn9x1O6V3hWzMAzJsoy6rgnD8PsmpdBa4/s+QRAQxzHAL4tht9sly7K/30gp6rr+qXUqpTDGoJRyBv/bhVVmWcaHDx9IkoTlconv+0gpmU6nNE1DlmXEccx8PkdrzXq9pqoqVquVM6Cua5cOu+B31/F9H/jePgGEEG4ZY+h0Ohhj3LWstQghnEGXboDWmrt373J+fs6NGzeIoojhcMinT5+w1nLt2jW01kwmE/I8Z29vj7Is6ff7JElCGIY0TeOC0VoDUFUVdV1TluX3G/2YGpumQUpJEARunxCCTqeDUsoNWsBPU+dlIV6/ft0cHh4ipeTz588Mh0MnMssy0jRlMpng+z5RFJEkCdPpFCEEs9nM7c3z3NWGvb094jjG8zwGgwFRFLk3YddZiqIgCALCMERrzWKxQAhBt9ulrmuUUqzXa54/f36pBqgsyzg5OQHg4OCA4+Njrl+/jhDCTXunp6d0Oh263S5SSs7OzhBC4HkeQRBwdHTEYrFgNptRFAWPHj1ivV67lHnw4AG+7/P27Vv29/d5/PgxX7584f379zRNw8OHDynLkl6vhzGGxWKB7/t8/PjxUoMHUE+fPnX5+asC1Ol03BC0+1YoigIhBE3T8OLFC6IoYrlcEkURxhiKoiCKIjzPI0kSTk5OXHEFmM1mLBYL95SLomC5XDKfz9lsNmRZxu3bt3+aRC/NAGOMC9xay/7+PkmSOEOqqsL3fbIsQwhBURT0ej222y1SSvr9Pqenp65rCCHYbrdst1vSNEVrTb/fd8NWnufM53OEECilCMOQ8/Nzoigiz3PCMGQ4HLLZbFw7vkzkbrrbVfFd8FprrLVu+ts9ca01m82GpmlctY7j2OVunuekaUoYhlRVRRzHbLdbzs7OkFKilGK1WiGEoK5rqqqiLEtGoxFSSuI4Jk1T4jim3+9fugF/AB2QdgmRx5AeAAAAAElFTkSuQmCC';
 
-// Load skin3d and three from same CDN (critical: same module instance)
-let _skin3dPromise=null, _threePromise=null;
+let _skin3dPromise=null;
 function getSkin3d(){ return _skin3dPromise||(_skin3dPromise=import('https://esm.run/skin3d').catch(()=>null)); }
-function getThree(){ return _threePromise||(_threePromise=import('https://esm.run/three').catch(()=>null)); }
 
-// Cache loaded textures
-let _l1tex=null, _l2tex=null;
-function getArmorTex(THREE, b64){
-  const cache = b64===LEATHER_L1 ? '_l1tex' : '_l2tex';
-  if(window[cache]) return window[cache];
-  const img = new Image();
-  img.src = b64;
-  const tex = new THREE.Texture(img);
-  tex.magFilter = THREE.NearestFilter;
-  tex.minFilter = THREE.NearestFilter;
-  tex.needsUpdate = true;
-  window[cache] = tex;
-  return tex;
-}
-
-// UV assignment for armour boxes on a 64x32 texture
-// Matches skinview3d's setUVs logic but with textureW=64, textureH=32
-function setArmorUVs(geo, u, v, w, h, d){
-  const TW=64, TH=32;
-  const top    = geo.groups.find(g=>g.materialIndex===2) || null;
-  // BoxGeometry UV attribute — 4 verts per face, order: +x,-x,+y,-y,+z,-z
-  const uv = geo.attributes.uv;
-  function face(fi, u0,v0,uw,vh){
-    const b=fi*4;
-    const [u0n,v0n,u1n,v1n] = [u0/TW, 1-(v0+vh)/TH, (u0+uw)/TW, 1-v0/TH];
-    uv.setXY(b+0,u0n,v0n); uv.setXY(b+1,u1n,v0n);
-    uv.setXY(b+2,u0n,v1n); uv.setXY(b+3,u1n,v1n);
-  }
-  // BoxGeometry face order: +x(right), -x(left), +y(top), -y(bottom), +z(front), -z(back)
-  face(0, u+d+w, v+d,      d, h); // right face
-  face(1, u,     v+d,      d, h); // left face
-  face(2, u+d,   v,        w, d); // top face
-  face(3, u+d+w, v,        w, d); // bottom face
-  face(4, u+d,   v+d,      w, h); // front face
-  face(5, u+d+w+d, v+d,   w, h); // back face
-  uv.needsUpdate=true;
-}
-
-function addArmorMeshes(THREE, playerObject, pc){
-  const skin = playerObject?.skin;
-  if(!skin){ console.warn('armor: no playerObject.skin'); return; }
-
-  // Hide skinview3d outer layers where armour will cover (prevent z-fighting)
-  if(pc.Helmet)     { if(skin.head?.outerLayer)     skin.head.outerLayer.visible=false; }
-  if(pc.Chestplate) { if(skin.body?.outerLayer)     skin.body.outerLayer.visible=false;
-                       if(skin.rightArm?.outerLayer) skin.rightArm.outerLayer.visible=false;
-                       if(skin.leftArm?.outerLayer)  skin.leftArm.outerLayer.visible=false; }
-  if(pc.Leggings)   { if(skin.rightLeg?.outerLayer) skin.rightLeg.outerLayer.visible=false;
-                       if(skin.leftLeg?.outerLayer)  skin.leftLeg.outerLayer.visible=false; }
-
-  function armorMat(hex, useL2=false){
-    const tex = getArmorTex(THREE, useL2?LEATHER_L2:LEATHER_L1);
-    return new THREE.MeshStandardMaterial({
-      map: tex,
-      color: new THREE.Color(normHex(hex)||BLEACHED),
-      transparent: true, alphaTest: 0.01,
-      depthWrite: true,
-    });
-  }
-
-  function box(w,h,d, u,v, hex, useL2=false){
-    const geo = new THREE.BoxGeometry(w/16, h/16, d/16);
-    setArmorUVs(geo, u,v, w,h,d);
-    return new THREE.Mesh(geo, armorMat(hex,useL2));
-  }
-
-  // === HELMET: 9x9x9 box around 8x8x8 head, layer1 UV (0,0) ===
-  if(pc.Helmet && skin.head){
-    const m = box(9,9,9, 0,0, pc.Helmet);
-    skin.head.add(m);
-  }
-
-  // === CHESTPLATE: body 9x13x5 at (16,16), arms 5x13x5 at (40,16) ===
-  if(pc.Chestplate){
-    if(skin.body){
-      const m = box(9,13,5, 16,16, pc.Chestplate);
-      skin.body.add(m);
-    }
-    if(skin.rightArm){
-      const m = box(5,13,5, 40,16, pc.Chestplate);
-      skin.rightArm.add(m);
-    }
-    if(skin.leftArm){
-      // Left arm mirrors right arm in legacy 64x32 (same UV, model handles mirror)
-      const m = box(5,13,5, 40,16, pc.Chestplate);
-      skin.leftArm.add(m);
-    }
-  }
-
-  // === LEGGINGS: 5x13x5 legs from layer2 at (0,16) and (16,16) ===
-  if(pc.Leggings){
-    if(skin.rightLeg){
-      const m = box(5,13,5, 0,16, pc.Leggings, true);
-      skin.rightLeg.add(m);
-    }
-    if(skin.leftLeg){
-      const m = box(5,13,5, 16,16, pc.Leggings, true);
-      skin.leftLeg.add(m);
-    }
-  }
-
-  // === BOOTS: 5x7x5 lower box on legs from layer1 ===
-  if(pc.Boots){
-    if(skin.rightLeg){
-      const m = box(5,7,5, 0,16, pc.Boots);
-      m.position.y = -3/16; // shift to lower leg
-      skin.rightLeg.add(m);
-    }
-    if(skin.leftLeg){
-      const m = box(5,7,5, 0,16, pc.Boots);
-      m.position.y = -3/16;
-      skin.leftLeg.add(m);
-    }
-  }
-}
-
-const _viewers = new Map();
-
-async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
+// Card view: just show mineatar image, no 3D
+function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
   const W=opts.width||120, H=opts.height||220;
   const uuid=fmtUuid(ownerUuid);
-
   containerEl.innerHTML='';
-  // Show mineatar immediately as placeholder
-  const ph=document.createElement('img');
-  ph.style.cssText=`display:block;width:${W}px;height:${H}px;object-fit:contain`;
-  ph.src=`https://api.mineatar.io/body/full/${uuid||'MHF_Steve'}?scale=8&overlay=true&format=png`;
-  ph.onerror=()=>{ ph.src=`https://mc-heads.net/body/${uuid||'MHF_Steve'}/240`; };
-  containerEl.appendChild(ph);
+  const img=document.createElement('img');
+  img.style.cssText=`display:block;width:${W}px;height:${H}px;object-fit:contain`;
+  img.src=`https://api.mineatar.io/body/full/${uuid||'MHF_Steve'}?scale=8&overlay=true&format=png`;
+  img.onerror=()=>{ img.src=`https://mc-heads.net/body/${uuid||'MHF_Steve'}/240`; };
+  containerEl.appendChild(img);
+}
 
-  const [skin3d, THREE] = await Promise.all([getSkin3d(), getThree()]);
-  if(!skin3d?.Render || !THREE) return;
+// Panel view: full 3D skin + leather armour overlay
+async function renderPlayerIntoPanel(containerEl, ownerUuid, pieces, armourType, opts={}){
+  const W=opts.width||200, H=opts.height||320;
+  const uuid=fmtUuid(ownerUuid);
+  containerEl.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:11px">Loading…</div>';
+
+  const skin3d = await getSkin3d();
+  if(!skin3d?.Render){
+    renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts);
+    return;
+  }
 
   try{
     const skinUrl=`https://mc-heads.net/skin/${uuid||'MHF_Steve'}`;
 
-    // Build piece colour map (dyeable pieces only)
+    // Build dyeable piece map
     const pc={};
     (pieces||[]).forEach(p=>{ if(p.hex&&isDyeable(armourType||'',p.piece)) pc[p.piece]=normHex(p.hex)||BLEACHED; });
 
+    // Container: position:relative so we can stack canvases
     containerEl.innerHTML='';
-    const canvas=document.createElement('canvas');
-    canvas.style.cssText=`display:block;width:${W}px;height:${H}px`;
-    containerEl.appendChild(canvas);
+    containerEl.style.cssText+=';position:relative;overflow:hidden';
 
-    const viewer=new skin3d.Render({canvas, width:W, height:H, skin:skinUrl});
-    viewer.renderer.setClearColor(0x000000,0);
-    viewer.autoRotate=false;
-    viewer.animation=null;
-    viewer.zoom=0.95;
-    viewer.player.rotation.y=-0.55;
-    viewer.player.rotation.x=0.15;
-    viewer.player.position.y=-0.15;
-    if(viewer.globalLight) viewer.globalLight.intensity=3;
-    if(viewer.cameraLight) viewer.cameraLight.intensity=0.6;
+    // ── CANVAS 1: base skin ──────────────────────────────────
+    const canvas1=document.createElement('canvas');
+    canvas1.style.cssText=`position:absolute;top:0;left:0;width:${W}px;height:${H}px`;
+    containerEl.appendChild(canvas1);
 
-    // Add armour meshes after skin loads
+    const v1=new skin3d.Render({canvas:canvas1, width:W, height:H, skin:skinUrl});
+    v1.renderer.setClearColor(0x000000,0);
+    v1.autoRotate=false; v1.animation=null;
+    v1.zoom=0.95;
+    v1.player.rotation.y=-0.55;
+    v1.player.rotation.x=0.15;
+    v1.player.position.y=-0.15;
+    if(v1.globalLight) v1.globalLight.intensity=3;
+    if(v1.cameraLight) v1.cameraLight.intensity=0.6;
+
+    // ── CANVAS 2: armour overlay (only if dyeable pieces) ────
     if(Object.keys(pc).length>0){
-      await new Promise(r=>setTimeout(r,600));
-      // viewer.playerObject is skinview3d API, viewer.player is skin3d API
-      const po = viewer.playerObject || viewer.player;
-      addArmorMeshes(THREE, po, pc);
-      try{ viewer.renderer.render(viewer.scene, viewer.camera); }catch(e){}
+      await new Promise(r=>setTimeout(r,200));
+
+      const canvas2=document.createElement('canvas');
+      canvas2.style.cssText=`position:absolute;top:0;left:0;width:${W}px;height:${H}px`;
+      containerEl.appendChild(canvas2);
+
+      // Use a blank white skin so armour texture shows pure colours
+      const blankSkin = await buildBlankSkin();
+
+      const v2=new skin3d.Render({canvas:canvas2, width:W, height:H, skin:blankSkin});
+      v2.renderer.setClearColor(0x000000,0);
+      v2.autoRotate=false; v2.animation=null;
+      v2.zoom=0.95;
+      v2.player.rotation.y=-0.55;
+      v2.player.rotation.x=0.15;
+      v2.player.position.y=-0.15;
+      if(v2.globalLight) v2.globalLight.intensity=3;
+      if(v2.cameraLight) v2.cameraLight.intensity=0.6;
+
+      // Wait for v2 to initialise then replace textures with leather layer
+      await new Promise(r=>setTimeout(r,800));
+      await applyLeatherArmour(v2, pc);
     }
 
+    // Make container the right size
+    containerEl.style.width=W+'px';
+    containerEl.style.height=H+'px';
+
   }catch(e){
-    console.warn('skin3d error:',e);
+    console.warn('panel render error:',e);
+    renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts);
   }
+}
+
+// Build a blank white 64x64 skin PNG (so leather texture shows unmodified)
+function buildBlankSkin(){
+  const c=document.createElement('canvas'); c.width=64; c.height=64;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,64,64);
+  // Make all pixels transparent so only armour layer pieces show
+  ctx.clearRect(0,0,64,64);
+  return c.toDataURL('image/png');
+}
+
+// Tint the leather layer texture with a hex colour and return a data URL
+function tintLeatherTex(b64, hex){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas'); c.width=64; c.height=32;
+      const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(img,0,0,64,32);
+      const id=ctx.getImageData(0,0,64,32);
+      const h=normHex(hex)||BLEACHED;
+      const tR=parseInt(h.slice(1,3),16)/255;
+      const tG=parseInt(h.slice(3,5),16)/255;
+      const tB=parseInt(h.slice(5,7),16)/255;
+      for(let i=0;i<id.data.length;i+=4){
+        if(id.data[i+3]<10) continue;
+        // Minecraft tint: out = texel * dye (normalised multiply)
+        id.data[i]  =Math.min(255,Math.round(id.data[i]  *tR));
+        id.data[i+1]=Math.min(255,Math.round(id.data[i+1]*tG));
+        id.data[i+2]=Math.min(255,Math.round(id.data[i+2]*tB));
+      }
+      ctx.putImageData(id,0,0);
+      res(c.toDataURL('image/png'));
+    };
+    img.src='data:image/png;base64,'+b64;
+  });
+}
+
+async function applyLeatherArmour(viewer, pc){
+  // For each piece, tint the leather layer and reload it as the viewer's skin
+  // The viewer is showing a blank skin — we composite all armour pieces into
+  // a single 64x64 canvas (mapping 64x32 armour UV onto 64x64 skin UV)
+  // then reload that as the skin texture
+
+  const c=document.createElement('canvas'); c.width=64; c.height=64;
+  const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false;
+
+  for(const [piece,hex] of Object.entries(pc)){
+    const useL2 = piece==='Leggings';
+    const b64 = useL2 ? LEATHER_L2_B64 : LEATHER_L1_B64;
+    const tinted = await tintLeatherTex(b64, hex);
+    
+    const img=new Image();
+    await new Promise(r=>{ img.onload=r; img.src=tinted; });
+
+    // Map the 64x32 armour layer UV onto the 64x64 skin texture UV
+    // The armour layer UV matches the legacy skin UV layout
+    // Row 0-15 of armour = row 0-15 of skin (head area)
+    // Row 16-31 of armour = row 16-31 of skin (body/leg area)
+    if(piece==='Helmet'){
+      // Head: armour rows 0-15 → skin rows 0-15
+      ctx.drawImage(img, 0,0,32,16, 0,0,32,16);
+    } else if(piece==='Chestplate'){
+      // Body+arms: armour rows 16-31 right half → skin rows 16-31
+      ctx.drawImage(img, 16,0,48,16, 16,16,48,16);
+    } else if(piece==='Leggings'){
+      // Legs: L2 rows 0-15 → skin rows 16-31 left+right leg areas  
+      ctx.drawImage(img, 0,0,16,16,  0,16,16,16); // right leg
+      ctx.drawImage(img, 16,0,16,16, 16,16,16,16); // left leg + lower body
+    } else if(piece==='Boots'){
+      // Boot lower portion
+      ctx.drawImage(img, 0,16,16,16, 0,16,16,16);
+      ctx.drawImage(img, 16,16,16,16,16,16,16,16);
+    }
+  }
+
+  // Reload viewer with the composited armour texture as skin
+  const skinDataUrl = c.toDataURL('image/png');
+  if(viewer.loadSkin) viewer.loadSkin(skinDataUrl);
+  else if(viewer.setSkin) viewer.setSkin(skinDataUrl);
 }
 
 /* ─────────────────────────────────────────────────────
@@ -1207,7 +1204,7 @@ window.openSetPanel=function(id){
     ${ownerActions?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${ownerActions}</div>`:''}`;
   // Render player
   const el=document.getElementById('spPlayer');
-  renderPlayerInto(el,s.uuid,pieces,at,{width:200,height:360});
+  renderPlayerIntoPanel(el,s.uuid,pieces,at,{width:200,height:360});
 };
 window.closeSetPanel=function(){
   document.getElementById('panelOv').classList.remove('open');

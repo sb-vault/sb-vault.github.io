@@ -750,20 +750,15 @@ let _skin3dPromise=null;
 function getSkin3d(){ return _skin3dPromise||(_skin3dPromise=import('https://esm.run/skin3d').catch(()=>null)); }
 
 // Card view: just show mineatar image, no 3D
+// Card view: 3D skin3d render but NOT interactable (pointer-events:none)
 function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
-  const W=opts.width||120, H=opts.height||220;
-  const uuid=fmtUuid(ownerUuid);
-  containerEl.innerHTML='';
-  const img=document.createElement('img');
-  img.style.cssText=`display:block;width:${W}px;height:${H}px;object-fit:contain`;
-  img.src=`https://api.mineatar.io/body/full/${uuid||'MHF_Steve'}?scale=8&overlay=true&format=png`;
-  img.onerror=()=>{ img.src=`https://mc-heads.net/body/${uuid||'MHF_Steve'}/240`; };
-  containerEl.appendChild(img);
+  renderPlayerIntoPanel(containerEl, ownerUuid, pieces, armourType, {...opts, interactive:false});
 }
 
 // Panel view: full 3D skin + leather armour overlay
 async function renderPlayerIntoPanel(containerEl, ownerUuid, pieces, armourType, opts={}){
   const W=opts.width||200, H=opts.height||320;
+  const interactive = opts.interactive !== false; // default true, false for cards
   const uuid=fmtUuid(ownerUuid);
   containerEl.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:11px">Loading…</div>';
 
@@ -786,7 +781,8 @@ async function renderPlayerIntoPanel(containerEl, ownerUuid, pieces, armourType,
 
     // ── CANVAS 1: base skin ──────────────────────────────────
     const canvas1=document.createElement('canvas');
-    canvas1.style.cssText=`position:absolute;top:0;left:0;width:${W}px;height:${H}px`;
+    const pe = interactive ? 'auto' : 'none';
+    canvas1.style.cssText=`position:absolute;top:0;left:0;width:${W}px;height:${H}px;pointer-events:${pe}`;
     containerEl.appendChild(canvas1);
 
     const v1=new skin3d.Render({canvas:canvas1, width:W, height:H, skin:skinUrl});
@@ -798,13 +794,15 @@ async function renderPlayerIntoPanel(containerEl, ownerUuid, pieces, armourType,
     v1.player.position.y=-0.15;
     if(v1.globalLight) v1.globalLight.intensity=3;
     if(v1.cameraLight) v1.cameraLight.intensity=0.6;
+    // Disable orbit controls for card view
+    if(!interactive && v1.controls) v1.controls.enabled=false;
 
     // ── CANVAS 2: armour overlay (only if dyeable pieces) ────
     if(Object.keys(pc).length>0){
       await new Promise(r=>setTimeout(r,200));
 
       const canvas2=document.createElement('canvas');
-      canvas2.style.cssText=`position:absolute;top:0;left:0;width:${W}px;height:${H}px`;
+      canvas2.style.cssText=`position:absolute;top:0;left:0;width:${W}px;height:${H}px;pointer-events:${pe}`;
       containerEl.appendChild(canvas2);
 
       // Use a blank white skin so armour texture shows pure colours

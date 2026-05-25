@@ -722,8 +722,8 @@ function renderSkinSettingsModal(){
   const s=getSkinSettings();
   const get=(k,d)=>k in s?s[k]:d;
   document.getElementById('skinSettingsInner').innerHTML=`
-    <div class="modal-box" style="max-width:300px" onclick="event.stopPropagation()">
-      <div class="modal-header"><span class="modal-title">Skin Settings</span><button class="modal-close" onclick="closeModal('skinSettingsModal')">×</button></div>
+    <div class="modal-box" style="max-width:300px;background:var(--bg2)" onclick="event.stopPropagation()">
+      <div class="modal-header"><span class="modal-title">Skin Settings</span><button class="modal-close" onclick="if(event.target===this)closeModal('skinSettingsModal')">×</button></div>
       <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600">Model</div>
         <label style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);cursor:pointer">
@@ -1698,7 +1698,7 @@ loadBrowse();
 setInterval(loadStats,60000);
 </script>
 
-<div class="modal-ov" id="skinSettingsModal" onclick="closeModal('skinSettingsModal')"><div id="skinSettingsInner"></div></div>
+<div class="modal-ov" id="skinSettingsModal" onclick="if(event.target===this)closeModal('skinSettingsModal')"><div id="skinSettingsInner"></div></div>
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "900fd7499dcf40d6ad7834003bd09674"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

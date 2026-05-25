@@ -720,33 +720,28 @@ function openSkinSettings(e){
 }
 function renderSkinSettingsModal(){
   const s=getSkinSettings();
-  const get=(k,d)=>k in s?s[k]:d;
+  const g=(k,d)=>k in s?s[k]:d;
+  const row=(label,key,def)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px;color:var(--text)">${label}</span>
+      <div class="ss-toggle"><input type="checkbox" ${g(key,def)?'checked':''} onchange="saveSkinSettings('${key}',this.checked)"><span class="track"></span></div>
+    </div>`;
   document.getElementById('skinSettingsInner').innerHTML=`
-    <div class="modal-box" style="max-width:300px;background:var(--bg2)" onclick="event.stopPropagation()">
-      <div class="modal-header"><span class="modal-title">Skin Settings</span><button class="modal-close" onclick="if(event.target===this)closeModal('skinSettingsModal')">×</button></div>
-      <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600">Model</div>
-        <label style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);cursor:pointer">
-          Slim arms (Alex model)
-          <div class="ss-toggle"><input type="checkbox" ${get('slim',false)?'checked':''} onchange="saveSkinSettings('slim',this.checked)"><span class="track"></span></div>
-        </label>
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-top:4px">Overlay Layers</div>
-        <label style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);cursor:pointer">
-          Hat / Helmet layer
-          <div class="ss-toggle"><input type="checkbox" ${get('showHat',true)?'checked':''} onchange="saveSkinSettings('showHat',this.checked)"><span class="track"></span></div>
-        </label>
-        <label style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);cursor:pointer">
-          Jacket / Body layer
-          <div class="ss-toggle"><input type="checkbox" ${get('showJacket',true)?'checked':''} onchange="saveSkinSettings('showJacket',this.checked)"><span class="track"></span></div>
-        </label>
-        <label style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);cursor:pointer">
-          Sleeves / Arm layer
-          <div class="ss-toggle"><input type="checkbox" ${get('showSleeves',true)?'checked':''} onchange="saveSkinSettings('showSleeves',this.checked)"><span class="track"></span></div>
-        </label>
-        <label style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);cursor:pointer">
-          Pants / Leg layer
-          <div class="ss-toggle"><input type="checkbox" ${get('showPants',true)?'checked':''} onchange="saveSkinSettings('showPants',this.checked)"><span class="track"></span></div>
-        </label>
+    <div class="modal-box" style="max-width:340px" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title">Skin Settings</span>
+        <button class="modal-close" onclick="closeModal('skinSettingsModal')">×</button>
+      </div>
+      <div style="padding:0 20px 20px">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:16px 0 4px">Model</div>
+        ${row('Slim arms (Alex model)','slim',false)}
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:16px 0 4px">Overlay Layers</div>
+        ${row('Hat','showHat',true)}
+        ${row('Jacket','showJacket',true)}
+        ${row('Right sleeve','showRightSleeve',true)}
+        ${row('Left sleeve','showLeftSleeve',true)}
+        ${row('Right pant leg','showRightPant',true)}
+        ${row('Left pant leg','showLeftPant',true)}
       </div>
     </div>`;
 }
@@ -888,11 +883,10 @@ function makeOuterLayer(THREE,tex,W,H,D,faces,inflate){
 }
 
 function buildPlayer(THREE,tex,skinImg,opts={}){
-  const {slim=false,showHat=true,showJacket=true,showSleeves=true,showPants=true}=opts;
+  const {slim=false,showHat=true,showJacket=true,showRightSleeve=true,showLeftSleeve=true,showRightPant=true,showLeftPant=true}=opts;
   const g=new THREE.Group();
   const P=1/16,AW=slim?3:4;
 
-  // Pre-draw skin to canvas for pixel reads
   let skinCanvas=null;
   if(skinImg){
     skinCanvas=document.createElement('canvas');skinCanvas.width=64;skinCanvas.height=64;
@@ -918,24 +912,24 @@ function buildPlayer(THREE,tex,skinImg,opts={}){
   addAt(g,makePart(THREE,tex,AW,12,4,[
     [48,20,4,12],[40,20,4,12],[44,16,AW,4],[48,16,AW,4],[44,20,AW,12],[52,20,AW,12],
   ]),rX,18*P,0);
-  if(showSleeves) addAt(g,makeOuterLayer(THREE,tex,AW,12,4,
+  if(showRightSleeve) addAt(g,makeOuterLayer(THREE,tex,AW,12,4,
     [[48,36,4,12],[40,36,4,12],[44,32,AW,4],[48,32,AW,4],[44,36,AW,12],[52,36,AW,12]],0.2),rX,18*P,0);
   addAt(g,makePart(THREE,tex,AW,12,4,[
     [40,52,4,12],[32,52,4,12],[36,48,AW,4],[40,48,AW,4],[36,52,AW,12],[44,52,AW,12],
   ]),lX,18*P,0);
-  if(showSleeves) addAt(g,makeOuterLayer(THREE,tex,AW,12,4,
+  if(showLeftSleeve) addAt(g,makeOuterLayer(THREE,tex,AW,12,4,
     [[56,52,4,12],[48,52,4,12],[52,48,AW,4],[56,48,AW,4],[52,52,AW,12],[60,52,AW,12]],0.2),lX,18*P,0);
 
   // LEGS inner+outer
   addAt(g,makePart(THREE,tex,4,12,4,[
     [8,20,4,12],[0,20,4,12],[4,16,4,4],[8,16,4,4],[4,20,4,12],[12,20,4,12],
   ]),-2*P,6*P,0);
-  if(showPants) addAt(g,makeOuterLayer(THREE,tex,4,12,4,
+  if(showRightPant) addAt(g,makeOuterLayer(THREE,tex,4,12,4,
     [[8,36,4,12],[0,36,4,12],[4,32,4,4],[8,32,4,4],[4,36,4,12],[12,36,4,12]],0.2),-2*P,6*P,0);
   addAt(g,makePart(THREE,tex,4,12,4,[
     [24,52,4,12],[16,52,4,12],[20,48,4,4],[24,48,4,4],[20,52,4,12],[28,52,4,12],
   ]),2*P,6*P,0);
-  if(showPants) addAt(g,makeOuterLayer(THREE,tex,4,12,4,
+  if(showLeftPant) addAt(g,makeOuterLayer(THREE,tex,4,12,4,
     [[8,52,4,12],[0,52,4,12],[4,48,4,4],[8,48,4,4],[4,52,4,12],[12,52,4,12]],0.2),2*P,6*P,0);
 
   g.position.y=-16*P;
@@ -989,10 +983,12 @@ async function renderPlayerInto(containerEl,ownerUuid,pieces,armourType,opts={})
   const ss=getSkinSettings();
   const player=buildPlayer(THREE,tex,skinImg,{
     slim: ss.slim||slim,
-    showHat:    'showHat'    in ss ? ss.showHat    : true,
-    showJacket: 'showJacket' in ss ? ss.showJacket : true,
-    showSleeves:'showSleeves'in ss ? ss.showSleeves: true,
-    showPants:  'showPants'  in ss ? ss.showPants  : true,
+    showHat:         'showHat'          in ss ? ss.showHat          : true,
+    showJacket:      'showJacket'       in ss ? ss.showJacket       : true,
+    showRightSleeve: 'showRightSleeve'  in ss ? ss.showRightSleeve  : true,
+    showLeftSleeve:  'showLeftSleeve'   in ss ? ss.showLeftSleeve   : true,
+    showRightPant:   'showRightPant'    in ss ? ss.showRightPant    : true,
+    showLeftPant:    'showLeftPant'     in ss ? ss.showLeftPant     : true,
   });
   player.rotation.y=0.5;
   scene.add(player);

@@ -761,145 +761,115 @@ function fmtUuid(u){
 // All UVs reference the 64x64 skin texture
 // face order in BoxGeometry: right(+x), left(-x), top(+y), bottom(-y), front(+z), back(-z)
 function buildBoxUVs(THREE, geo, faces){
-  // faces = [right, left, top, bottom, front, back]
-  // each = [u, v, w, h] in skin pixels
-  // Three.js UV: (0,0)=bottom-left, (1,1)=top-right
-  // Skin texture: (0,0)=top-left, so v is FLIPPED: v_uv = 1 - (v_px / 64)
   const TW=64, TH=64;
   const uv=geo.attributes.uv;
-  faces.forEach(([u,v,w,h], fi)=>{
-    const b=fi*4;
-    // Correct flip: top of UV = bottom of skin region
-    const u0=u/TW,    v0=1-(v+h)/TH;  // bottom-left in UV space
-    const u1=(u+w)/TW, v1=1-v/TH;     // top-right in UV space
-    // BoxGeometry vertex order per face: 0=BL,1=BR,2=TL,3=TR
-    uv.setXY(b+0, u0, v0);
-    uv.setXY(b+1, u1, v0);
-    uv.setXY(b+2, u0, v1);
-    uv.setXY(b+3, u1, v1);
+  faces.forEach(([px,py,pw,ph,flipU], fi)=>{
+    const i=fi*4;
+    let u0=px/TW, u1=(px+pw)/TW;
+    if(flipU){ const t=u0; u0=u1; u1=t; }
+    const vTop=1-py/TH;
+    const vBot=1-(py+ph)/TH;
+    uv.setXY(i+0,u0,vTop); uv.setXY(i+1,u1,vTop);
+    uv.setXY(i+2,u0,vBot); uv.setXY(i+3,u1,vBot);
   });
   uv.needsUpdate=true;
 }
 
-function makePart(THREE, tex, W,H,D, faces, inflate=0){
+function makePart(THREE,tex,W,H,D,faces,inflate=0){
   const geo=new THREE.BoxGeometry((W+inflate*2)/16,(H+inflate*2)/16,(D+inflate*2)/16);
-  buildBoxUVs(THREE, geo, faces);
-  const mat=new THREE.MeshLambertMaterial({map:tex, transparent:true, alphaTest:0.1});
-  return new THREE.Mesh(geo, mat);
+  buildBoxUVs(THREE,geo,faces);
+  const mat=new THREE.MeshLambertMaterial({map:tex,transparent:true,alphaTest:0.1});
+  return new THREE.Mesh(geo,mat);
 }
 
-// overlayFlags: which outer layers to show (default all on)
-// slim: true = 3px arms (Alex model), false = 4px arms (Steve model)
-function buildPlayer(THREE, tex, opts={}){
-  const {
-    slim=false,
-    showHatLayer=true,
-    showJacketLayer=true,
-    showSleevesLayer=true,
-    showPantsLayer=true,
-  } = opts;
+function addAt(group,mesh,x,y,z){ mesh.position.set(x,y,z); group.add(mesh); }
 
-  const group=new THREE.Group();
+function buildPlayer(THREE,tex,opts={}){
+  const {slim=false,showHat=true,showJacket=true,showSleeves=true,showPants=true}=opts;
+  const g=new THREE.Group();
   const S=1/16;
-  const AW = slim ? 3 : 4; // arm width
+  const AW=slim?3:4;
 
-  // ── HEAD ─────────────────────────────────────────────
-  group.add(Object.assign(makePart(THREE,tex, 8,8,8, [
-    [16,8,8,8],[0,8,8,8],[8,0,8,8],[16,0,8,8],[8,8,8,8],[24,8,8,8]
-  ]), {position:{x:0, y:(12+4)*S, z:0}}));
+  // HEAD — bottom face needs U flip so front-side pixels align under face
+  addAt(g,makePart(THREE,tex,8,8,8,[
+    [16,8,8,8],[0,8,8,8],[8,0,8,8],[16,0,8,8,1],[8,8,8,8],[24,8,8,8],
+  ]),0,(12+4)*S,0);
+  if(showHat) addAt(g,makePart(THREE,tex,8,8,8,[
+    [48,8,8,8],[32,8,8,8],[40,0,8,8],[48,0,8,8,1],[40,8,8,8],[56,8,8,8],
+  ],0.25),0,(12+4)*S,0);
 
-  if(showHatLayer) group.add(Object.assign(makePart(THREE,tex, 8,8,8, [
-    [48,8,8,8],[32,8,8,8],[40,0,8,8],[48,0,8,8],[40,8,8,8],[56,8,8,8]
-  ], 0.5), {position:{x:0, y:(12+4)*S, z:0}}));
+  // BODY — 8w × 12h × 4d
+  addAt(g,makePart(THREE,tex,8,12,4,[
+    [28,20,4,12],[16,20,4,12],[20,16,8,4],[28,16,8,4],[20,20,8,12],[32,20,8,12],
+  ]),0,6*S,0);
+  if(showJacket) addAt(g,makePart(THREE,tex,8,12,4,[
+    [28,36,4,12],[16,36,4,12],[20,32,8,4],[28,32,8,4],[20,36,8,12],[32,36,8,12],
+  ],0.25),0,6*S,0);
 
-  // ── BODY ─────────────────────────────────────────────
-  group.add(Object.assign(makePart(THREE,tex, 8,12,4, [
-    [28,20,4,12],[16,20,4,12],[20,16,8,4],[28,16,8,4],[20,20,8,12],[32,20,8,12]
-  ]), {position:{x:0, y:6*S, z:0}}));
+  // ARMS — flush with body: centre at ±(4 + AW/2)
+  // body half=4px, arm half=AW/2 → centre = 4+AW/2 from origin
+  const rX=-(4+AW/2)*S;
+  addAt(g,makePart(THREE,tex,AW,12,4,[
+    [48,20,4,12],[40,20,4,12],[44,16,AW,4],[48,16,AW,4],[44,20,AW,12],[52,20,AW,12],
+  ]),rX,6*S,0);
+  if(showSleeves) addAt(g,makePart(THREE,tex,AW,12,4,[
+    [48,36,4,12],[40,36,4,12],[44,32,AW,4],[48,32,AW,4],[44,36,AW,12],[52,36,AW,12],
+  ],0.25),rX,6*S,0);
 
-  if(showJacketLayer) group.add(Object.assign(makePart(THREE,tex, 8,12,4, [
-    [28,36,4,12],[16,36,4,12],[20,32,8,4],[28,32,8,4],[20,36,8,12],[32,36,8,12]
-  ], 0.25), {position:{x:0, y:6*S, z:0}}));
+  const lX=(4+AW/2)*S;
+  addAt(g,makePart(THREE,tex,AW,12,4,[
+    [40,52,4,12],[32,52,4,12],[36,48,AW,4],[40,48,AW,4],[36,52,AW,12],[44,52,AW,12],
+  ]),lX,6*S,0);
+  if(showSleeves) addAt(g,makePart(THREE,tex,AW,12,4,[
+    [56,52,4,12],[48,52,4,12],[52,48,AW,4],[56,48,AW,4],[52,52,AW,12],[60,52,AW,12],
+  ],0.25),lX,6*S,0);
 
-  // ── RIGHT ARM (player's right = viewer's left, x negative) ───
-  // Arms connect flush to body: x = -(body_half + arm_half) = -(4+AW/2)*S
-  const rArmX = -(4 + AW/2)*S;
-  const rArmFaces = slim
-    ? [[48,20,4,12],[40,20,4,12],[44,16,3,4],[47,16,3,4],[44,20,3,12],[51,20,3,12]]
-    : [[48,20,4,12],[40,20,4,12],[44,16,4,4],[48,16,4,4],[44,20,4,12],[52,20,4,12]];
-  group.add(Object.assign(makePart(THREE,tex, AW,12,4, rArmFaces),
-    {position:{x:rArmX, y:6*S, z:0}}));
-  if(showSleevesLayer){
-    const rSlvFaces = slim
-      ? [[48,36,4,12],[40,36,4,12],[44,32,3,4],[47,32,3,4],[44,36,3,12],[51,36,3,12]]
-      : [[48,36,4,12],[40,36,4,12],[44,32,4,4],[48,32,4,4],[44,36,4,12],[52,36,4,12]];
-    group.add(Object.assign(makePart(THREE,tex, AW,12,4, rSlvFaces, 0.25),
-      {position:{x:rArmX, y:6*S, z:0}}));
-  }
+  // LEGS — flush touching: each 4px wide, centres at ±2px
+  // Right leg at x=-2, left at x=+2 → inner edges touch at x=0
+  addAt(g,makePart(THREE,tex,4,12,4,[
+    [8,20,4,12],[0,20,4,12],[4,16,4,4],[8,16,4,4],[4,20,4,12],[12,20,4,12],
+  ]),-2*S,-6*S,0);
+  if(showPants) addAt(g,makePart(THREE,tex,4,12,4,[
+    [8,36,4,12],[0,36,4,12],[4,32,4,4],[8,32,4,4],[4,36,4,12],[12,36,4,12],
+  ],0.25),-2*S,-6*S,0);
 
-  // ── LEFT ARM (player's left = viewer's right, x positive) ────
-  const lArmX = (4 + AW/2)*S;
-  const lArmFaces = slim
-    ? [[40,52,4,12],[32,52,4,12],[36,48,3,4],[39,48,3,4],[36,52,3,12],[43,52,3,12]]
-    : [[40,52,4,12],[32,52,4,12],[36,48,4,4],[40,48,4,4],[36,52,4,12],[44,52,4,12]];
-  group.add(Object.assign(makePart(THREE,tex, AW,12,4, lArmFaces),
-    {position:{x:lArmX, y:6*S, z:0}}));
-  if(showSleevesLayer){
-    const lSlvFaces = slim
-      ? [[56,52,4,12],[48,52,4,12],[52,48,3,4],[55,48,3,4],[52,52,3,12],[59,52,3,12]]
-      : [[56,52,4,12],[48,52,4,12],[52,48,4,4],[56,48,4,4],[52,52,4,12],[60,52,4,12]];
-    group.add(Object.assign(makePart(THREE,tex, AW,12,4, lSlvFaces, 0.25),
-      {position:{x:lArmX, y:6*S, z:0}}));
-  }
+  addAt(g,makePart(THREE,tex,4,12,4,[
+    [24,52,4,12],[16,52,4,12],[20,48,4,4],[24,48,4,4],[20,52,4,12],[28,52,4,12],
+  ]),2*S,-6*S,0);
+  if(showPants) addAt(g,makePart(THREE,tex,4,12,4,[
+    [8,52,4,12],[0,52,4,12],[4,48,4,4],[8,48,4,4],[4,52,4,12],[12,52,4,12],
+  ],0.25),2*S,-6*S,0);
 
-  // ── RIGHT LEG ────────────────────────────────────────
-  group.add(Object.assign(makePart(THREE,tex, 4,12,4, [
-    [8,20,4,12],[0,20,4,12],[4,16,4,4],[8,16,4,4],[4,20,4,12],[12,20,4,12]
-  ]), {position:{x:-2*S, y:-6*S, z:0}}));
-  if(showPantsLayer) group.add(Object.assign(makePart(THREE,tex, 4,12,4, [
-    [8,36,4,12],[0,36,4,12],[4,32,4,4],[8,32,4,4],[4,36,4,12],[12,36,4,12]
-  ], 0.25), {position:{x:-2*S, y:-6*S, z:0}}));
-
-  // ── LEFT LEG ─────────────────────────────────────────
-  group.add(Object.assign(makePart(THREE,tex, 4,12,4, [
-    [24,52,4,12],[16,52,4,12],[20,48,4,4],[24,48,4,4],[20,52,4,12],[28,52,4,12]
-  ]), {position:{x:2*S, y:-6*S, z:0}}));
-  if(showPantsLayer) group.add(Object.assign(makePart(THREE,tex, 4,12,4, [
-    [8,52,4,12],[0,52,4,12],[4,48,4,4],[8,48,4,4],[4,52,4,12],[12,52,4,12]
-  ], 0.25), {position:{x:2*S, y:-6*S, z:0}}));
-
-  return group;
+  return g;
 }
 
-async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts={}){
-  const W=opts.width||120, H=opts.height||220;
+async function renderPlayerInto(containerEl,ownerUuid,pieces,armourType,opts={}){
+  const W=opts.width||120,H=opts.height||220;
   const interactive=opts.interactive!==false;
   const uuid=fmtUuid(ownerUuid);
+  const DPR=Math.min(window.devicePixelRatio||1,2);
 
   containerEl.innerHTML='';
   const canvas=document.createElement('canvas');
-  canvas.width=W*2; canvas.height=H*2; // 2x for sharpness
   canvas.style.cssText=`display:block;width:${W}px;height:${H}px${interactive?'':';pointer-events:none'}`;
   containerEl.appendChild(canvas);
 
   const THREE=await getThree();
-  if(!THREE){ canvas.style.display='none'; return; }
+  if(!THREE) return;
 
-  const renderer=new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
-  renderer.setSize(W*2,H*2);
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  renderer.setSize(W*DPR,H*DPR,false);
+  renderer.setPixelRatio(1);
   renderer.setClearColor(0x000000,0);
 
   const scene=new THREE.Scene();
-  // Zoom out more, centre on torso, face right (positive y rotation)
-  const cam=new THREE.PerspectiveCamera(28, W/H, 0.1, 100);
-  cam.position.set(0, 0.3, 5.2);
-  cam.lookAt(0, 0.3, 0);
+  const cam=new THREE.PerspectiveCamera(26,W/H,0.1,100);
+  cam.position.set(0,0.25,5.5);
+  cam.lookAt(0,0.25,0);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-  const sun=new THREE.DirectionalLight(0xffffff, 0.8);
-  sun.position.set(2,4,3); scene.add(sun);
-  const fill=new THREE.DirectionalLight(0xffffff, 0.3);
-  fill.position.set(-2,-2,-3); scene.add(fill);
+  scene.add(new THREE.AmbientLight(0xffffff,0.55));
+  const sun=new THREE.DirectionalLight(0xffffff,0.85); sun.position.set(2,4,3); scene.add(sun);
+  const fill=new THREE.DirectionalLight(0xffffff,0.25); fill.position.set(-2,-2,-3); scene.add(fill);
 
   const skinUrl=`https://mc-heads.net/skin/${uuid||'MHF_Steve'}`;
   const skinImg=await loadImg(skinUrl);
@@ -908,54 +878,41 @@ async function renderPlayerInto(containerEl, ownerUuid, pieces, armourType, opts
   tex.minFilter=THREE.NearestFilter;
   tex.needsUpdate=true;
 
-  // Detect slim model from skin image alpha pattern (column 54 pixel test)
   let slim=false;
   if(skinImg){
     try{
-      const c=document.createElement('canvas'); c.width=64; c.height=64;
-      c.getContext('2d').drawImage(skinImg,0,0);
-      const px=c.getContext('2d').getImageData(54,20,1,1).data;
-      slim=(px[3]===0); // transparent = slim/Alex model
+      const dc=document.createElement('canvas');dc.width=64;dc.height=64;
+      dc.getContext('2d').drawImage(skinImg,0,0);
+      slim=dc.getContext('2d').getImageData(54,20,1,1).data[3]===0;
     }catch(e){}
   }
 
-  const player=buildPlayer(THREE, tex, {slim});
-  // Face right by default (positive rotation = turns right)
+  const player=buildPlayer(THREE,tex,{slim});
   player.rotation.y=0.5;
   scene.add(player);
+  renderer.render(scene,cam);
 
-  if(!interactive){
-    renderer.render(scene,cam);
-  } else {
-    // Interactive drag — listen on WINDOW so drag continues outside canvas
-    let dragging=false, lastX=0, lastY=0;
-    const onDown=(cx,cy)=>{ dragging=true; lastX=cx; lastY=cy; };
+  if(interactive){
+    let dragging=false,lastX=0,lastY=0;
+    canvas.addEventListener('mousedown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;});
+    canvas.addEventListener('touchstart',e=>{dragging=true;lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;},{passive:true});
     const onMove=(cx,cy)=>{
       if(!dragging) return;
       player.rotation.y+=(cx-lastX)*0.012;
-      player.rotation.x=Math.max(-0.4, Math.min(0.4, player.rotation.x+(cy-lastY)*0.006));
-      lastX=cx; lastY=cy;
+      player.rotation.x=Math.max(-0.4,Math.min(0.4,player.rotation.x+(cy-lastY)*0.006));
+      lastX=cx;lastY=cy;
       renderer.render(scene,cam);
     };
-    const onUp=()=>dragging=false;
-    canvas.addEventListener('mousedown',e=>onDown(e.clientX,e.clientY));
-    canvas.addEventListener('touchstart',e=>onDown(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
-    // Mouse move/up on WINDOW so drag works outside the small canvas
+    const onUp=()=>{dragging=false;};
     window.addEventListener('mousemove',e=>onMove(e.clientX,e.clientY));
     window.addEventListener('mouseup',onUp);
     canvas.addEventListener('touchmove',e=>{e.preventDefault();onMove(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
     canvas.addEventListener('touchend',onUp);
-    // Cleanup listeners when container changes
-    const obs=new MutationObserver(()=>{
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-      obs.disconnect();
-    });
+    const obs=new MutationObserver(()=>{window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);obs.disconnect();});
     obs.observe(containerEl,{childList:true});
-
     let animId;
-    const animate=()=>{ animId=requestAnimationFrame(animate); renderer.render(scene,cam); };
-    animate();
+    const loop=()=>{animId=requestAnimationFrame(loop);renderer.render(scene,cam);};
+    loop();
   }
 }
 

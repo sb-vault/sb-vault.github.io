@@ -645,7 +645,7 @@ function setUser(user){
       '<div class="dd-sep"></div>' +
       '<button class="dd" onclick="openModal(\'discordModal\')">'+discLabel+'</button>' +
       '<div class="dd-sep"></div>' +
-      '<button class="dd" onclick="openSkinSettings(event)">⚙ Skin Settings</button>' +
+      '<button class="dd" onclick="openSkinSettings(event)">Skin Settings</button>' +
       '<div class="dd-sep"></div>' +
       '<button class="dd red" onclick="logout()">Log out</button>' +
       '</div></div>';
@@ -714,13 +714,14 @@ function refreshVisibleSkins(){
 }
 function openSkinSettings(e){
   e.stopPropagation();
+  document.getElementById('userPill')?.classList.remove('open');
   renderSkinSettingsModal();
   openModal('skinSettingsModal');
 }
 function renderSkinSettingsModal(){
   const s=getSkinSettings();
   const get=(k,d)=>k in s?s[k]:d;
-  document.getElementById('skinSettingsModal').innerHTML=`
+  document.getElementById('skinSettingsInner').innerHTML=`
     <div class="modal-box" style="max-width:300px" onclick="event.stopPropagation()">
       <div class="modal-header"><span class="modal-title">Skin Settings</span><button class="modal-close" onclick="closeModal('skinSettingsModal')">×</button></div>
       <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
@@ -1695,6 +1696,6 @@ loadBrowse();
 setInterval(loadStats,60000);
 </script>
 
-<div class="modal-overlay" id="skinSettingsModal" onclick="closeModal('skinSettingsModal')"></div>
+<div class="modal-overlay" id="skinSettingsModal" onclick="closeModal('skinSettingsModal')"><div id="skinSettingsInner"></div></div>
 </body>
 </html>

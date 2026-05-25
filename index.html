@@ -722,20 +722,20 @@ function renderSkinSettingsModal(){
   const s=getSkinSettings();
   const g=(k,d)=>k in s?s[k]:d;
   const row=(label,key,def)=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:13px;color:var(--text)">${label}</span>
+    <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">
+      <span style="font-size:14px;color:var(--text)">${label}</span>
       <div class="ss-toggle"><input type="checkbox" ${g(key,def)?'checked':''} onchange="saveSkinSettings('${key}',this.checked)"><span class="track"></span></div>
-    </div>`;
+    </label>`;
   document.getElementById('skinSettingsInner').innerHTML=`
-    <div class="modal" style="max-width:340px" onclick="event.stopPropagation()">
+    <div class="modal" style="max-width:480px;width:480px" onclick="event.stopPropagation()">
       <div class="modal-head">
         <div class="modal-title">Skin Settings</div>
         <button class="btn btn-icon" style="font-size:13px" onclick="closeModal('skinSettingsModal')">✕</button>
       </div>
       <div class="modal-body">
-        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding-bottom:6px">Model</div>
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding-bottom:4px">Model</div>
         ${row('Slim arms (Alex model)','slim',false)}
-        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:14px 0 6px">Overlay Layers</div>
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:14px 0 4px">Overlay Layers</div>
         ${row('Hat','showHat',true)}
         ${row('Jacket','showJacket',true)}
         ${row('Right sleeve','showRightSleeve',true)}

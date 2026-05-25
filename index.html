@@ -266,6 +266,17 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+.skin-settings-panel{padding:8px 4px 4px}
+.skin-settings-panel .ss-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:0 8px 6px}
+.skin-settings-panel .ss-row{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;gap:8px}
+.skin-settings-panel .ss-label{font-size:12px;color:var(--text2)}
+.ss-toggle{position:relative;width:28px;height:16px;flex-shrink:0}
+.ss-toggle input{opacity:0;width:0;height:0;position:absolute}
+.ss-toggle .track{position:absolute;inset:0;background:var(--border);border-radius:8px;transition:background .2s;cursor:pointer}
+.ss-toggle input:checked+.track{background:var(--text3)}
+.ss-toggle .track:before{content:'';position:absolute;width:12px;height:12px;left:2px;top:2px;background:#fff;border-radius:50%;transition:transform .2s}
+.ss-toggle input:checked+.track:before{transform:translateX(12px)}
 </style>
 </head>
 <body>
@@ -634,6 +645,8 @@ function setUser(user){
       '<div class="dd-sep"></div>' +
       '<button class="dd" onclick="openModal(\'discordModal\')">'+discLabel+'</button>' +
       '<div class="dd-sep"></div>' +
+      '<button class="dd" onclick="openSkinSettings(event)">⚙ Skin Settings</button>' +
+      '<div class="dd-sep"></div>' +
       '<button class="dd red" onclick="logout()">Log out</button>' +
       '</div></div>';
     if(!hasDisc&&!localStorage.getItem('vault_disc_prompted')){
@@ -664,6 +677,77 @@ async function saveDiscord(){
     if(currentUser) setUser(currentUser);
   }catch(e){ toast('Network error — check connection.'); }
   finally{ if(btn){btn.disabled=false;btn.textContent='Save';} }
+}
+
+
+// Skin settings: stored per username in localStorage
+function getSkinSettings(){
+  const u=currentUser?.username||'_';
+  try{ return JSON.parse(localStorage.getItem('vault_skin_'+u)||'{}'); }catch(e){ return {}; }
+}
+function saveSkinSettings(k,v){
+  const u=currentUser?.username||'_';
+  const s=getSkinSettings(); s[k]=v;
+  localStorage.setItem('vault_skin_'+u,JSON.stringify(s));
+  // Re-render all visible skin viewers
+  document.querySelectorAll('[data-rendered]').forEach(el=>{
+    el.removeAttribute('data-rendered');
+  });
+  refreshVisibleSkins();
+}
+function getSkinOpt(k,def){
+  const s=getSkinSettings();
+  return k in s ? s[k] : def;
+}
+function refreshVisibleSkins(){
+  // Rerender all model containers that have a uuid attribute
+  document.querySelectorAll('.set-card-model[data-uuid]').forEach(el=>{
+    el.dataset.rendered='';
+    const uuid=el.dataset.uuid, pieces=JSON.parse(el.dataset.pieces||'[]'), at=el.dataset.at||'';
+    renderPlayerInto(el,uuid,pieces,at,{width:150,height:230,interactive:false});
+  });
+  // Also rerender panel if open
+  const sp=document.getElementById('spPlayer');
+  if(sp&&sp.dataset.uuid){
+    renderPlayerInto(sp,sp.dataset.uuid,JSON.parse(sp.dataset.pieces||'[]'),sp.dataset.at||'',{width:200,height:360,interactive:true});
+  }
+}
+function openSkinSettings(e){
+  e.stopPropagation();
+  renderSkinSettingsModal();
+  openModal('skinSettingsModal');
+}
+function renderSkinSettingsModal(){
+  const s=getSkinSettings();
+  const get=(k,d)=>k in s?s[k]:d;
+  document.getElementById('skinSettingsModal').innerHTML=`
+    <div class="modal-box" style="max-width:300px" onclick="event.stopPropagation()">
+      <div class="modal-header"><span class="modal-title">Skin Settings</span><button class="modal-close" onclick="closeModal('skinSettingsModal')">×</button></div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600">Model</div>
+        <label style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);cursor:pointer">
+          Slim arms (Alex model)
+          <div class="ss-toggle"><input type="checkbox" ${get('slim',false)?'checked':''} onchange="saveSkinSettings('slim',this.checked)"><span class="track"></span></div>
+        </label>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-top:4px">Overlay Layers</div>
+        <label style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);cursor:pointer">
+          Hat / Helmet layer
+          <div class="ss-toggle"><input type="checkbox" ${get('showHat',true)?'checked':''} onchange="saveSkinSettings('showHat',this.checked)"><span class="track"></span></div>
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);cursor:pointer">
+          Jacket / Body layer
+          <div class="ss-toggle"><input type="checkbox" ${get('showJacket',true)?'checked':''} onchange="saveSkinSettings('showJacket',this.checked)"><span class="track"></span></div>
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);cursor:pointer">
+          Sleeves / Arm layer
+          <div class="ss-toggle"><input type="checkbox" ${get('showSleeves',true)?'checked':''} onchange="saveSkinSettings('showSleeves',this.checked)"><span class="track"></span></div>
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);cursor:pointer">
+          Pants / Leg layer
+          <div class="ss-toggle"><input type="checkbox" ${get('showPants',true)?'checked':''} onchange="saveSkinSettings('showPants',this.checked)"><span class="track"></span></div>
+        </label>
+      </div>
+    </div>`;
 }
 
 window.togglePill=function(e){
@@ -766,9 +850,9 @@ function buildBoxUVs(THREE, geo, faces){
   faces.forEach(([px,py,pw,ph,flipU], fi)=>{
     const i=fi*4;
     let u0=px/TW, u1=(px+pw)/TW;
-    if(flipU){ const t=u0; u0=u1; u1=t; }
-    const vTop=1-py/TH;
-    const vBot=1-(py+ph)/TH;
+    if(flipU===1||flipU===2){ const t=u0; u0=u1; u1=t; }
+    let vTop=1-py/TH, vBot=1-(py+ph)/TH;
+    if(flipU===2){ const t=vTop; vTop=vBot; vBot=t; } // 180°: flip both U and V
     uv.setXY(i+0,u0,vTop); uv.setXY(i+1,u1,vTop);
     uv.setXY(i+2,u0,vBot); uv.setXY(i+3,u1,vBot);
   });
@@ -778,7 +862,12 @@ function buildBoxUVs(THREE, geo, faces){
 function makePart(THREE,tex,W,H,D,faces,inflate=0){
   const geo=new THREE.BoxGeometry((W+inflate*2)/16,(H+inflate*2)/16,(D+inflate*2)/16);
   buildBoxUVs(THREE,geo,faces);
-  const mat=new THREE.MeshLambertMaterial({map:tex,transparent:true,alphaTest:0.1});
+  // Outer layers (inflate>0) don't write depth so they never occlude each other
+  const mat=new THREE.MeshLambertMaterial({
+    map:tex, transparent:true, alphaTest:0.1,
+    depthWrite: inflate===0,
+    polygonOffset: inflate>0, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+  });
   return new THREE.Mesh(geo,mat);
 }
 
@@ -787,59 +876,66 @@ function addAt(group,mesh,x,y,z){ mesh.position.set(x,y,z); group.add(mesh); }
 function buildPlayer(THREE,tex,opts={}){
   const {slim=false,showHat=true,showJacket=true,showSleeves=true,showPants=true}=opts;
   const g=new THREE.Group();
-  const S=1/16;
+  // 1 MC pixel = 1/16 Three.js unit. Player stands 32px tall (head8 + body12 + leg12)
+  // Origin at feet. Head top at 32, feet at 0.
+  const P=1/16; // pixels to units
   const AW=slim?3:4;
 
-  // HEAD — bottom face needs U flip so front-side pixels align under face
-  addAt(g,makePart(THREE,tex,8,8,8,[
-    [16,8,8,8],[0,8,8,8],[8,0,8,8],[16,0,8,8,1],[8,8,8,8],[24,8,8,8],
-  ]),0,(12+4)*S,0);
-  if(showHat) addAt(g,makePart(THREE,tex,8,8,8,[
-    [48,8,8,8],[32,8,8,8],[40,0,8,8],[48,0,8,8,1],[40,8,8,8],[56,8,8,8],
-  ],0.25),0,(12+4)*S,0);
+  // Y positions (from feet = 0):
+  // Legs: 0-12px → centre at 6px
+  // Body: 12-24px → centre at 18px  
+  // Head: 24-32px → centre at 28px
 
-  // BODY — 8w × 12h × 4d
+  // HEAD inner 8×8×8
+  addAt(g,makePart(THREE,tex,8,8,8,[
+    [16,8,8,8],[0,8,8,8],[8,0,8,8],[16,0,8,8,2],[8,8,8,8],[24,8,8,8],
+  ]),0,28*P,0);
+  if(showHat) addAt(g,makePart(THREE,tex,8,8,8,[
+    [48,8,8,8],[32,8,8,8],[40,0,8,8],[48,0,8,8,2],[40,8,8,8],[56,8,8,8],
+  ],0.5),0,28*P,0);
+
+  // BODY inner 8×12×4
   addAt(g,makePart(THREE,tex,8,12,4,[
     [28,20,4,12],[16,20,4,12],[20,16,8,4],[28,16,8,4],[20,20,8,12],[32,20,8,12],
-  ]),0,6*S,0);
+  ]),0,18*P,0);
   if(showJacket) addAt(g,makePart(THREE,tex,8,12,4,[
     [28,36,4,12],[16,36,4,12],[20,32,8,4],[28,32,8,4],[20,36,8,12],[32,36,8,12],
-  ],0.25),0,6*S,0);
+  ],0.5),0,18*P,0);
 
-  // ARMS — flush with body: centre at ±(4 + AW/2)
-  // body half=4px, arm half=AW/2 → centre = 4+AW/2 from origin
-  const rX=-(4+AW/2)*S;
+  // ARMS — inner edge flush with body (body half=4px, arm half=AW/2)
+  // arm centre x = ±(4 + AW/2), y same as body centre = 18px
+  const rX=-(4+AW/2)*P;
+  const lX= (4+AW/2)*P;
   addAt(g,makePart(THREE,tex,AW,12,4,[
     [48,20,4,12],[40,20,4,12],[44,16,AW,4],[48,16,AW,4],[44,20,AW,12],[52,20,AW,12],
-  ]),rX,6*S,0);
+  ]),rX,18*P,0);
   if(showSleeves) addAt(g,makePart(THREE,tex,AW,12,4,[
     [48,36,4,12],[40,36,4,12],[44,32,AW,4],[48,32,AW,4],[44,36,AW,12],[52,36,AW,12],
-  ],0.25),rX,6*S,0);
-
-  const lX=(4+AW/2)*S;
+  ],0.5),rX,18*P,0);
   addAt(g,makePart(THREE,tex,AW,12,4,[
     [40,52,4,12],[32,52,4,12],[36,48,AW,4],[40,48,AW,4],[36,52,AW,12],[44,52,AW,12],
-  ]),lX,6*S,0);
+  ]),lX,18*P,0);
   if(showSleeves) addAt(g,makePart(THREE,tex,AW,12,4,[
     [56,52,4,12],[48,52,4,12],[52,48,AW,4],[56,48,AW,4],[52,52,AW,12],[60,52,AW,12],
-  ],0.25),lX,6*S,0);
+  ],0.5),lX,18*P,0);
 
-  // LEGS — flush touching: each 4px wide, centres at ±2px
-  // Right leg at x=-2, left at x=+2 → inner edges touch at x=0
+  // LEGS — each 4px wide, touching at centre (x=0), centre y=6px
+  // outer edges at ±4px = same as body outer edges ✓
   addAt(g,makePart(THREE,tex,4,12,4,[
     [8,20,4,12],[0,20,4,12],[4,16,4,4],[8,16,4,4],[4,20,4,12],[12,20,4,12],
-  ]),-2*S,-6*S,0);
+  ]),-2*P,6*P,0);
   if(showPants) addAt(g,makePart(THREE,tex,4,12,4,[
     [8,36,4,12],[0,36,4,12],[4,32,4,4],[8,32,4,4],[4,36,4,12],[12,36,4,12],
-  ],0.25),-2*S,-6*S,0);
-
+  ],0.5),-2*P,6*P,0);
   addAt(g,makePart(THREE,tex,4,12,4,[
     [24,52,4,12],[16,52,4,12],[20,48,4,4],[24,48,4,4],[20,52,4,12],[28,52,4,12],
-  ]),2*S,-6*S,0);
+  ]),2*P,6*P,0);
   if(showPants) addAt(g,makePart(THREE,tex,4,12,4,[
     [8,52,4,12],[0,52,4,12],[4,48,4,4],[8,48,4,4],[4,52,4,12],[12,52,4,12],
-  ],0.25),2*S,-6*S,0);
+  ],0.5),2*P,6*P,0);
 
+  // Centre the whole model vertically (shift down by half total height = 16px)
+  g.position.y=-16*P;
   return g;
 }
 
@@ -864,8 +960,8 @@ async function renderPlayerInto(containerEl,ownerUuid,pieces,armourType,opts={})
 
   const scene=new THREE.Scene();
   const cam=new THREE.PerspectiveCamera(26,W/H,0.1,100);
-  cam.position.set(0,0.25,5.5);
-  cam.lookAt(0,0.25,0);
+  cam.position.set(0,0,5.5);
+  cam.lookAt(0,0,0);
 
   scene.add(new THREE.AmbientLight(0xffffff,0.55));
   const sun=new THREE.DirectionalLight(0xffffff,0.85); sun.position.set(2,4,3); scene.add(sun);
@@ -887,7 +983,14 @@ async function renderPlayerInto(containerEl,ownerUuid,pieces,armourType,opts={})
     }catch(e){}
   }
 
-  const player=buildPlayer(THREE,tex,{slim});
+  const ss=getSkinSettings();
+  const player=buildPlayer(THREE,tex,{
+    slim: ss.slim||slim,
+    showHat:    'showHat'    in ss ? ss.showHat    : true,
+    showJacket: 'showJacket' in ss ? ss.showJacket : true,
+    showSleeves:'showSleeves'in ss ? ss.showSleeves: true,
+    showPants:  'showPants'  in ss ? ss.showPants  : true,
+  });
   player.rotation.y=0.5;
   scene.add(player);
   renderer.render(scene,cam);
@@ -1591,5 +1694,7 @@ loadStats();
 loadBrowse();
 setInterval(loadStats,60000);
 </script>
+
+<div class="modal-overlay" id="skinSettingsModal" onclick="closeModal('skinSettingsModal')"></div>
 </body>
 </html>

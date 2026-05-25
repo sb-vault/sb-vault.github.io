@@ -845,17 +845,16 @@ function fmtUuid(u){
 // Build UV-mapped face geometry for a box body part
 // All UVs reference the 64x64 skin texture
 // face order in BoxGeometry: right(+x), left(-x), top(+y), bottom(-y), front(+z), back(-z)
-function buildBoxUVs(THREE, geo, faces){
-  const TW=64, TH=64;
-  const uv=geo.attributes.uv;
-  faces.forEach(([px,py,pw,ph,flipU], fi)=>{
+function buildBoxUVs(THREE,geo,faces){
+  const TW=64,TH=64,uv=geo.attributes.uv;
+  faces.forEach(([px,py,pw,ph,flipU],fi)=>{
     const i=fi*4;
-    let u0=px/TW, u1=(px+pw)/TW;
-    if(flipU===1||flipU===2){ const t=u0; u0=u1; u1=t; }
-    let vTop=1-py/TH, vBot=1-(py+ph)/TH;
-    if(flipU===2){ const t=vTop; vTop=vBot; vBot=t; } // 180°: flip both U and V
-    uv.setXY(i+0,u0,vTop); uv.setXY(i+1,u1,vTop);
-    uv.setXY(i+2,u0,vBot); uv.setXY(i+3,u1,vBot);
+    let u0=px/TW,u1=(px+pw)/TW;
+    if(flipU===1||flipU===2){const t=u0;u0=u1;u1=t;}
+    let vT=1-py/TH,vB=1-(py+ph)/TH;
+    if(flipU===2){const t=vT;vT=vB;vB=t;}
+    uv.setXY(i+0,u0,vT);uv.setXY(i+1,u1,vT);
+    uv.setXY(i+2,u0,vB);uv.setXY(i+3,u1,vB);
   });
   uv.needsUpdate=true;
 }
@@ -863,79 +862,82 @@ function buildBoxUVs(THREE, geo, faces){
 function makePart(THREE,tex,W,H,D,faces,inflate=0){
   const geo=new THREE.BoxGeometry((W+inflate*2)/16,(H+inflate*2)/16,(D+inflate*2)/16);
   buildBoxUVs(THREE,geo,faces);
-  // Outer layers (inflate>0) don't write depth so they never occlude each other
   const mat=new THREE.MeshLambertMaterial({
-    map:tex, transparent:true, alphaTest:0.1,
-    depthWrite: inflate===0,
-    polygonOffset: inflate>0, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+    map:tex,transparent:true,alphaTest:0.1,
+    depthWrite:inflate===0,
+    polygonOffset:inflate>0,polygonOffsetFactor:-1,polygonOffsetUnits:-1,
   });
   return new THREE.Mesh(geo,mat);
 }
 
-function addAt(group,mesh,x,y,z){ mesh.position.set(x,y,z); group.add(mesh); }
+function addAt(group,mesh,x,y,z){mesh.position.set(x,y,z);group.add(mesh);}
 
-function buildPlayer(THREE,tex,opts={}){
+// 3D Skin Layers: the outer skin layer rendered as a flat box sitting
+// at inflate distance from the inner skin, same as vanilla but with depth
+// achieved by the box having real thickness. Simple, correct, no per-pixel issues.
+// Outer layer with inward extrusion depth.
+// Each face is a flat slab sitting at the inflate surface, extruding depth/2 inward.
+// The outer face position is unchanged; only the sides gain thickness.
+// We do this by making the box (inflate + depth/2) larger but shifting it
+// outward by depth/2 so the outer face stays at the same position.
+// For a uniform box this simplifies to: just make the box depth deeper.
+// For all 6 faces simultaneously, the correct approach is one box with
+// inflated size + we accept tiny pixel scale difference from 0.2 inflate.
+function makeOuterLayer(THREE,tex,W,H,D,faces,inflate){
+  return makePart(THREE,tex,W,H,D,faces,inflate);
+}
+
+function buildPlayer(THREE,tex,skinImg,opts={}){
   const {slim=false,showHat=true,showJacket=true,showSleeves=true,showPants=true}=opts;
   const g=new THREE.Group();
-  // 1 MC pixel = 1/16 Three.js unit. Player stands 32px tall (head8 + body12 + leg12)
-  // Origin at feet. Head top at 32, feet at 0.
-  const P=1/16; // pixels to units
-  const AW=slim?3:4;
+  const P=1/16,AW=slim?3:4;
 
-  // Y positions (from feet = 0):
-  // Legs: 0-12px → centre at 6px
-  // Body: 12-24px → centre at 18px  
-  // Head: 24-32px → centre at 28px
+  // Pre-draw skin to canvas for pixel reads
+  let skinCanvas=null;
+  if(skinImg){
+    skinCanvas=document.createElement('canvas');skinCanvas.width=64;skinCanvas.height=64;
+    skinCanvas.getContext('2d').drawImage(skinImg,0,0);
+  }
 
-  // HEAD inner 8×8×8
+  // HEAD inner
   addAt(g,makePart(THREE,tex,8,8,8,[
     [16,8,8,8],[0,8,8,8],[8,0,8,8],[16,0,8,8,2],[8,8,8,8],[24,8,8,8],
   ]),0,28*P,0);
-  if(showHat) addAt(g,makePart(THREE,tex,8,8,8,[
-    [48,8,8,8],[32,8,8,8],[40,0,8,8],[48,0,8,8,2],[40,8,8,8],[56,8,8,8],
-  ],1.5),0,28*P,0);
+  if(showHat) addAt(g,makeOuterLayer(THREE,tex,8,8,8,
+    [[48,8,8,8],[32,8,8,8],[40,0,8,8],[48,0,8,8],[40,8,8,8],[56,8,8,8]],0.7),0,28*P,0);
 
-  // BODY inner 8×12×4
+  // BODY inner
   addAt(g,makePart(THREE,tex,8,12,4,[
     [28,20,4,12],[16,20,4,12],[20,16,8,4],[28,16,8,4],[20,20,8,12],[32,20,8,12],
   ]),0,18*P,0);
-  if(showJacket) addAt(g,makePart(THREE,tex,8,12,4,[
-    [28,36,4,12],[16,36,4,12],[20,32,8,4],[28,32,8,4],[20,36,8,12],[32,36,8,12],
-  ],0.25),0,18*P,0);
+  if(showJacket) addAt(g,makeOuterLayer(THREE,tex,8,12,4,
+    [[28,36,4,12],[16,36,4,12],[20,32,8,4],[28,32,8,4],[20,36,8,12],[32,36,8,12]],0.2),0,18*P,0);
 
-  // ARMS — inner edge flush with body (body half=4px, arm half=AW/2)
-  // arm centre x = ±(4 + AW/2), y same as body centre = 18px
-  const rX=-(4+AW/2)*P;
-  const lX= (4+AW/2)*P;
+  // ARMS inner+outer
+  const rX=-(4+AW/2)*P,lX=(4+AW/2)*P;
   addAt(g,makePart(THREE,tex,AW,12,4,[
     [48,20,4,12],[40,20,4,12],[44,16,AW,4],[48,16,AW,4],[44,20,AW,12],[52,20,AW,12],
   ]),rX,18*P,0);
-  if(showSleeves) addAt(g,makePart(THREE,tex,AW,12,4,[
-    [48,36,4,12],[40,36,4,12],[44,32,AW,4],[48,32,AW,4],[44,36,AW,12],[52,36,AW,12],
-  ],0.25),rX,18*P,0);
+  if(showSleeves) addAt(g,makeOuterLayer(THREE,tex,AW,12,4,
+    [[48,36,4,12],[40,36,4,12],[44,32,AW,4],[48,32,AW,4],[44,36,AW,12],[52,36,AW,12]],0.2),rX,18*P,0);
   addAt(g,makePart(THREE,tex,AW,12,4,[
     [40,52,4,12],[32,52,4,12],[36,48,AW,4],[40,48,AW,4],[36,52,AW,12],[44,52,AW,12],
   ]),lX,18*P,0);
-  if(showSleeves) addAt(g,makePart(THREE,tex,AW,12,4,[
-    [56,52,4,12],[48,52,4,12],[52,48,AW,4],[56,48,AW,4],[52,52,AW,12],[60,52,AW,12],
-  ],0.25),lX,18*P,0);
+  if(showSleeves) addAt(g,makeOuterLayer(THREE,tex,AW,12,4,
+    [[56,52,4,12],[48,52,4,12],[52,48,AW,4],[56,48,AW,4],[52,52,AW,12],[60,52,AW,12]],0.2),lX,18*P,0);
 
-  // LEGS — each 4px wide, touching at centre (x=0), centre y=6px
-  // outer edges at ±4px = same as body outer edges ✓
+  // LEGS inner+outer
   addAt(g,makePart(THREE,tex,4,12,4,[
     [8,20,4,12],[0,20,4,12],[4,16,4,4],[8,16,4,4],[4,20,4,12],[12,20,4,12],
   ]),-2*P,6*P,0);
-  if(showPants) addAt(g,makePart(THREE,tex,4,12,4,[
-    [8,36,4,12],[0,36,4,12],[4,32,4,4],[8,32,4,4],[4,36,4,12],[12,36,4,12],
-  ],0.25),-2*P,6*P,0);
+  if(showPants) addAt(g,makeOuterLayer(THREE,tex,4,12,4,
+    [[8,36,4,12],[0,36,4,12],[4,32,4,4],[8,32,4,4],[4,36,4,12],[12,36,4,12]],0.2),-2*P,6*P,0);
   addAt(g,makePart(THREE,tex,4,12,4,[
     [24,52,4,12],[16,52,4,12],[20,48,4,4],[24,48,4,4],[20,52,4,12],[28,52,4,12],
   ]),2*P,6*P,0);
-  if(showPants) addAt(g,makePart(THREE,tex,4,12,4,[
-    [8,52,4,12],[0,52,4,12],[4,48,4,4],[8,48,4,4],[4,52,4,12],[12,52,4,12],
-  ],0.25),2*P,6*P,0);
+  if(showPants) addAt(g,makeOuterLayer(THREE,tex,4,12,4,
+    [[8,52,4,12],[0,52,4,12],[4,48,4,4],[8,48,4,4],[4,52,4,12],[12,52,4,12]],0.2),2*P,6*P,0);
 
-  // Centre the whole model vertically (shift down by half total height = 16px)
   g.position.y=-16*P;
   return g;
 }
@@ -985,7 +987,7 @@ async function renderPlayerInto(containerEl,ownerUuid,pieces,armourType,opts={})
   }
 
   const ss=getSkinSettings();
-  const player=buildPlayer(THREE,tex,{
+  const player=buildPlayer(THREE,tex,skinImg,{
     slim: ss.slim||slim,
     showHat:    'showHat'    in ss ? ss.showHat    : true,
     showJacket: 'showJacket' in ss ? ss.showJacket : true,

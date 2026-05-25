@@ -893,7 +893,7 @@ function buildPlayer(THREE,tex,opts={}){
   ]),0,28*P,0);
   if(showHat) addAt(g,makePart(THREE,tex,8,8,8,[
     [48,8,8,8],[32,8,8,8],[40,0,8,8],[48,0,8,8,2],[40,8,8,8],[56,8,8,8],
-  ],0.5),0,28*P,0);
+  ],1.5),0,28*P,0);
 
   // BODY inner 8×12×4
   addAt(g,makePart(THREE,tex,8,12,4,[
@@ -901,7 +901,7 @@ function buildPlayer(THREE,tex,opts={}){
   ]),0,18*P,0);
   if(showJacket) addAt(g,makePart(THREE,tex,8,12,4,[
     [28,36,4,12],[16,36,4,12],[20,32,8,4],[28,32,8,4],[20,36,8,12],[32,36,8,12],
-  ],0.5),0,18*P,0);
+  ],0.25),0,18*P,0);
 
   // ARMS — inner edge flush with body (body half=4px, arm half=AW/2)
   // arm centre x = ±(4 + AW/2), y same as body centre = 18px
@@ -912,13 +912,13 @@ function buildPlayer(THREE,tex,opts={}){
   ]),rX,18*P,0);
   if(showSleeves) addAt(g,makePart(THREE,tex,AW,12,4,[
     [48,36,4,12],[40,36,4,12],[44,32,AW,4],[48,32,AW,4],[44,36,AW,12],[52,36,AW,12],
-  ],0.5),rX,18*P,0);
+  ],0.25),rX,18*P,0);
   addAt(g,makePart(THREE,tex,AW,12,4,[
     [40,52,4,12],[32,52,4,12],[36,48,AW,4],[40,48,AW,4],[36,52,AW,12],[44,52,AW,12],
   ]),lX,18*P,0);
   if(showSleeves) addAt(g,makePart(THREE,tex,AW,12,4,[
     [56,52,4,12],[48,52,4,12],[52,48,AW,4],[56,48,AW,4],[52,52,AW,12],[60,52,AW,12],
-  ],0.5),lX,18*P,0);
+  ],0.25),lX,18*P,0);
 
   // LEGS — each 4px wide, touching at centre (x=0), centre y=6px
   // outer edges at ±4px = same as body outer edges ✓
@@ -927,13 +927,13 @@ function buildPlayer(THREE,tex,opts={}){
   ]),-2*P,6*P,0);
   if(showPants) addAt(g,makePart(THREE,tex,4,12,4,[
     [8,36,4,12],[0,36,4,12],[4,32,4,4],[8,32,4,4],[4,36,4,12],[12,36,4,12],
-  ],0.5),-2*P,6*P,0);
+  ],0.25),-2*P,6*P,0);
   addAt(g,makePart(THREE,tex,4,12,4,[
     [24,52,4,12],[16,52,4,12],[20,48,4,4],[24,48,4,4],[20,52,4,12],[28,52,4,12],
   ]),2*P,6*P,0);
   if(showPants) addAt(g,makePart(THREE,tex,4,12,4,[
     [8,52,4,12],[0,52,4,12],[4,48,4,4],[8,48,4,4],[4,52,4,12],[12,52,4,12],
-  ],0.5),2*P,6*P,0);
+  ],0.25),2*P,6*P,0);
 
   // Centre the whole model vertically (shift down by half total height = 16px)
   g.position.y=-16*P;
@@ -1696,6 +1696,7 @@ loadBrowse();
 setInterval(loadStats,60000);
 </script>
 
-<div class="modal-overlay" id="skinSettingsModal" onclick="closeModal('skinSettingsModal')"><div id="skinSettingsInner"></div></div>
+<div class="modal-ov" id="skinSettingsModal" onclick="closeModal('skinSettingsModal')"><div id="skinSettingsInner"></div></div>
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "900fd7499dcf40d6ad7834003bd09674"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

@@ -399,7 +399,10 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     <div class="modal-body">
       <div class="field">
         <label>Armour Type</label>
-        <input type="text" id="addArmourType" placeholder="e.g. Superior Dragon Armour" oninput="onArmourTypeChange()">
+        <div style="position:relative">
+          <input type="text" id="addArmourType" placeholder="e.g. Superior Dragon Armour" oninput="onArmourTypeChange()" autocomplete="off" style="width:100%">
+          <div id="armourTypeSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:var(--shadow)"></div>
+        </div>
       </div>
       <div class="field">
         <label>Set Name <span style="color:var(--text3);font-weight:400">(your label for this set)</span></label>
@@ -1610,7 +1613,23 @@ window.selectAllPieces=function(){
   else { all.forEach(p=>addPieces.add(p)); document.querySelectorAll('.piece-toggle').forEach(t=>t.classList.add('on')); }
   renderPieceInputs();
 };
-window.onArmourTypeChange=function(){ renderPieceInputs(); };
+window.ARMOUR_TYPES=["Superior Dragon Armour","Strong Dragon Armour","Unstable Dragon Armour","Young Dragon Armour","Old Dragon Armour","Wise Dragon Armour","Protector Dragon Armour","Holy Dragon Armour","Tarantula Armour","Necron’s Armour","Goldor’s Armour","Storm’s Armour","Maxor’s Armour","Wither Skeleton Armour","Sorrow Armour","Titanium Armour","Mineral Armour","Fairy Armour","Crystal Armour","Reaper Armour","Crimson Armour","Aurora Armour","Terror Armour","Fervor Armour","Hollow Armour","Farm Suit","Mastiff Armour","Thorn’s Armour","Frozen Blaze Armour","Magma Lord Armour","Lapis Armour","Emerald Armour","Gold Armour","Speedster Armour","Skeleton Master Armour","Revenant Armour","Shadow Assassin Armour","Glacite Armour","Blaze Armour"]
+window.onArmourTypeChange=function(){
+  renderPieceInputs();
+  const q=(document.getElementById('addArmourType')?.value||'').trim().toLowerCase();
+  const box=document.getElementById('armourTypeSuggestions');
+  if(!box) return;
+  if(!q){box.style.display='none';return;}
+  const matches=ARMOUR_TYPES.filter(a=>a.toLowerCase().includes(q));
+  if(!matches.length){box.style.display='none';return;}
+  box.innerHTML=matches.map(a=>`<div onclick="document.getElementById('addArmourType').value='${a.replace(/'/,"\'")}';;box=document.getElementById('armourTypeSuggestions');box.style.display='none';onArmourTypeChange();" style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text);border-bottom:1px solid var(--border)" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''">${a}</div>`).join('');
+  box.style.display='block';
+};
+// Close suggestions when clicking outside
+document.addEventListener('click',function(e){
+  const box=document.getElementById('armourTypeSuggestions');
+  if(box&&!box.contains(e.target)&&e.target.id!=='addArmourType') box.style.display='none';
+});
 function renderPieceInputs(){
   const at=document.getElementById('addArmourType').value.trim();
   const pieces=['Helmet','Chestplate','Leggings','Boots'].filter(p=>addPieces.has(p));

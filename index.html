@@ -391,46 +391,54 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 
 <!-- ADD SET MODAL -->
 <div class="modal-ov" id="addSetModal" onclick="if(event.target===this)closeModal('addSetModal')">
-  <div class="modal" style="max-width:540px">
+  <div class="modal" style="max-width:860px;width:860px">
     <div class="modal-head">
       <div class="modal-title">Add Armour Set</div>
       <button class="btn btn-icon" style="font-size:13px" onclick="closeModal('addSetModal')">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="field">
-        <label>Armour Type</label>
-        <div style="position:relative">
-          <input type="text" id="addArmourType" placeholder="e.g. Superior Dragon Armour" oninput="onArmourTypeChange()" autocomplete="off" style="width:100%">
-          <div id="armourTypeSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:var(--shadow)"></div>
+    <div class="modal-body" style="display:flex;gap:24px;padding:20px">
+      <!-- LEFT: skin preview -->
+      <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Preview</div>
+        <div id="addSetSkinPreview" style="width:160px;height:280px;background:var(--bg3);border-radius:8px;overflow:hidden"></div>
+      </div>
+      <!-- RIGHT: form -->
+      <div style="flex:1;display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div class="field">
+          <label>Armour Type</label>
+          <div style="position:relative">
+            <input type="text" id="addArmourType" placeholder="e.g. Superior Dragon Armour" oninput="onArmourTypeChange()" autocomplete="off" style="width:100%">
+            <div id="armourTypeSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:var(--shadow)"></div>
+          </div>
         </div>
-      </div>
-      <div class="field">
-        <label>Set Name <span style="color:var(--text3);font-weight:400">(your label for this set)</span></label>
-        <input type="text" id="addSetName" placeholder="e.g. My Crystal Superior" maxlength="60">
-      </div>
-      <div class="field">
-        <label>Page</label>
-        <select id="addPageSelect"></select>
-      </div>
-      <div class="field">
-        <label>Pieces</label>
-        <div class="piece-toggles">
-          <button class="piece-toggle" onclick="toggleAddPiece('Helmet',this)">Helmet</button>
-          <button class="piece-toggle" onclick="toggleAddPiece('Chestplate',this)">Chestplate</button>
-          <button class="piece-toggle" onclick="toggleAddPiece('Leggings',this)">Leggings</button>
-          <button class="piece-toggle" onclick="toggleAddPiece('Boots',this)">Boots</button>
-          <button class="piece-toggle" style="border-style:dashed" onclick="selectAllPieces()">Full Set</button>
+        <div class="field">
+          <label>Set Name <span style="color:var(--text3);font-weight:400">(your label for this set)</span></label>
+          <input type="text" id="addSetName" placeholder="e.g. My Crystal Superior" maxlength="60">
         </div>
-        <div id="addPieceInputs"></div>
-      </div>
-      <div class="field">
-        <label>Category (auto-detected)</label>
-        <div class="auto-cat" id="addAutoCat"><span style="color:var(--text3);font-size:12px">Select pieces and enter hex codes</span></div>
-      </div>
-      <div class="field" style="margin-bottom:0">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;font-size:13px;letter-spacing:0;font-weight:400">
-          <input type="checkbox" id="addForOffers"> Taking offers (visitors can start a chat)
-        </label>
+        <div class="field">
+          <label>Page</label>
+          <select id="addPageSelect"></select>
+        </div>
+        <div class="field">
+          <label>Pieces</label>
+          <div class="piece-toggles">
+            <button class="piece-toggle" onclick="toggleAddPiece('Helmet',this)">Helmet</button>
+            <button class="piece-toggle" onclick="toggleAddPiece('Chestplate',this)">Chestplate</button>
+            <button class="piece-toggle" onclick="toggleAddPiece('Leggings',this)">Leggings</button>
+            <button class="piece-toggle" onclick="toggleAddPiece('Boots',this)">Boots</button>
+            <button class="piece-toggle" style="border-style:dashed" onclick="selectAllPieces()">Full Set</button>
+          </div>
+          <div id="addPieceInputs"></div>
+        </div>
+        <div class="field">
+          <label>Category (auto-detected)</label>
+          <div class="auto-cat" id="addAutoCat"><span style="color:var(--text3);font-size:12px">Select pieces and enter hex codes</span></div>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;font-size:13px;letter-spacing:0;font-weight:400">
+            <input type="checkbox" id="addForOffers"> Taking offers (visitors can start a chat)
+          </label>
+        </div>
       </div>
     </div>
     <div class="modal-foot">
@@ -1630,6 +1638,15 @@ document.addEventListener('click',function(e){
   const box=document.getElementById('armourTypeSuggestions');
   if(box&&!box.contains(e.target)&&e.target.id!=='addArmourType') box.style.display='none';
 });
+function updateAddSetPreview(){
+  const el=document.getElementById('addSetSkinPreview');
+  if(!el||!currentUser) return;
+  const at=document.getElementById('addArmourType')?.value.trim()||'';
+  const rows=[...document.querySelectorAll('#addPieceInputs .piece-row')];
+  const pieces=rows.map(r=>({piece:r.dataset.piece,hex:'#'+(r.querySelector('.hex-in').value||'a06540')}));
+  renderPlayerInto(el,currentUser.uuid,pieces,at,{width:160,height:280,interactive:false});
+}
+
 function renderPieceInputs(){
   const at=document.getElementById('addArmourType').value.trim();
   const pieces=['Helmet','Chestplate','Leggings','Boots'].filter(p=>addPieces.has(p));
@@ -1660,12 +1677,14 @@ function renderPieceInputs(){
       ct.textContent=cls?cls.label:'—'; ct.style.color=cls?cls.colour:'';
       drawPiecePreview(canvas,piece,hex,at);
       updateAutoCat();
+      updateAddSetPreview();
     });
     const dh=getDefHex(at||'',piece);
     if(dy&&dh!==BLEACHED&&at){ hi.value=dh.replace('#',''); const cls=classifyHex(dh,at,piece); if(cls){ct.textContent=cls.label;ct.style.color=cls.colour;} }
     drawPiecePreview(canvas,piece,hi.value?'#'+hi.value:BLEACHED,at);
   });
   updateAutoCat();
+  updateAddSetPreview();
 }
 function updateAutoCat(){
   const at=document.getElementById('addArmourType').value.trim();

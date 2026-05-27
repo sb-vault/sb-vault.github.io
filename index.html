@@ -879,7 +879,24 @@ function addAt(group,mesh,x,y,z){mesh.position.set(x,y,z);group.add(mesh);}
 // For all 6 faces simultaneously, the correct approach is one box with
 // inflated size + we accept tiny pixel scale difference from 0.2 inflate.
 function makeOuterLayer(THREE,tex,W,H,D,faces,inflate){
-  return makePart(THREE,tex,W,H,D,faces,inflate);
+  const geo=new THREE.BoxGeometry((W+inflate*2)/16,(H+inflate*2)/16,(D+inflate*2)/16);
+  buildBoxUVs(THREE,geo,faces);
+  const matF=new THREE.MeshLambertMaterial({
+    map:tex,transparent:true,alphaTest:0.1,
+    depthWrite:true,
+    side:THREE.FrontSide,
+    polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1,
+  });
+  const matB=new THREE.MeshLambertMaterial({
+    map:tex,transparent:true,alphaTest:0.1,
+    depthWrite:false,
+    side:THREE.BackSide,
+    polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1,
+  });
+  const g=new THREE.Group();
+  g.add(new THREE.Mesh(geo,matF));
+  g.add(new THREE.Mesh(geo,matB));
+  return g;
 }
 
 function buildPlayer(THREE,tex,skinImg,opts={}){
@@ -907,33 +924,249 @@ function buildPlayer(THREE,tex,skinImg,opts={}){
   if(showJacket) addAt(g,makeOuterLayer(THREE,tex,8,12,4,
     [[28,36,4,12],[16,36,4,12],[20,32,8,4],[28,32,8,4],[20,36,8,12],[32,36,8,12]],0.2),0,18*P,0);
 
-  // ARMS inner+outer
-  const rX=-(4+AW/2)*P,lX=(4+AW/2)*P;
-  addAt(g,makePart(THREE,tex,AW,12,4,[
+  // ARMS — grouped for rotation. Pivot at shoulder (top of arm).
+  // Arm centre is AW/2 below shoulder, so translate arm mesh down by 6P within group.
+  const rArmPivot=new THREE.Group();
+  rArmPivot.position.set(-(4+AW/2)*P, 24*P, 0); // shoulder position
+  rArmPivot.rotation.z= -0.04375;
+  rArmPivot.rotation.x= -0.03125;
+  const rArmInner=makePart(THREE,tex,AW,12,4,[
     [48,20,4,12],[40,20,4,12],[44,16,AW,4],[48,16,AW,4],[44,20,AW,12],[52,20,AW,12],
-  ]),rX,18*P,0);
-  if(showRightSleeve) addAt(g,makeOuterLayer(THREE,tex,AW,12,4,
-    [[48,36,4,12],[40,36,4,12],[44,32,AW,4],[48,32,AW,4],[44,36,AW,12],[52,36,AW,12]],0.2),rX,18*P,0);
-  addAt(g,makePart(THREE,tex,AW,12,4,[
-    [40,52,4,12],[32,52,4,12],[36,48,AW,4],[40,48,AW,4],[36,52,AW,12],[44,52,AW,12],
-  ]),lX,18*P,0);
-  if(showLeftSleeve) addAt(g,makeOuterLayer(THREE,tex,AW,12,4,
-    [[56,52,4,12],[48,52,4,12],[52,48,AW,4],[56,48,AW,4],[52,52,AW,12],[60,52,AW,12]],0.2),lX,18*P,0);
+  ]); rArmInner.position.y=-6*P; rArmPivot.add(rArmInner);
+  if(showRightSleeve){ const m=makeOuterLayer(THREE,tex,AW,12,4,
+    [[48,36,4,12],[40,36,4,12],[44,32,AW,4],[48,32,AW,4],[44,36,AW,12],[52,36,AW,12]],0.2);
+    m.position.y=-6*P; rArmPivot.add(m); }
+  g.add(rArmPivot);
+  g.userData.rArmPivot=rArmPivot;
 
-  // LEGS inner+outer
-  addAt(g,makePart(THREE,tex,4,12,4,[
+  const lArmPivot=new THREE.Group();
+  lArmPivot.position.set((4+AW/2)*P, 24*P, 0);
+  lArmPivot.rotation.z=  0.04375;
+  lArmPivot.rotation.x=  0.03125;
+  const lArmInner=makePart(THREE,tex,AW,12,4,[
+    [40,52,4,12],[32,52,4,12],[36,48,AW,4],[40,48,AW,4],[36,52,AW,12],[44,52,AW,12],
+  ]); lArmInner.position.y=-6*P; lArmPivot.add(lArmInner);
+  if(showLeftSleeve){ const m=makeOuterLayer(THREE,tex,AW,12,4,
+    [[56,52,4,12],[48,52,4,12],[52,48,AW,4],[56,48,AW,4],[52,52,AW,12],[60,52,AW,12]],0.2);
+    m.position.y=-6*P; lArmPivot.add(m); }
+  g.add(lArmPivot);
+  g.userData.lArmPivot=lArmPivot;
+
+  // LEGS — pivoted at hip (top of leg = y=12*P from feet, i.e. y=12*P in local coords before g.position.y offset)
+  // Pivot at top of leg: y=12*P, mesh centre at y=-6*P within group
+  // Right leg back (same angle as left arm), left leg forward (same as right arm)
+  const rLegPivot=new THREE.Group();
+  rLegPivot.position.set(-2*P,12*P,0);
+  rLegPivot.rotation.x=0.03125; // backward (same magnitude as arm x rotation)
+  const rLegInner=makePart(THREE,tex,4,12,4,[
     [8,20,4,12],[0,20,4,12],[4,16,4,4],[8,16,4,4],[4,20,4,12],[12,20,4,12],
-  ]),-2*P,6*P,0);
-  if(showRightPant) addAt(g,makeOuterLayer(THREE,tex,4,12,4,
-    [[8,36,4,12],[0,36,4,12],[4,32,4,4],[8,32,4,4],[4,36,4,12],[12,36,4,12]],0.2),-2*P,6*P,0);
-  addAt(g,makePart(THREE,tex,4,12,4,[
+  ]); rLegInner.position.y=-6*P; rLegPivot.add(rLegInner);
+  if(showRightPant){ const m=makeOuterLayer(THREE,tex,4,12,4,
+    [[8,36,4,12],[0,36,4,12],[4,32,4,4],[8,32,4,4],[4,36,4,12],[12,36,4,12]],0.2);
+    m.position.y=-6*P; rLegPivot.add(m); }
+  g.add(rLegPivot);
+  g.userData.rLegPivot=rLegPivot;
+
+  const lLegPivot=new THREE.Group();
+  lLegPivot.position.set(2*P,12*P,0);
+  lLegPivot.rotation.x=-0.03125; // forward
+  const lLegInner=makePart(THREE,tex,4,12,4,[
     [24,52,4,12],[16,52,4,12],[20,48,4,4],[24,48,4,4],[20,52,4,12],[28,52,4,12],
-  ]),2*P,6*P,0);
-  if(showLeftPant) addAt(g,makeOuterLayer(THREE,tex,4,12,4,
-    [[8,52,4,12],[0,52,4,12],[4,48,4,4],[8,48,4,4],[4,52,4,12],[12,52,4,12]],0.2),2*P,6*P,0);
+  ]); lLegInner.position.y=-6*P; lLegPivot.add(lLegInner);
+  if(showLeftPant){ const m=makeOuterLayer(THREE,tex,4,12,4,
+    [[8,52,4,12],[0,52,4,12],[4,48,4,4],[8,48,4,4],[4,52,4,12],[12,52,4,12]],0.2);
+    m.position.y=-6*P; lLegPivot.add(m); }
+  g.add(lLegPivot);
+  g.userData.lLegPivot=lLegPivot;
 
   g.position.y=-16*P;
   return g;
+}
+
+// Leather armour textures loaded directly from Minecraft assets CDN
+const ARMOR_L1_URL='https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.1/assets/minecraft/textures/models/armor/leather_layer_1.png';
+const ARMOR_L2_URL='https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.1/assets/minecraft/textures/models/armor/leather_layer_2.png';
+const ARMOR_L1_OV_URL='https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.1/assets/minecraft/textures/models/armor/leather_layer_1_overlay.png';
+let _armorL1=null, _armorL2=null;
+
+function loadArmorTex(THREE, b64, hex){
+  // Load the leather layer texture, tint it with the dye hex (MC multiply algorithm)
+  // Returns a THREE.Texture
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas'); c.width=64; c.height=32;
+      const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(img,0,0,64,32);
+      const id=ctx.getImageData(0,0,64,32);
+      const h=normHex(hex)||BLEACHED;
+      const tR=parseInt(h.slice(1,3),16)/255;
+      const tG=parseInt(h.slice(3,5),16)/255;
+      const tB=parseInt(h.slice(5,7),16)/255;
+      for(let i=0;i<id.data.length;i+=4){
+        // Black pixels (r=g=b=0) are transparent in armor textures
+        if(id.data[i]<5&&id.data[i+1]<5&&id.data[i+2]<5){
+          id.data[i+3]=0; continue;
+        }
+        // MC leather tint: out = texel * dye
+        id.data[i]  =Math.round(id.data[i]  *tR);
+        id.data[i+1]=Math.round(id.data[i+1]*tG);
+        id.data[i+2]=Math.round(id.data[i+2]*tB);
+        id.data[i+3]=255;
+      }
+      ctx.putImageData(id,0,0);
+      const tex=new THREE.Texture(c);
+      tex.magFilter=THREE.NearestFilter;
+      tex.minFilter=THREE.NearestFilter;
+      tex.generateMipmaps=false;
+      tex.needsUpdate=true;
+      res(tex);
+    };
+    img.src='data:image/png;base64,'+b64;
+  });
+}
+
+async function addArmorLayer(THREE, group, pc, slim, P){
+  const INFLATE=1.0, AW=4;
+
+  function buildArmorUVs(geo,faces){
+    const TW=64,TH=32,uv=geo.attributes.uv;
+    faces.forEach(([px,py,pw,ph,flipU],fi)=>{
+      const i=fi*4;
+      let u0=px/TW,u1=(px+pw)/TW;
+      if(flipU===1||flipU===2){const t=u0;u0=u1;u1=t;}
+      let vT=1-py/TH,vB=1-(py+ph)/TH;
+      if(flipU===2){const t=vT;vT=vB;vB=t;}
+      uv.setXY(i+0,u0,vT);uv.setXY(i+1,u1,vT);
+      uv.setXY(i+2,u0,vB);uv.setXY(i+3,u1,vB);
+    });
+    uv.needsUpdate=true;
+  }
+
+  const makeArmorPart=(tex,W,H,D,faces,inflate,order=0)=>{
+    const geo=new THREE.BoxGeometry((W+inflate*2)/16,(H+inflate*2)/16,(D+inflate*2)/16);
+    buildArmorUVs(geo,faces);
+    const matF=new THREE.MeshLambertMaterial({
+      map:tex,alphaTest:0.5,transparent:false,depthWrite:true,side:THREE.FrontSide,
+    });
+    const matB=new THREE.MeshLambertMaterial({
+      map:tex,alphaTest:0.5,transparent:false,depthWrite:false,side:THREE.BackSide,
+    });
+    const grp=new THREE.Group();
+    const mB=new THREE.Mesh(geo,matB); mB.renderOrder=3; grp.add(mB);
+    const mF=new THREE.Mesh(geo,matF); mF.renderOrder=4; grp.add(mF);
+    return grp;
+  };
+
+  const loadTinted=(url,hex,ovUrl)=>new Promise(res=>{
+    const li=src=>new Promise(r=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src;});
+    Promise.all([li(url),ovUrl?li(ovUrl):Promise.resolve(null)]).then(([base,ov])=>{
+      if(!base){res(null);return;}
+      const c=document.createElement('canvas');c.width=64;c.height=32;
+      const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(base,0,0,64,32);
+      const id=ctx.getImageData(0,0,64,32);
+      const h=normHex(hex)||BLEACHED;
+      const tR=parseInt(h.slice(1,3),16)/255,tG=parseInt(h.slice(3,5),16)/255,tB=parseInt(h.slice(5,7),16)/255;
+      for(let i=0;i<id.data.length;i+=4){
+        if(id.data[i+3]<10) continue;
+        id.data[i]=Math.round(id.data[i]*tR);
+        id.data[i+1]=Math.round(id.data[i+1]*tG);
+        id.data[i+2]=Math.round(id.data[i+2]*tB);
+      }
+      ctx.putImageData(id,0,0);
+      if(ov) ctx.drawImage(ov,0,0,64,32);
+      const tex=new THREE.Texture(c);
+      tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;tex.needsUpdate=true;
+      res(tex);
+    });
+  });
+
+  const rX=-(4+AW/2)*P,lX=(4+AW/2)*P;
+
+  if(pc.Helmet){
+    const tex=await loadTinted(ARMOR_L1_URL,pc.Helmet,ARMOR_L1_OV_URL);
+    if(tex) addAt(group,makeArmorPart(tex,8,8,8,[
+      [16,8,8,8],[0,8,8,8],[8,0,8,8],[16,0,8,8,1],[8,8,8,8],[24,8,8,8],
+    ],INFLATE),0,28*P,0);
+  }
+  if(pc.Chestplate){
+    const tex=await loadTinted(ARMOR_L1_URL,pc.Chestplate,ARMOR_L1_OV_URL);
+    if(tex){
+      const bodyArmor=makeArmorPart(tex,8,12,4,[
+        [28,20,4,12],[16,20,4,12],[20,16,8,4],[28,16,8,4],[20,20,8,12],[32,20,8,12],
+      ],INFLATE,2);
+      bodyArmor.renderOrder=2;
+      addAt(group,bodyArmor,0,18*P,0);
+      // Right arm — match skin arm pivot rotation
+      const rArmArmor=new THREE.Group();
+      rArmArmor.position.set(-(4+AW/2)*P,24*P,0);
+      rArmArmor.rotation.z=-0.04375; rArmArmor.rotation.x=-0.03125;
+      const rM=makeArmorPart(tex,4,12,4,[
+        [48,20,4,12],[40,20,4,12],[44,16,4,4],[48,16,4,4],[44,20,4,12],[52,20,4,12],
+      ],INFLATE); rM.position.y=-6*P; rArmArmor.add(rM);
+      group.add(rArmArmor);
+      // Left arm
+      const lArmArmor=new THREE.Group();
+      lArmArmor.position.set((4+AW/2)*P,24*P,0);
+      lArmArmor.rotation.z=0.04375; lArmArmor.rotation.x=0.03125;
+      const lM=makeArmorPart(tex,4,12,4,[
+        [40,20,4,12],[48,20,4,12],[44,16,4,4],[48,16,4,4],[44,20,4,12],[52,20,4,12],
+      ],INFLATE); lM.position.y=-6*P; lArmArmor.add(lM);
+      group.add(lArmArmor);
+    }
+  }
+  if(pc.Leggings){
+    // No overlay - the texture already has belt/kneepads as lighter grey pixels
+    const tex=await loadTinted(ARMOR_L2_URL,pc.Leggings,null);
+    if(tex){
+      const rLeg=group.userData.rLegPivot||group;
+      const lLeg=group.userData.lLegPivot||group;
+
+      // Main leg: full 12px, cols 0-15, rows 20-31
+      // Face order: +x(right), -x(left), +y(top), -y(bottom), +z(front), -z(back)
+      const legFaces=[
+        [0,20,4,12],[8,20,4,12],
+        [4,16,4,4],[0,0,4,4],      // top=waist region, bottom=empty
+        [4,20,4,12],[12,20,4,12],
+      ];
+      const rM=makeArmorPart(tex,4,12,4,legFaces,INFLATE-0.5);
+      rM.position.y=-6*P; rLeg.add(rM);
+      const lM=makeArmorPart(tex,4,12,4,legFaces,INFLATE-0.5);
+      lM.position.y=-6*P; lLeg.add(lM);
+
+      // Belt: cols 16-39 rows 27-31 = 5px tall, sits ABOVE the leg (at waist)
+      // Leg pivot is at top of leg. Belt centre at +2.5*P (above pivot = above leg)
+      const beltFaces=[
+        [16,27,4,5],[24,27,4,5],   // right, left
+        [32,27,4,4],[0,0,4,4],     // top, bottom(empty)
+        [20,27,4,5],[28,27,4,5],   // front, back
+      ];
+      const rBelt=makeArmorPart(tex,4,5,4,beltFaces,INFLATE-0.49);
+      rBelt.position.y=2.5*P; rLeg.add(rBelt);
+      const lBelt=makeArmorPart(tex,4,5,4,beltFaces,INFLATE-0.49);
+      lBelt.position.y=2.5*P; lLeg.add(lBelt);
+    }
+  }
+  if(pc.Boots){
+    const tex=await loadTinted(ARMOR_L1_URL,pc.Boots,ARMOR_L1_OV_URL);
+    if(tex){
+      const rLeg=group.userData.rLegPivot||group;
+      const lLeg=group.userData.lLegPivot||group;
+      // Boots have no top face - only sides (5 faces)
+      // sides cols 0-15 rows 26-31, bottom cols 8-11 rows 16-19
+      // Use a flat top (transparent) - just omit top by mapping to empty area
+      const bootFaces=[
+        [8,26,4,6],[0,26,4,6],   // right, left
+        [0,0,0,0],[8,16,4,4],    // top=invisible(0 size), bottom
+        [4,26,4,6],[12,26,4,6],  // front, back
+      ];
+      const rB=makeArmorPart(tex,4,6,4,bootFaces,INFLATE);
+      rB.position.y=-10*P; rLeg.add(rB);
+      const lB=makeArmorPart(tex,4,6,4,bootFaces,INFLATE);
+      lB.position.y=-10*P; lLeg.add(lB);
+    }
+  }
 }
 
 async function renderPlayerInto(containerEl,ownerUuid,pieces,armourType,opts={}){
@@ -992,6 +1225,15 @@ async function renderPlayerInto(containerEl,ownerUuid,pieces,armourType,opts={})
   });
   player.rotation.y=0.5;
   scene.add(player);
+
+  // Add leather armour layer if any dyeable pieces
+  const pc={};
+  (pieces||[]).forEach(p=>{ if(p.hex&&isDyeable(armourType||'',p.piece)) pc[p.piece]=normHex(p.hex)||BLEACHED; });
+  if(Object.keys(pc).length>0){
+    const P=1/16;
+    await addArmorLayer(THREE, player, pc, ss.slim||slim, P);
+  }
+
   renderer.render(scene,cam);
 
   if(interactive){

@@ -435,8 +435,9 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
           <div class="auto-cat" id="addAutoCat"><span style="color:var(--text3);font-size:12px">Select pieces and enter hex codes</span></div>
         </div>
         <div class="field" style="margin-bottom:0">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;font-size:13px;letter-spacing:0;font-weight:400">
-            <input type="checkbox" id="addForOffers"> Taking offers (visitors can start a chat)
+          <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-transform:none;font-size:13px;letter-spacing:0;font-weight:400;background:var(--bg3);border-radius:8px;padding:10px 14px">
+            <span>Taking offers <span style="color:var(--text3);font-size:12px">(visitors can start a chat)</span></span>
+            <input type="checkbox" id="addForOffers">
           </label>
         </div>
       </div>
@@ -1652,35 +1653,42 @@ function renderPieceInputs(){
   const pieces=['Helmet','Chestplate','Leggings','Boots'].filter(p=>addPieces.has(p));
   const container=document.getElementById('addPieceInputs');
   container.innerHTML='';
-  const SZ={Helmet:{w:48,h:48},Chestplate:{w:48,h:56},Leggings:{w:48,h:56},Boots:{w:48,h:48}};
+  container.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px';
   pieces.forEach(piece=>{
     const dy=isDyeable(at||'',piece), mat=at?getMat(at,piece):'leather';
-    const sz=SZ[piece]||{w:48,h:48};
     const row=document.createElement('div'); row.className='piece-row'; row.dataset.piece=piece;
-    const canvas=document.createElement('canvas'); canvas.width=sz.w; canvas.height=sz.h;
-    canvas.style.cssText=`width:${sz.w/2}px;height:${sz.h/2}px;flex-shrink:0`; canvas.className='piece-preview';
-    row.appendChild(canvas);
-    const right=document.createElement('div'); right.style.cssText='flex:1;display:flex;flex-direction:column;gap:5px';
-    const lbl=document.createElement('div'); lbl.style.cssText='font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text)'; lbl.textContent=piece; right.appendChild(lbl);
+    row.style.cssText='display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:8px;padding:8px;';
+    // Small colour dot instead of canvas preview
+    const dot=document.createElement('div'); dot.style.cssText='width:20px;height:20px;border-radius:50%;border:1px solid var(--border);flex-shrink:0;background:#a06540';
+    row.appendChild(dot);
+    const right=document.createElement('div'); right.style.cssText='flex:1;min-width:0;display:flex;flex-direction:column;gap:3px';
+    const lbl=document.createElement('div'); lbl.style.cssText='font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text)'; lbl.textContent=piece; right.appendChild(lbl);
     const hw=document.createElement('div'); hw.className='hex-wrap'; hw.style.opacity=dy?'1':'0.4';
     const hp=document.createElement('span'); hp.className='hex-pre'; hp.textContent='#';
     const hi=document.createElement('input'); hi.type='text'; hi.className='hex-in'; hi.maxLength=6;
     hi.placeholder=dy?'a06540':'N/A'; hi.disabled=!dy; hi.readOnly=!dy; hi.dataset.piece=piece;
     hw.appendChild(hp); hw.appendChild(hi); right.appendChild(hw);
-    const ct=document.createElement('div'); ct.className='piece-cat-tag'; ct.textContent='—'; right.appendChild(ct);
-    if(!dy){ const ml=document.createElement('div'); ml.style.cssText='font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em'; ml.textContent=mat+' (not dyeable)'; right.appendChild(ml); ct.style.display='none'; }
+    const ct=document.createElement('div'); ct.className='piece-cat-tag'; ct.textContent='—'; ct.style.fontSize='10px'; right.appendChild(ct);
+    if(!dy){ ct.style.display='none'; }
+    // Also create a hidden canvas for piece preview logic
+    const canvas=document.createElement('canvas'); canvas.width=48; canvas.height=48; canvas.style.display='none'; canvas.className='piece-preview'; row.appendChild(canvas);
     row.appendChild(right); container.appendChild(row);
     hi.addEventListener('input',()=>{
       if(!dy) return;
       const hex='#'+hi.value;
       const cls=classifyHex(hex,at,piece);
       ct.textContent=cls?cls.label:'—'; ct.style.color=cls?cls.colour:'';
+      dot.style.background=hex.length===7?hex:'#a06540';
       drawPiecePreview(canvas,piece,hex,at);
       updateAutoCat();
       updateAddSetPreview();
     });
     const dh=getDefHex(at||'',piece);
-    if(dy&&dh!==BLEACHED&&at){ hi.value=dh.replace('#',''); const cls=classifyHex(dh,at,piece); if(cls){ct.textContent=cls.label;ct.style.color=cls.colour;} }
+    if(dy&&dh!==BLEACHED&&at){
+      hi.value=dh.replace('#','');
+      const cls=classifyHex(dh,at,piece); if(cls){ct.textContent=cls.label;ct.style.color=cls.colour;}
+      dot.style.background=dh;
+    }
     drawPiecePreview(canvas,piece,hi.value?'#'+hi.value:BLEACHED,at);
   });
   updateAutoCat();

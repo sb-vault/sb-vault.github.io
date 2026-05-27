@@ -403,7 +403,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
         <div id="addSetSkinPreview" style="width:160px;height:280px;background:var(--bg3);border-radius:8px;overflow:hidden"></div>
       </div>
       <!-- RIGHT: form -->
-      <div style="flex:1;display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div style="flex:1;display:flex;flex-direction:column;gap:10px;min-width:0">
         <div class="field">
           <label>Armour Type</label>
           <div style="position:relative">
@@ -815,8 +815,86 @@ function classifyPieces(pieces,at){const seen=new Map();pieces.forEach(p=>{if(p.
 const MATS={'gold armor':{h:'gold',c:'gold',l:'gold',b:'gold'},'gold armour':{h:'gold',c:'gold',l:'gold',b:'gold'},'chainmail armor':{h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},'chainmail armour':{h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},'iron armor':{h:'iron',c:'iron',l:'iron',b:'iron'},'iron armour':{h:'iron',c:'iron',l:'iron',b:'iron'},'diamond armor':{h:'diamond',c:'diamond',l:'diamond',b:'diamond'},'diamond armour':{h:'diamond',c:'diamond',l:'diamond',b:'diamond'},'hardened diamond':{h:'diamond',c:'diamond',l:'diamond',b:'diamond'},'perfect armor':{h:'diamond',c:'diamond',l:'diamond',b:'diamond'},'perfect armour':{h:'diamond',c:'diamond',l:'diamond',b:'diamond'},'golem armor':{h:'iron',c:'iron',l:'iron',b:'iron'},'golem armour':{h:'iron',c:'iron',l:'iron',b:'iron'},'flamebreaker':{h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},'sorrow armor':{h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},'sorrow armour':{h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},'ember armor':{h:'leather',c:'chainmail',l:'chainmail',b:'chainmail'},'ember armour':{h:'leather',c:'chainmail',l:'chainmail',b:'chainmail'},'rekindled ember':{h:'leather',c:'chainmail',l:'chainmail',b:'chainmail'},'ender armor':{h:'leather',c:'chainmail',l:'chainmail',b:'chainmail'},'ender armour':{h:'leather',c:'chainmail',l:'chainmail',b:'chainmail'},'angler armor':{h:'diamond',c:'leather',l:'leather',b:'leather'},'angler armour':{h:'diamond',c:'leather',l:'leather',b:'leather'},'squire armor':{h:'iron',c:'leather',l:'iron',b:'leather'},'squire armour':{h:'iron',c:'leather',l:'iron',b:'leather'},'mercenary armor':{h:'leather',c:'leather',l:'chainmail',b:'leather'},'mercenary armour':{h:'leather',c:'leather',l:'chainmail',b:'leather'},'spring boots':{h:'leather',c:'leather',l:'leather',b:'chainmail'}};
 function getMat(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'}[piece]||'h';for(const[k,v]of Object.entries(MATS)){if(key.includes(k))return v[pk]||'leather';}return'leather';}
 function isDyeable(at,piece){return getMat(at,piece)==='leather';}
-const SKULL_HELMETS={'superior dragon':'d4981ca4-723e-3237-8099-7c8f5637b3c3'};
-function getSkull(at){const al=at.toLowerCase();for(const[k,v]of Object.entries(SKULL_HELMETS)){if(al.includes(k))return v;}return null;}
+const SKULL_HELMETS={
+  'abyssal':         '29c1fb923e363b02929de8207c8013ea3c7e4b3933047fc9ca2bb08b8dc07254',
+  'adaptive':        '16f0d34aaa714377983701c1bbe9b3f6e7b30cb38571bc0a2fd7541d7edb1637',
+  'arachne':         '10505f1e9765e47e7fb9208e2ad8f171668decf39465ec40d3a589f8cbeb9722',
+  'fig':             '531d3f448491a35d711b877973e5da5d0e72a2ecfdc98dede71bfa1b537bb4eb',
+  'wyld':            'fc8593b91058ff24a0f6845130ed3e449569ce9c6b22fa9cd1ed7360b5045ea3',
+  'divan':           '83f69ef27f3120a51050e6be66a0e3f8e89af888d4806716bf86f590da638317',
+  'diver':           'd8f11c2b1eb0568cac64f976e50e0e45f3c09a65801e7ed72734b1a99f1606ca',
+  'sniper':          'b18c071f080dba50a62a6263ff724edc157ce4fb4883cceff2491d5bbde830c1',
+  'canopy':          '93da8ca9a62856d5c0ee7808f12fa850594294a9755ca527dbc6679bacc3f7bb',
+  'shark scale':     'd38e3f1152b4855fea5865357e03ecb4d80c52889d641cc5f023e6d16996d8f1',
+  'primordial':      '307cefa20028878ef529d6b9208d2812010d086f961b964c328f09b3f6573d6',
+  'young dragon':    'a0e81ed07dfb0244d56f4d5f2b37553ec026fb4796f0fb0c57a8eb264983e1e0',
+  'protector dragon':'1f1a1ccbb024ed1d28471bc4b3c28d093277161a3871d2699d68e5d2c387964',
+  'snow suit':       '3d1119643cecfbe004141a1ea4062f8315ca78e503958ac50505e8592c44a601',
+  'snow':            '3d1119643cecfbe004141a1ea4062f8315ca78e503958ac50505e8592c44a601',
+  'blaze':           '531b2183392ebcffe217a983c96a573cf90dd58687d18fd63036ccc59eb2f47d',
+  'wise dragon':     '5797c77ccee3c04c3deed770595ea83ea1e84c9a4629b753af5d351c0cc11a74',
+  'mender':          '13301950a1e80cdfee82cfca4cb0d8aeea712fe3331ccd7e1e55722230bd43ff',
+  'spooky':          '121ebb2b36c1f5dde4fa665cd39a4895ef02d00fcb3eb3588b86a13f9ae7e9a8',
+  'mineral':         'a95280a7b21b06e3887f165c8ca7a03bfac96378acd96cdf5944bcd08a0b6587',
+  'shadow assassin': 'a1aa14de9c158d3513949c85cabb9e37848b984ec3fb5b44a3219f4fb58a00da',
+  'snorkeling':      '875478f91a51c281255545fd700d3155d9628ac7f6ecacb96110416cbc3849d3',
+  'old dragon':      '524c4da6ab27e9c93fbf49ea1b1fefaefbe2d4c0c8b222e2ff6b18179fb5addf',
+  'holy dragon':     '99cc8ba26793218f6f6491947a1837fd52878701f33f76bbe2883a45aba8ab8f',
+  'strong dragon':   '78bc6551beb2148d939b69925140d2379fe0fab6e7d31f65df50b59e9f77a0e4',
+  'superior dragon': '1e0329f42192ee7c1a0c704f82dbbbe7c00fbfa3f020c1067a208630b991b988',
+  'unstable dragon': '605fc4e2b68c45059afef3999e9a95aa3d8943597a7894e569397d6cf5d1672a',
+  'wither skeleton': '6ce1327d-c29c-3b73-acb4-8ab72cc2c92b',
+  'goldor':          '654bccc0-ed3c-3483-bfc2-701c5d582593',
+  'storm':           '19f4ade1-1057-3c24-bdd1-54adf342bf79',
+  'maxor':           'ee05abe4-347b-3ea5-8248-fae93392140e',
+  'necron':          '66324342-b7cc-3bfd-bce5-12324193befb',
+  'ender':           'c7c991cd-a6ae-3947-9f86-32173a9c10d6',
+};
+// Returns texture URL: long hashes go to textures.minecraft.net, short UUIDs use Hypixel API
+function getSkullTextureUrl(val){
+  return val.length>36
+    ? 'https://textures.minecraft.net/texture/'+val
+    : null; // UUID — fetch from Hypixel API at runtime
+}
+// Cache for skull helmet texture URLs fetched from Hypixel API
+const _skullTexCache={};
+async function fetchSkullTexUrl(armourType){
+  const at=(armourType||'').toLowerCase();
+  if(_skullTexCache[at]) return _skullTexCache[at];
+  
+  try{
+    // Fetch Hypixel items API to find skull texture
+    const res=await fetch('https://api.hypixel.net/v2/resources/skyblock/items');
+    const data=await res.json();
+    const items=data.items||[];
+    
+    // Find the helmet item matching this armour type
+    const helmetName=armourType.replace(/\s+/g,'_').toUpperCase()+'_HELMET';
+    const item=items.find(i=>i.id===helmetName||i.name?.toLowerCase().includes(at+' helmet'));
+    
+    if(item?.skin){
+      const decoded=atob(item.skin);
+      const json=JSON.parse(decoded);
+      const url=json?.textures?.SKIN?.url;
+      if(url){ _skullTexCache[at]=url; return url; }
+    }
+  }catch(e){ console.warn('skull fetch error:',e); }
+  
+  // Fallback: try mc-heads with the UUID we have
+  const skullKey=Object.keys(SKULL_HELMETS).find(k=>at.includes(k));
+  if(skullKey){
+    const uuid=SKULL_HELMETS[skullKey];
+    const fallback=`https://mc-heads.net/skin/${uuid}`;
+    _skullTexCache[at]=fallback;
+    return fallback;
+  }
+  return null;
+}
+function getSkullUrl(at){
+  const al=(at||'').toLowerCase();
+  return Object.keys(SKULL_HELMETS).some(k=>al.includes(k));
+}
+function getSkull(at){return getSkullUrl(at);}
 const DEF_HEX={'superior dragon':{h:'#f2df11',c:'#f2df11',l:'#f2df11',b:'#f25d18'},'wise dragon':{h:'#29f0e9',c:'#29f0e9',l:'#29f0e9',b:'#29f0e9'},'young dragon':{h:'#dde4f0',c:'#dde4f0',l:'#dde4f0',b:'#dde4f0'},'old dragon':{h:'#f0e6aa',c:'#f0e6aa',l:'#f0e6aa',b:'#f0e6aa'},'unstable dragon':{h:'#b212e3',c:'#b212e3',l:'#b212e3',b:'#b212e3'},'strong dragon':{h:'#d91e41',c:'#d91e41',l:'#e09419',b:'#f0d124'},'protector dragon':{h:'#99978b',c:'#99978b',l:'#99978b',b:'#99978b'},'tarantula':{h:'#000000',c:'#3d1d1d',l:'#000000',b:'#3d1d1d'},'shark scale':{h:'#002ca6',c:'#002ca6',l:'#002ca6',b:'#002ca6'},'bat person':{h:'#000000',c:'#000000',l:'#000000',b:'#000000'},'angler':{h:'#0b004f',c:'#0b004f',l:'#0b004f',b:'#0b004f'},'necron':{h:'#1a1a1a',c:'#1a1a1a',l:'#1a1a1a',b:'#1a1a1a'},'farm suit':{h:'#ffff00',c:'#ffff00',l:'#ffff00',b:'#ffff00'},'farm armor':{h:'#ffd700',c:'#ffd700',l:'#ffd700',b:'#ffd700'},'lapis':{h:'#0000ff',c:'#0000ff',l:'#0000ff',b:'#0000ff'},'emerald':{h:'#00ff00',c:'#00ff00',l:'#00ff00',b:'#00ff00'},'pumpkin':{h:'#edaa36',c:'#edaa36',l:'#edaa36',b:'#edaa36'},'cheap tuxedo':{h:'#f0f0f0',c:'#383838',l:'#c7c7c7',b:'#383838'},'fancy tuxedo':{h:'#f5f5f5',c:'#332a2a',l:'#d4d4d4',b:'#332a2a'},'elegant tuxedo':{h:'#fefdfc',c:'#191919',l:'#fefdfc',b:'#191919'},'speedster':{h:'#e0fcf7',c:'#e0fcf7',l:'#e0fcf7',b:'#e0fcf7'},'mushroom':{h:'#ff0000',c:'#ff0000',l:'#ff0000',b:'#ff0000'}};
 function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'}[piece]||'h';for(const[k,v]of Object.entries(DEF_HEX)){if(key.includes(k))return v[pk]||BLEACHED;}return BLEACHED;}
 
@@ -1056,7 +1134,7 @@ function loadArmorTex(THREE, b64, hex){
   });
 }
 
-async function addArmorLayer(THREE, group, pc, slim, P){
+async function addArmorLayer(THREE, group, pc, slim, P, armourType=''){
   const INFLATE=1.0, AW=4;
 
   function buildArmorUVs(geo,faces){
@@ -1115,10 +1193,67 @@ async function addArmorLayer(THREE, group, pc, slim, P){
   const rX=-(4+AW/2)*P,lX=(4+AW/2)*P;
 
   if(pc.Helmet){
-    const tex=await loadTinted(ARMOR_L1_URL,pc.Helmet,ARMOR_L1_OV_URL);
-    if(tex) addAt(group,makeArmorPart(tex,8,8,8,[
-      [16,8,8,8],[0,8,8,8],[8,0,8,8],[16,0,8,8,1],[8,8,8,8],[24,8,8,8],
-    ],INFLATE),0,28*P,0);
+    if(getSkullUrl(armourType||'')){
+      const skullKey=Object.keys(SKULL_HELMETS).find(k=>(armourType||'').toLowerCase().includes(k));
+      const uuid=skullKey?SKULL_HELMETS[skullKey]:null;
+      if(uuid){
+        // Fetch skin via Hypixel API → textures.minecraft.net
+        let skinUrl=null;
+        try{
+          const r=await fetch('https://api.hypixel.net/v2/resources/skyblock/items');
+          const d=await r.json();
+          const helmetId=armourType.trim().replace(/\s+/g,'_').toUpperCase()+'_HELMET';
+          const it=(d.items||[]).find(x=>x.id===helmetId);
+          if(it?.skin){
+            const raw=it.skin.value||it.skin;
+            const padded=raw+'='.repeat((4-raw.length%4)%4);
+            const j=JSON.parse(atob(padded));
+            const texUrl=j?.textures?.SKIN?.url;
+            if(texUrl) skinUrl=texUrl; // direct textures.minecraft.net URL - static, correct
+          }
+        }catch(e){}
+        if(!skinUrl) skinUrl=`https://mc-heads.net/skin/${uuid}`;
+        
+        const img=await new Promise(r=>{
+          const i=new Image();i.crossOrigin='anonymous';
+          i.onload=()=>r(i);i.onerror=()=>r(null);
+          i.src=skinUrl;
+        });
+        if(img){
+          // Draw skin onto 64x64 canvas to use as texture
+          const c=document.createElement('canvas');c.width=64;c.height=64;
+          const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=false;
+          ctx.drawImage(img,0,0,64,64);
+          const tex=new THREE.Texture(c);
+          tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestFilter;
+          tex.generateMipmaps=false;tex.needsUpdate=true;
+          // Inner skull head
+          const geo=new THREE.BoxGeometry((8+INFLATE*2)/16,(8+INFLATE*2)/16,(8+INFLATE*2)/16);
+          buildBoxUVs(THREE,geo,[
+            [16,8,8,8],[0,8,8,8],[8,0,8,8],[16,0,8,8,1],[8,8,8,8],[24,8,8,8],
+          ]);
+          const mat=new THREE.MeshLambertMaterial({map:tex,transparent:true,alphaTest:0.1,depthWrite:true});
+          addAt(group,new THREE.Mesh(geo,mat),0,28*P,0);
+          // Outer overlay (hat layer cols 32-63 rows 0-15) at inflate+0.35
+          const OV=INFLATE+0.35;
+          const geo2=new THREE.BoxGeometry((8+OV*2)/16,(8+OV*2)/16,(8+OV*2)/16);
+          buildBoxUVs(THREE,geo2,[
+            [48,8,8,8],[32,8,8,8],[40,0,8,8],[48,0,8,8,1],[40,8,8,8],[56,8,8,8],
+          ]);
+          const matF=new THREE.MeshLambertMaterial({map:tex,transparent:true,alphaTest:0.1,depthWrite:true,side:THREE.FrontSide});
+          const matB=new THREE.MeshLambertMaterial({map:tex,transparent:true,alphaTest:0.1,depthWrite:false,side:THREE.BackSide});
+          const ov=new THREE.Group();
+          ov.add(new THREE.Mesh(geo2,matF));
+          ov.add(new THREE.Mesh(geo2,matB));
+          addAt(group,ov,0,28*P,0);
+        }
+      }
+    } else {
+      const tex=await loadTinted(ARMOR_L1_URL,pc.Helmet,ARMOR_L1_OV_URL);
+      if(tex) addAt(group,makeArmorPart(tex,8,8,8,[
+        [16,8,8,8],[0,8,8,8],[8,0,8,8],[16,0,8,8,1],[8,8,8,8],[24,8,8,8],
+      ],INFLATE),0,28*P,0);
+    }
   }
   if(pc.Chestplate){
     const tex=await loadTinted(ARMOR_L1_URL,pc.Chestplate,ARMOR_L1_OV_URL);
@@ -1258,10 +1393,15 @@ async function renderPlayerInto(containerEl,ownerUuid,pieces,armourType,opts={})
 
   // Add leather armour layer if any dyeable pieces
   const pc={};
-  (pieces||[]).forEach(p=>{ if(p.hex&&isDyeable(armourType||'',p.piece)) pc[p.piece]=normHex(p.hex)||BLEACHED; });
+  // Always include skull helmet if armour type has one
+  if(getSkullUrl(armourType||'')) pc['Helmet']='skull';
+  (pieces||[]).forEach(p=>{
+    if(p.hex&&isDyeable(armourType||'',p.piece)) pc[p.piece]=normHex(p.hex)||BLEACHED;
+  });
   if(Object.keys(pc).length>0){
     const P=1/16;
-    await addArmorLayer(THREE, player, pc, ss.slim||slim, P);
+    await addArmorLayer(THREE, player, pc, ss.slim||slim, P, armourType);
+    renderer.render(scene,cam); // re-render after async armor/skull textures load
   }
 
   renderer.render(scene,cam);
@@ -1486,12 +1626,16 @@ function setCard(s){
   const pCols=pieces.map(p=>{const c=classifyHex(p.hex,at,p.piece);return c?c.colour:'#888';});
   const stripe=pCols.length>1?'linear-gradient(90deg,'+pCols.map((c,i)=>c+' '+Math.round(i/pCols.length*100)+'%,'+c+' '+Math.round((i+1)/pCols.length*100)+'%').join(',')+')':pCols[0]||'var(--border)';
   const pHtml=pieces.map(p=>{
-    const cls=classifyHex(p.hex,at,p.piece),col=cls?.colour||'#888';
+    const isSkullHelmet=p.piece==='Helmet'&&!!getSkullUrl(at);
+    const cls=isSkullHelmet?null:classifyHex(p.hex,at,p.piece),col=cls?.colour||'#888';
+    const dot=isSkullHelmet
+      ?`<img src="https://mc-heads.net/avatar/${SKULL_HELMETS[Object.keys(SKULL_HELMETS).find(k=>at.toLowerCase().includes(k))]}/16" style="width:12px;height:12px;border-radius:2px;image-rendering:pixelated">`
+      :`<div class="set-piece-dot" style="background:${p.hex||'transparent'};border-color:${col}55"></div>`;
     return`<div class="set-piece-row">
-      <div class="set-piece-dot" style="background:${p.hex||'transparent'};border-color:${col}55"></div>
+      ${dot}
       <span class="set-piece-name">${esc(p.piece)}</span>
-      ${p.hex?`<span style="font-size:8px;color:var(--text3);font-family:monospace">${esc(p.hex.toUpperCase())}</span>`:''}
-      <span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${cls?esc(cls.label):'N/A'}</span>
+      ${(!isSkullHelmet&&p.hex)?`<span style="font-size:8px;color:var(--text3);font-family:monospace">${esc(p.hex.toUpperCase())}</span>`:''}
+      ${isSkullHelmet?`<span class="set-piece-tag" style="color:#888;border-color:#88844;background:#8882">Skull</span>`:`<span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${cls?esc(cls.label):'N/A'}</span>`}
     </div>`;
   }).join('');
   const catPills=cats.map(c=>`<span style="font-size:9px;padding:2px 5px;border-radius:4px;border:1px solid ${c.colour}44;color:${c.colour};font-weight:600;background:${c.colour}10">${esc(c.label)}</span>`).join('');
@@ -1545,14 +1689,18 @@ window.openSetPanel=function(id){
     </div>
     <button class="btn btn-icon" style="font-size:13px;flex-shrink:0" onclick="closeSetPanel()">✕</button>`;
   const pHtml=pieces.map(p=>{
-    const cls=classifyHex(p.hex,at,p.piece),col=cls?.colour||'#888';
+    const isSkullHelmet=p.piece==='Helmet'&&!!getSkullUrl(at);
+    const cls=isSkullHelmet?null:classifyHex(p.hex,at,p.piece),col=cls?.colour||'#888';
+    const skullKey=isSkullHelmet?Object.keys(SKULL_HELMETS).find(k=>at.toLowerCase().includes(k)):null;
     return`<div class="sp-piece">
-      <div class="sp-piece-dot" style="background:${p.hex||'transparent'};border-color:${col}55"></div>
+      ${isSkullHelmet&&skullKey
+        ?`<img src="https://mc-heads.net/avatar/${SKULL_HELMETS[skullKey]}/24" style="width:24px;height:24px;border-radius:4px;image-rendering:pixelated;flex-shrink:0">`
+        :`<div class="sp-piece-dot" style="background:${p.hex||'transparent'};border-color:${col}55"></div>`}
       <div class="sp-piece-info">
         <div class="sp-piece-name">${esc(p.piece)}</div>
-        <div class="sp-piece-hex">${p.hex?esc(p.hex.toUpperCase()):'N/A'}</div>
+        <div class="sp-piece-hex">${isSkullHelmet?'Skull Helmet':p.hex?esc(p.hex.toUpperCase()):'N/A'}</div>
       </div>
-      <span class="sp-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${cls?esc(cls.label):'—'}</span>
+      <span class="sp-piece-tag" style="color:${isSkullHelmet?'#888':col};border-color:${isSkullHelmet?'#88844':col+'55'};background:${isSkullHelmet?'#8882':col+'10'}">${isSkullHelmet?'Skull':cls?esc(cls.label):'—'}</span>
     </div>`;
   }).join('');
   const ownerActions=isOwn?`

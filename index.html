@@ -435,10 +435,11 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
           <div class="auto-cat" id="addAutoCat"><span style="color:var(--text3);font-size:12px">Select pieces and enter hex codes</span></div>
         </div>
         <div class="field" style="margin-bottom:0">
-          <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-transform:none;font-size:13px;letter-spacing:0;font-weight:400;background:var(--bg3);border-radius:8px;padding:10px 14px">
-            <span>Taking offers <span style="color:var(--text3);font-size:12px">(visitors can start a chat)</span></span>
-            <input type="checkbox" id="addForOffers">
-          </label>
+          <button id="addForOffersBtn" onclick="toggleForOffers()" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .15s">
+            <span>Taking Offers</span>
+            <span id="addForOffersIndicator" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .15s"></span>
+          </button>
+          <input type="checkbox" id="addForOffers" style="display:none">
         </div>
       </div>
     </div>
@@ -758,6 +759,23 @@ function renderSkinSettingsModal(){
     </div>`;
 }
 
+window.toggleForOffers=function(){
+  const cb=document.getElementById('addForOffers');
+  const btn=document.getElementById('addForOffersBtn');
+  const dot=document.getElementById('addForOffersIndicator');
+  cb.checked=!cb.checked;
+  if(cb.checked){
+    btn.style.borderColor='var(--green)';
+    btn.style.background='rgba(78,203,113,.08)';
+    btn.style.color='var(--green)';
+    dot.style.background='var(--green)';
+  } else {
+    btn.style.borderColor='var(--border)';
+    btn.style.background='var(--bg3)';
+    btn.style.color='var(--text2)';
+    dot.style.background='var(--border)';
+  }
+};
 window.togglePill=function(e){
   e.stopPropagation();
   document.getElementById('userPill')?.classList.toggle('open');

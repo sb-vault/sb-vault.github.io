@@ -340,24 +340,51 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     <div class="museum-hdr" id="museumHdr">
       <div class="loading" style="padding:20px;flex:1"><div class="spinner"></div></div>
     </div>
-    <div class="page-tabs" id="pageTabs"></div>
-    <div class="filter-bar">
-      <input class="fsearch" id="setSearch" placeholder="Search sets or #hex…" oninput="renderSets()">
-      <div class="cat-chips" id="catChips">
-        <button class="chip on" data-cat="all" onclick="toggleCat(this)">All</button>
-        <button class="chip" data-cat="exotic" onclick="toggleCat(this)">Exotic</button>
-        <button class="chip" data-cat="crystal" onclick="toggleCat(this)">Crystal</button>
-        <button class="chip" data-cat="fairy" onclick="toggleCat(this)">Fairy</button>
-        <button class="chip" data-cat="pure" onclick="toggleCat(this)">Pure</button>
-        <button class="chip" data-cat="bleached" onclick="toggleCat(this)">Bleached</button>
-        <button class="chip" data-cat="default" onclick="toggleCat(this)">Default</button>
-      </div>
-      <button class="offers-tog" id="offersToggle" onclick="toggleOffersFilter()">
-        <input type="checkbox" id="offersChk" onchange="toggleOffersFilter()"> For sale only
-      </button>
+    <!-- Museum sub-tabs -->
+    <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:12px">
+      <button id="museumTabExotic" onclick="switchMuseumTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;font-size:13px">Exotic</button>
+      <button id="museumTabSeymour" onclick="switchMuseumTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;font-size:13px">Seymour</button>
     </div>
-    <div class="sets-grid" id="setsGrid">
-      <div class="loading"><div class="spinner"></div>Loading sets…</div>
+    <!-- Exotic sub-view -->
+    <div id="museumExoticView">
+      <div class="page-tabs" id="pageTabs"></div>
+      <div class="filter-bar">
+        <input class="fsearch" id="setSearch" placeholder="Search sets or #hex…" oninput="renderSets()">
+        <div class="cat-chips" id="catChips">
+          <button class="chip on" data-cat="all" onclick="toggleCat(this)">All</button>
+          <button class="chip" data-cat="exotic" onclick="toggleCat(this)">Exotic</button>
+          <button class="chip" data-cat="crystal" onclick="toggleCat(this)">Crystal</button>
+          <button class="chip" data-cat="fairy" onclick="toggleCat(this)">Fairy</button>
+          <button class="chip" data-cat="pure" onclick="toggleCat(this)">Pure</button>
+          <button class="chip" data-cat="bleached" onclick="toggleCat(this)">Bleached</button>
+          <button class="chip" data-cat="default" onclick="toggleCat(this)">Default</button>
+        </div>
+        <button class="offers-tog" id="offersToggle" onclick="toggleOffersFilter()">
+          <input type="checkbox" id="offersChk" onchange="toggleOffersFilter()"> For sale only
+        </button>
+      </div>
+      <div class="sets-grid" id="setsGrid">
+        <div class="loading"><div class="spinner"></div>Loading sets…</div>
+      </div>
+    </div>
+    <!-- Seymour sub-view -->
+    <div id="museumSeymourView" style="display:none">
+      <div class="filter-bar">
+        <select id="seymourPieceFilter" onchange="renderSeymourSets()" style="height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 10px;font-size:13px">
+          <option value="">All pieces</option>
+          <option value="Velvet Top Hat">Velvet Top Hat</option>
+          <option value="Cashmere Jacket">Cashmere Jacket</option>
+          <option value="Satin Trousers">Satin Trousers</option>
+          <option value="Oxford Shoes">Oxford Shoes</option>
+        </select>
+        <input class="fsearch" id="seymourSearch" placeholder="Search sets or #hex…" oninput="renderSeymourSets()" style="max-width:200px">
+        <button class="offers-tog" id="seymourOffersToggle" onclick="toggleSeymourOffersFilter()">
+          <input type="checkbox" id="seymourOffersChk" onchange="toggleSeymourOffersFilter()"> For sale only
+        </button>
+      </div>
+      <div class="sets-grid" id="seymourSetsGrid">
+        <div class="loading"><div class="spinner"></div>Loading sets…</div>
+      </div>
     </div>
   </div>
 </div>
@@ -935,22 +962,40 @@ function isSeymourFade(colorName){
   return false;
 }
 
+function seymourTierColour(isFade, dE){
+  if(dE>5) return '#888888';
+  if(isFade){
+    if(dE<=1.0) return '#4a90d9'; // dark blue
+    if(dE<=2.0) return '#7ecef4'; // light blue
+    return '#f5c842';             // yellow
+  } else {
+    if(dE<=1.0) return '#e03030'; // red
+    if(dE<=2.0) return '#f472b6'; // pink
+    return '#f97316';             // orange
+  }
+}
+function seymourAbsDist(hex, targetHex){
+  const a=seymourHexToRgb(hex.replace('#','')), b=seymourHexToRgb(targetHex.replace('#',''));
+  return Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b);
+}
 function classifySeymour(hex){
   const h=normHex('#'+hex.replace('#',''));
   if(!h) return null;
   const itemLab=hexToLab(h.replace('#',''));
-  let best=null, bestDelta=Infinity;
+  let best=null, bestDelta=Infinity, bestHex='';
   const names=Object.keys(SEYMOUR_COLORS);
   for(let i=0;i<names.length;i++){
     const targetLab=SEYMOUR_COLORS_LAB[names[i]];
     if(!targetLab) continue;
     const dE=calculateDeltaEWithLab(itemLab,targetLab);
-    if(dE<bestDelta){bestDelta=dE;best=names[i];}
+    if(dE<bestDelta){bestDelta=dE;best=names[i];bestHex=SEYMOUR_COLORS[names[i]];}
   }
   if(!best) return null;
   const tier=bestDelta<=1.0?0:(bestDelta<=2.0?1:(bestDelta<=5.0?2:3));
   const isFade=isSeymourFade(best);
-  return {cat:'seymour',label:best,deltaE:bestDelta,tier,isFade,colour:isFade?'#7fbaff':'#ff9d6b'};
+  const colour=seymourTierColour(isFade,bestDelta);
+  const abs=seymourAbsDist(h.replace('#',''), bestHex);
+  return {cat:'seymour',label:best,deltaE:bestDelta,abs,tier,isFade,targetHex:bestHex,colour};
 }
 const PK={Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'};
 
@@ -1891,7 +1936,7 @@ function setCard(s){
       ${dot}
       <span class="set-piece-name">${esc(p.piece)}</span>
       ${(!isSkullHelmet&&p.hex)?`<span style="font-size:8px;color:var(--text3);font-family:monospace">${esc(p.hex.toUpperCase())}</span>`:''}
-      ${isSkullHelmet?`<span class="set-piece-tag" style="color:#888;border-color:#88844;background:#8882">Skull</span>`:`<span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${cls?esc(cls.label):'N/A'}</span>`}
+      ${isSkullHelmet?`<span class="set-piece-tag" style="color:#888;border-color:#88844;background:#8882">Skull</span>`:`<span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${cls?esc(cls.cat==='seymour'?cls.label+' \u0394E:'+cls.deltaE.toFixed(2)+' Abs:'+cls.abs:cls.label):'N/A'}</span>`}
     </div>`;
   }).join('');
   const catPills=cats.map(c=>`<span style="font-size:9px;padding:2px 5px;border-radius:4px;border:1px solid ${c.colour}44;color:${c.colour};font-weight:600;background:${c.colour}10">${esc(c.label)}</span>`).join('');
@@ -1921,6 +1966,114 @@ window.toggleCat=function(el){
   renderSets();
 };
 window.toggleOffersFilter=function(){ offersFilterOn=!offersFilterOn; document.getElementById('offersToggle').classList.toggle('on',offersFilterOn); document.getElementById('offersChk').checked=offersFilterOn; renderSets(); };
+
+let currentMuseumTab='exotic';
+let seymourOffersOn=false;
+
+window.switchMuseumTab=function(tab){
+  currentMuseumTab=tab;
+  const exoBtn=document.getElementById('museumTabExotic');
+  const seyBtn=document.getElementById('museumTabSeymour');
+  const exoView=document.getElementById('museumExoticView');
+  const seyView=document.getElementById('museumSeymourView');
+  if(tab==='seymour'){
+    exoBtn.style.borderBottomColor='transparent'; exoBtn.style.color='var(--text3)'; exoBtn.style.fontWeight='600';
+    seyBtn.style.borderBottomColor='var(--accent)'; seyBtn.style.color='var(--text)'; seyBtn.style.fontWeight='700';
+    exoView.style.display='none'; seyView.style.display='block';
+    renderSeymourSets();
+  } else {
+    seyBtn.style.borderBottomColor='transparent'; seyBtn.style.color='var(--text3)'; seyBtn.style.fontWeight='600';
+    exoBtn.style.borderBottomColor='var(--accent)'; exoBtn.style.color='var(--text)'; exoBtn.style.fontWeight='700';
+    seyView.style.display='none'; exoView.style.display='block';
+  }
+};
+
+window.toggleSeymourOffersFilter=function(){
+  seymourOffersOn=!seymourOffersOn;
+  document.getElementById('seymourOffersToggle').classList.toggle('on',seymourOffersOn);
+  document.getElementById('seymourOffersChk').checked=seymourOffersOn;
+  renderSeymourSets();
+};
+
+function renderSeymourSets(){
+  const grid=document.getElementById('seymourSetsGrid');
+  if(!grid) return;
+  const pieceFilter=(document.getElementById('seymourPieceFilter')?.value||'').trim();
+  const q=(document.getElementById('seymourSearch')?.value||'').toLowerCase().trim();
+  const isHex=/^#?[0-9a-f]{3,6}$/i.test(q);
+  const normQ=isHex?normHex(q.startsWith('#')?q:'#'+q):'';
+
+  // Get all sets belonging to this museum owner
+  let sets=allSets.filter(s=>{
+    // Must be Seymour armour type
+    if(!(s.armour_type||'').toLowerCase().includes('seymour')) return false;
+    if(seymourOffersOn&&!s.for_offers) return false;
+    return true;
+  });
+
+  // Filter by piece name
+  if(pieceFilter){
+    sets=sets.filter(s=>(s.pieces||[]).some(p=>p.piece===pieceFilter));
+  }
+
+  // Filter by search
+  if(q){
+    if(isHex){
+      sets=sets.filter(s=>(s.pieces||[]).some(p=>normHex(p.hex||'')===normQ));
+    } else {
+      sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q)));
+    }
+  }
+
+  if(sets.length===0){
+    grid.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">No Seymour sets found</div></div>';
+    return;
+  }
+
+  // Sort: if piece filter active, sort by deltaE of that piece; otherwise by set name
+  if(pieceFilter){
+    sets=sets.slice().sort((a,b)=>{
+      const pa=(a.pieces||[]).find(p=>p.piece===pieceFilter);
+      const pb=(b.pieces||[]).find(p=>p.piece===pieceFilter);
+      const da=pa&&pa.hex?classifySeymour(pa.hex)?.deltaE??999:999;
+      const db=pb&&pb.hex?classifySeymour(pb.hex)?.deltaE??999:999;
+      return da-db;
+    });
+  }
+
+  grid.innerHTML=sets.map(s=>{
+    const isOwn=currentUser&&currentUser.uuid===viewingUuid;
+    // Find the relevant piece
+    const dispPiece=pieceFilter?(s.pieces||[]).find(p=>p.piece===pieceFilter):null;
+    const piecesHtml=(s.pieces||[]).map(p=>{
+      const cls=p.hex?classifySeymour(p.hex):null;
+      const col=cls?.colour||'#888';
+      const hexSpan=p.hex?`<span style="font-size:9px;color:var(--text3);font-family:monospace">#${esc(p.hex.toUpperCase())}</span>`:'';
+      const tagText=cls?esc(p.piece.slice(0,3).toUpperCase()+' \u0394E:'+cls.deltaE.toFixed(2)):'N/A';
+      return `<div style="display:flex;align-items:center;gap:4px;min-width:0">
+        <div style="width:10px;height:10px;border-radius:50%;background:${p.hex?'#'+p.hex.replace('#',''):'#888'};border:1px solid ${col}44;flex-shrink:0"></div>
+        <span style="font-size:9px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.piece)}</span>
+        ${hexSpan}
+        <span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${tagText}</span>
+      </div>`;
+    }).join('');
+
+    const deltaInfo=dispPiece&&dispPiece.hex?(()=>{const c=classifySeymour(dispPiece.hex);return c?`<div style="font-size:11px;color:${c.colour};font-weight:700;margin-top:4px">\u0394E: ${c.deltaE.toFixed(2)} &middot; Abs: ${c.abs} &middot; ${esc(c.label)}</div>`:''})():'';
+
+    return `<div class="set-card" onclick="openSetPanel('${esc(s.id)}')">
+      <div style="height:3px;background:#7ecef4"></div>
+      <div class="set-body">
+        <div class="set-name">${esc(s.set_name||'Unnamed')}</div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Seymour Armour</div>
+        <div style="display:flex;flex-direction:column;gap:3px">${piecesHtml}</div>
+        ${deltaInfo}
+      </div>
+      <div class="set-foot">
+        ${s.for_offers?`<span style="font-size:10px;color:#4ade80;font-weight:600">For sale</span>`:'<span></span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
 
 /* SET DETAIL PANEL */
 let activePanelSet=null;
@@ -2167,7 +2320,7 @@ function renderPieceInputs(){
         const hex='#'+hi.value;
         const cls=classifySeymour(hi.value);
         if(cls && hi.value.length===6){
-          ct.textContent=cls.label+' (\u0394E: '+cls.deltaE.toFixed(2)+')';
+          ct.textContent=cls.label+' \u0394E:'+cls.deltaE.toFixed(2)+' Abs:'+cls.abs;
           ct.style.color=cls.colour||'';
           dot.style.background=hex;
         } else {

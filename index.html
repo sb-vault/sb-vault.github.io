@@ -522,9 +522,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 </div>
 
 <script>
-/* ─────────────────────────────────────────────────────
-   CONFIG
-───────────────────────────────────────────────────── */
+/* CONFIG */
 const API = 'https://hypixelapi.lucas-alexander-pilu.workers.dev';
 const MCID_CLIENT_ID = 'XIyZSAUOMSHFMdidQPdwGKKgvwisYGiE';
 const MCID_AUTH_URL  = 'https://mc-id.com/api/auth/oauth2/authorize';
@@ -532,9 +530,7 @@ const REDIRECT_URI   = 'https://sb-vault.github.io/';
 const SCOPE          = 'openid profile';
 const HEAD = uuid => `https://mc-heads.net/avatar/${uuid}/32`;
 
-/* ─────────────────────────────────────────────────────
-   STATE
-───────────────────────────────────────────────────── */
+/* STATE */
 let currentUser = null;
 let currentTheme = 'dark';
 let viewingUuid = null;
@@ -550,9 +546,7 @@ let chatList = [];
 let archivedChats = [];
 let lastMessageTs = 0;
 
-/* ─────────────────────────────────────────────────────
-   THEME
-───────────────────────────────────────────────────── */
+/* THEME */
 function setTheme(t){
   currentTheme = t;
   document.documentElement.setAttribute('data-theme', t);
@@ -564,9 +558,7 @@ function loadTheme(){
   setTheme(localStorage.getItem('vault_theme')||'dark');
 }
 
-/* ─────────────────────────────────────────────────────
-   VIEW ROUTING
-───────────────────────────────────────────────────── */
+/* VIEW ROUTING */
 function showView(name){
   ['home','museum'].forEach(v => {
     document.getElementById('view-'+v).style.display = v===name?'block':'none';
@@ -585,9 +577,7 @@ function openMyMuseum(){
   openMuseum(currentUser.uuid);
 }
 
-/* ─────────────────────────────────────────────────────
-   AUTH – MC-ID PKCE
-───────────────────────────────────────────────────── */
+/* AUTH - MC-ID PKCE */
 function b64url(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function genVerifier(){ const a=new Uint8Array(32);crypto.getRandomValues(a);return b64url(a); }
 async function genChallenge(v){ return b64url(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v))); }
@@ -641,7 +631,7 @@ function setUser(user){
     if(cw) cw.style.display='none';
     return;
   }
-  // Render pill immediately — don't block on discord fetch
+  // Render pill immediately - don't block on discord fetch
   function renderPill(discord){
     const hasDisc=!!discord;
     if(!area) return;
@@ -794,9 +784,7 @@ function loadStoredUser(){
   if(r) try{ setUser(JSON.parse(r)); }catch(e){ console.warn('stored user parse error',e); }
 }
 
-/* ─────────────────────────────────────────────────────
-   COLOUR CLASSIFICATION
-───────────────────────────────────────────────────── */
+/* COLOUR CLASSIFICATION */
 const BLEACHED='#a06540';
 const PURE_COLOURS={'#993333':'Red','#d87f33':'Orange','#e5e533':'Yellow','#7fcc19':'Green','#667f33':'Dark Green','#6699d8':'Light Blue','#4c7f99':'Cyan','#334cb2':'Dark Blue','#f27fa5':'Pink','#7f3fb2':'Purple','#b24cd8':'Magenta','#664c33':'Brown','#ffffff':'White','#999999':'Light Grey','#4c4c4c':'Dark Grey','#191919':'Black'};
 const CRYSTAL_HEXES=new Set(['#fcf3ff','#efe1f5','#e5d1ed','#d9c1e3','#c6a3d4','#b88bc9','#a875bd','#9c64b3','#8e51a6','#7e4196','#6a2c82','#63237d','#5d1c78','#54146e','#46085e','#1f0030']);
@@ -806,12 +794,11 @@ const PK={Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'};
 
 function normHex(h){if(!h)return'';h=h.trim().toLowerCase();if(!h.startsWith('#'))h='#'+h;if(/^#[0-9a-f]{3}$/.test(h))h='#'+h[1]+h[1]+h[2]+h[2]+h[3]+h[3];return h;}
 function isDefault(at,pn,hex){if(!at||!pn||!hex)return false;const h=normHex(hex),al=at.toLowerCase();for(const[k,v]of Object.entries(ORIG_COLOURS)){if(!al.includes(k))continue;if(v.full)return normHex(v.full)===h;const pk=PK[pn];if(pk&&v[pk])return normHex(v[pk])===h;}return false;}
-function classifyHex(hex,at,pn){const h=normHex(hex);if(!h||!/^#[0-9a-f]{6}$/.test(h))return null;if(at&&pn&&isDefault(at,pn,h))return{cat:'default',label:'Default',colour:'#888'};if(h===BLEACHED)return{cat:'bleached',label:'Bleached',colour:'#c8906a'};if(CRYSTAL_HEXES.has(h))return{cat:'crystal',label:'Crystal',colour:'#44ffee'};if(FAIRY_HEXES.has(h))return{cat:'fairy',label:'Fairy',colour:'#ff66b2'};const p=PURE_COLOURS[h];if(p)return{cat:'pure',label:'Pure '+p,colour:h==='#ffffff'?'#aaa':h};return{cat:'exotic',label:'Exotic',colour:'#ff6b35'};}
+function classifyHex(hex,at,pn){const h=normHex(hex);if(!h||!/^#[0-9a-f]{6}$/.test(h))return null;if(at&&pn&&isDefault(at,pn,h))return null; // default colour = no tag
+if(h===BLEACHED)return{cat:'bleached',label:'Bleached',colour:'#c8906a'};if(CRYSTAL_HEXES.has(h))return{cat:'crystal',label:'Crystal',colour:'#44ffee'};if(FAIRY_HEXES.has(h))return{cat:'fairy',label:'Fairy',colour:'#ff66b2'};const p=PURE_COLOURS[h];if(p)return{cat:'pure',label:'Pure '+p,colour:h==='#ffffff'?'#aaa':h};return{cat:'exotic',label:'Exotic',colour:'#ff6b35'};}
 function classifyPieces(pieces,at){const seen=new Map();pieces.forEach(p=>{if(p.dyeable===false)return;const c=classifyHex(p.hex,at,p.piece);if(c&&!seen.has(c.cat))seen.set(c.cat,c);});return[...seen.values()];}
 
-/* ─────────────────────────────────────────────────────
-   MATERIALS
-───────────────────────────────────────────────────── */
+/* MATERIALS */
 const MATS={'gold armor':{h:'gold',c:'gold',l:'gold',b:'gold'},'gold armour':{h:'gold',c:'gold',l:'gold',b:'gold'},'chainmail armor':{h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},'chainmail armour':{h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},'iron armor':{h:'iron',c:'iron',l:'iron',b:'iron'},'iron armour':{h:'iron',c:'iron',l:'iron',b:'iron'},'diamond armor':{h:'diamond',c:'diamond',l:'diamond',b:'diamond'},'diamond armour':{h:'diamond',c:'diamond',l:'diamond',b:'diamond'},'hardened diamond':{h:'diamond',c:'diamond',l:'diamond',b:'diamond'},'perfect armor':{h:'diamond',c:'diamond',l:'diamond',b:'diamond'},'perfect armour':{h:'diamond',c:'diamond',l:'diamond',b:'diamond'},'golem armor':{h:'iron',c:'iron',l:'iron',b:'iron'},'golem armour':{h:'iron',c:'iron',l:'iron',b:'iron'},'flamebreaker':{h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},'sorrow armor':{h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},'sorrow armour':{h:'chainmail',c:'chainmail',l:'chainmail',b:'chainmail'},'ember armor':{h:'leather',c:'chainmail',l:'chainmail',b:'chainmail'},'ember armour':{h:'leather',c:'chainmail',l:'chainmail',b:'chainmail'},'rekindled ember':{h:'leather',c:'chainmail',l:'chainmail',b:'chainmail'},'ender armor':{h:'leather',c:'chainmail',l:'chainmail',b:'chainmail'},'ender armour':{h:'leather',c:'chainmail',l:'chainmail',b:'chainmail'},'angler armor':{h:'diamond',c:'leather',l:'leather',b:'leather'},'angler armour':{h:'diamond',c:'leather',l:'leather',b:'leather'},'squire armor':{h:'iron',c:'leather',l:'iron',b:'leather'},'squire armour':{h:'iron',c:'leather',l:'iron',b:'leather'},'mercenary armor':{h:'leather',c:'leather',l:'chainmail',b:'leather'},'mercenary armour':{h:'leather',c:'leather',l:'chainmail',b:'leather'},'spring boots':{h:'leather',c:'leather',l:'leather',b:'chainmail'}};
 function getMat(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'}[piece]||'h';for(const[k,v]of Object.entries(MATS)){if(key.includes(k))return v[pk]||'leather';}return'leather';}
 function isDyeable(at,piece){return getMat(at,piece)==='leather';}
@@ -843,18 +830,18 @@ const SKULL_HELMETS={
   'strong dragon':   '78bc6551beb2148d939b69925140d2379fe0fab6e7d31f65df50b59e9f77a0e4',
   'superior dragon': '1e0329f42192ee7c1a0c704f82dbbbe7c00fbfa3f020c1067a208630b991b988',
   'unstable dragon': '605fc4e2b68c45059afef3999e9a95aa3d8943597a7894e569397d6cf5d1672a',
-  'wither skeleton': '6ce1327d-c29c-3b73-acb4-8ab72cc2c92b',
-  'goldor':          '654bccc0-ed3c-3483-bfc2-701c5d582593',
-  'storm':           '19f4ade1-1057-3c24-bdd1-54adf342bf79',
-  'maxor':           'ee05abe4-347b-3ea5-8248-fae93392140e',
-  'necron':          '66324342-b7cc-3bfd-bce5-12324193befb',
-  'ender':           'c7c991cd-a6ae-3947-9f86-32173a9c10d6',
+  'wither skeleton': '691129409789589ae1b43e1d828c06fc9a213b78348a68b7313bdd401d7485cc',
+  'goldor':          'd4923e28a187fe6af2278b7394ef253a96331fa2dc0731879c780bfee244228a',
+  'storm':           'f83159c5bb7d80454d2d646b15774b7116aabcb3af5b6777a27573fc45f7854f',
+  'maxor':           'dbfb0ed5959190d415e726a15f2984007a67a5fd4ea5671d0d676f9f641b5bac',
+  'necron':          '2bbb2fa7a6ca087280ea0cb564b41ef1ae404a19f7a8128d3d28c519a85e063f',
+  'ender':           'f715ca0f742544ae3ca104297578c2ed700ea3a54980413512f5e7a0bc06729a',
 };
 // Returns texture URL: long hashes go to textures.minecraft.net, short UUIDs use Hypixel API
 function getSkullTextureUrl(val){
   return val.length>36
     ? 'https://textures.minecraft.net/texture/'+val
-    : null; // UUID — fetch from Hypixel API at runtime
+    : null; // UUID - fetch from Hypixel API at runtime
 }
 // Cache for skull helmet texture URLs fetched from Hypixel API
 const _skullTexCache={};
@@ -873,8 +860,9 @@ async function fetchSkullTexUrl(armourType){
     const item=items.find(i=>i.id===helmetName||i.name?.toLowerCase().includes(at+' helmet'));
     
     if(item?.skin){
-      const decoded=atob(item.skin);
-      const json=JSON.parse(decoded);
+      const raw=item.skin.value||item.skin;
+      const padded=raw+'='.repeat((4-raw.length%4)%4);
+      const json=JSON.parse(atob(padded));
       const url=json?.textures?.SKIN?.url;
       if(url){ _skullTexCache[at]=url; return url; }
     }
@@ -923,7 +911,7 @@ const DEF_HEX={
   'zombie soldier':  {h:'#d07f00',c:'#d07f00',l:'#d07f00',b:'#d07f00'},
   'zombie lord':     {h:'#9b01c1',c:'#9b01c1',l:'#9b01c1',b:'#9b01c1'},
   'super heavy':     {h:'#e6e6e6',c:'#5a6464',l:'#5a6464',b:'#e6e6e6'},
-  'adaptive':        {h:'skull',c:'#bfbcb2',l:'#bfbcb2',b:'#bfbcb2'},
+  'adaptive':        {h:'skull',c:'#bfbcb2',l:'#bfbcb2',b:'#bfbcb2'}, // confirmed
   'necromancer lord':{h:'#370147',c:'#370147',l:'#370147',b:'#400352'},
   // Nether
   'crimson':   {h:'#ff6f0c',c:'#ff6f0c',l:'#e66105',b:'#e65300'},
@@ -978,7 +966,7 @@ const DEF_HEX={
   'canopy':         {h:'skull',c:'#006633',l:'#006600',b:'#331900'},
   'divan':          {h:'skull',c:'#7a7964',l:'#7a7964',b:'#7a7964'},
   'wyld':           {h:'skull',c:'#35b73b',l:'#35b73b',b:'#154918'},
-  'shadow assassin':{h:'skull',c:'#a1aa14',l:'#a1aa14',b:'#a1aa14'},
+  'shadow assassin':{h:'skull',c:'#000000',l:'#000000',b:'#000000'},
   'celeste':        {h:'#d48ef2',c:'#ff8ede',l:'#ff8eca',b:'#ff8eb6'},
   'aurora chestplate':{h:'#2841f1',c:'#2841f1',l:'#3f56fb',b:'#6184fc'},
   'nutcracker':     {h:'#fc2f3c',c:'#fc2f3c',l:'#fff9eb',b:'#46343a'},
@@ -990,10 +978,10 @@ const DEF_HEX={
   'salmon':         {h:'#c13c0f',c:'#a82b76',l:'#a82b76',b:'#c13c0f'},
   'minos hunter':   {h:'#ff0a0a',c:'#ff0a0a',l:'#ff0a0a',b:'#304b4e'},
   'kelly':          {h:'#7a4120',c:'#7a4120',l:'#7a4120',b:'#7a4120'},
-}
+};
 function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'}[piece]||'h';for(const[k,v]of Object.entries(DEF_HEX)){if(key.includes(k))return v[pk]||BLEACHED;}return BLEACHED;}
 
-/* ─────────────────────────────────────────────────────
+/* ---
    MINECRAFT SKIN RENDERER
    Pure Three.js (r128, cdnjs). No external skin libraries.
    
@@ -1008,7 +996,7 @@ function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplat
    
    Outer layers (jacket/hat/sleeves/pants) at rows 32-63 of the skin:
    Same UV layout but offset, slightly larger boxes
-───────────────────────────────────────────────────── */
+--- */
 
 // Load Three.js from cdnjs (reliable, CORS-ok, UMD global)
 let _threeReady = null;
@@ -1127,7 +1115,7 @@ function buildPlayer(THREE,tex,skinImg,opts={}){
   if(showJacket) addAt(g,makeOuterLayer(THREE,tex,8,12,4,
     [[28,36,4,12],[16,36,4,12],[20,32,8,4],[28,32,8,4],[20,36,8,12],[32,36,8,12]],0.2),0,18*P,0);
 
-  // ARMS — grouped for rotation. Pivot at shoulder (top of arm).
+  // ARMS - grouped for rotation. Pivot at shoulder (top of arm).
   // Arm centre is AW/2 below shoulder, so translate arm mesh down by 6P within group.
   const rArmPivot=new THREE.Group();
   rArmPivot.position.set(-(4+AW/2)*P, 24*P, 0); // shoulder position
@@ -1155,7 +1143,7 @@ function buildPlayer(THREE,tex,skinImg,opts={}){
   g.add(lArmPivot);
   g.userData.lArmPivot=lArmPivot;
 
-  // LEGS — pivoted at hip (top of leg = y=12*P from feet, i.e. y=12*P in local coords before g.position.y offset)
+  // LEGS - pivoted at hip (top of leg = y=12*P from feet, i.e. y=12*P in local coords before g.position.y offset)
   // Pivot at top of leg: y=12*P, mesh centre at y=-6*P within group
   // Right leg back (same angle as left arm), left leg forward (same as right arm)
   const rLegPivot=new THREE.Group();
@@ -1292,7 +1280,7 @@ async function addArmorLayer(THREE, group, pc, slim, P, armourType=''){
       const skullKey=Object.keys(SKULL_HELMETS).find(k=>(armourType||'').toLowerCase().includes(k));
       const uuid=skullKey?SKULL_HELMETS[skullKey]:null;
       if(uuid){
-        // Fetch skin via Hypixel API → textures.minecraft.net
+        // Fetch skin via Hypixel API - textures.minecraft.net
         let skinUrl=null;
         try{
           const r=await fetch('https://api.hypixel.net/v2/resources/skyblock/items');
@@ -1358,7 +1346,7 @@ async function addArmorLayer(THREE, group, pc, slim, P, armourType=''){
       ],INFLATE,2);
       bodyArmor.renderOrder=2;
       addAt(group,bodyArmor,0,18*P,0);
-      // Right arm — match skin arm pivot rotation
+      // Right arm - match skin arm pivot rotation
       const rArmArmor=new THREE.Group();
       rArmArmor.position.set(-(4+AW/2)*P,24*P,0);
       rArmArmor.rotation.z=-0.04375; rArmArmor.rotation.x=-0.03125;
@@ -1525,9 +1513,7 @@ async function renderPlayerInto(containerEl,ownerUuid,pieces,armourType,opts={})
   }
 }
 
-/* ─────────────────────────────────────────────────────
-   PIECE PREVIEW (for add-set form — simple 2D flat)
-───────────────────────────────────────────────────── */
+/* PIECE PREVIEW (for add-set form - simple 2D flat) */
 async function drawPiecePreview(canvas, piece, hex, armourType){
   const ctx=canvas.getContext('2d'), cw=canvas.width, ch=canvas.height;
   ctx.clearRect(0,0,cw,ch);
@@ -1551,9 +1537,7 @@ function adjustBright(hex,f){
   return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
 }
 
-/* ─────────────────────────────────────────────────────
-   HOME / BROWSE
-───────────────────────────────────────────────────── */
+/* HOME / BROWSE */
 async function loadStats(){
   try{
     const r=await fetch(`${API}/listings/stats`);
@@ -1615,9 +1599,7 @@ function browseCard(m){
   </div>`;
 }
 
-/* ─────────────────────────────────────────────────────
-   MUSEUM VIEW
-───────────────────────────────────────────────────── */
+/* MUSEUM VIEW */
 async function openMuseum(uuid){
   viewingUuid=uuid; currentPageId='all';
   activeCatFilter=new Set(['all']); offersFilterOn=false;
@@ -1705,7 +1687,7 @@ function renderSets(){
     const normQ=normHex(q.startsWith('#')?q:'#'+q);
     sets=sets.filter(s=>{
       if(isHex){
-        // Search by hex code — match any piece's hex
+        // Search by hex code - match any piece's hex
         return (s.pieces||[]).some(p=>normHex(p.hex||'')===normQ);
       }
       return [(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q));
@@ -1762,9 +1744,7 @@ function setCard(s){
   </div>`;
 }
 
-/* ─────────────────────────────────────────────────────
-   FILTERS
-───────────────────────────────────────────────────── */
+/* FILTERS */
 window.toggleCat=function(el){
   const cat=el.dataset.cat;
   if(cat==='all'){ activeCatFilter=new Set(['all']); document.querySelectorAll('#catChips .chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); }
@@ -1773,9 +1753,7 @@ window.toggleCat=function(el){
 };
 window.toggleOffersFilter=function(){ offersFilterOn=!offersFilterOn; document.getElementById('offersToggle').classList.toggle('on',offersFilterOn); document.getElementById('offersChk').checked=offersFilterOn; renderSets(); };
 
-/* ─────────────────────────────────────────────────────
-   SET DETAIL PANEL
-───────────────────────────────────────────────────── */
+/* SET DETAIL PANEL */
 let activePanelSet=null;
 window.openSetPanel=function(id){
   const s=allSets.find(x=>x.id===id); if(!s) return;
@@ -1869,9 +1847,7 @@ async function openChatForSet(id){
   }catch(e){ toast('Failed to start chat.'); }
 }
 
-/* ─────────────────────────────────────────────────────
-   ADD SET MODAL
-───────────────────────────────────────────────────── */
+/* ADD SET MODAL */
 let addPieces=new Set();
 window.openAddSetModal=function(){
   if(!currentUser){ startLogin(); return; }
@@ -1929,7 +1905,7 @@ window.ARMOUR_TYPES=[
   // Misc
   "Sorrow Armour","Titanium Armour","Mastiff Armour","Fairy Armour","Crystal Armour",
   "Revenant Armour","Skeleton Master Armour","Gold Armour",
-]
+];
 window.onArmourTypeChange=function(){
   renderPieceInputs();
   const q=(document.getElementById('addArmourType')?.value||'').trim().toLowerCase();
@@ -1938,7 +1914,20 @@ window.onArmourTypeChange=function(){
   if(!q){box.style.display='none';return;}
   const matches=ARMOUR_TYPES.filter(a=>a.toLowerCase().includes(q));
   if(!matches.length){box.style.display='none';return;}
-  box.innerHTML=matches.map(a=>`<div onclick="document.getElementById('addArmourType').value='${a.replace(/'/,"\'")}';;box=document.getElementById('armourTypeSuggestions');box.style.display='none';onArmourTypeChange();" style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text);border-bottom:1px solid var(--border)" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''">${a}</div>`).join('');
+  box.innerHTML='';
+  matches.forEach(a=>{
+    const div=document.createElement('div');
+    div.textContent=a;
+    div.style.cssText='padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text);border-bottom:1px solid var(--border)';
+    div.onmouseenter=()=>div.style.background='var(--bg3)';
+    div.onmouseleave=()=>div.style.background='';
+    div.onclick=()=>{
+      document.getElementById('addArmourType').value=a;
+      box.style.display='none';
+      onArmourTypeChange();
+    };
+    box.appendChild(div);
+  });
   box.style.display='block';
 };
 // Close suggestions when clicking outside
@@ -2061,9 +2050,7 @@ window.submitAddSet=async function(){
   finally{btn.disabled=false;btn.textContent='Add Set';}
 };
 
-/* ─────────────────────────────────────────────────────
-   PAGES
-───────────────────────────────────────────────────── */
+/* PAGES */
 window.openAddPageModal=function(){ document.getElementById('addPageName').value=''; openModal('addPageModal'); };
 window.submitAddPage=async function(){
   const name=document.getElementById('addPageName').value.trim();
@@ -2077,14 +2064,10 @@ window.submitAddPage=async function(){
   }catch(e){toast('Failed.');}
 };
 
-/* ─────────────────────────────────────────────────────
-   SHARE
-───────────────────────────────────────────────────── */
+/* SHARE */
 window.copyShare=function(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!')).catch(()=>toast('Could not copy.')); };
 
-/* ─────────────────────────────────────────────────────
-   CHAT SYSTEM
-───────────────────────────────────────────────────── */
+/* CHAT SYSTEM */
 window.openChatPanel=function(){ document.getElementById('chatOv').classList.add('open'); document.getElementById('chatPanel').classList.add('open'); };
 window.closeChatPanel=function(){ document.getElementById('chatOv').classList.remove('open'); document.getElementById('chatPanel').classList.remove('open'); };
 
@@ -2171,7 +2154,7 @@ window.openChat=async function(id){
               oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
             <button class="chat-send" onclick="sendMsg()">Send</button>
           </div>
-          <input type="file" id="chatImgInput" accept="image/*" style="display:none" onchange="handleImgUpload(event)">`
+          <input type="file" id="chatImgInput" accept="image/\u002a" style="display:none" onchange="handleImgUpload(event)">`
       }`;
     const msgs=document.getElementById('chatMsgs');
     if(msgs) msgs.scrollTop=msgs.scrollHeight;
@@ -2223,7 +2206,7 @@ function resizeImg(file,mW,mH){
   });
 }
 window.closeChat=async function(id){
-  try{ await fetch(`${API}/chats/${id}/archive`,{method:'PUT',headers:{Authorization:`Bearer ${getToken()}`,'Content-Type':'application/json'},body:JSON.stringify({both:true})}); activeChatId=null; loadChatList(); document.getElementById('chatMain').innerHTML='<div class="chat-empty"><div style="font-size:28px;opacity:.3">✓</div>Chat closed.</div>'; toast('Chat closed.'); }
+  try{ await fetch(`${API}/chats/${id}/archive`,{method:'PUT',headers:{Authorization:`Bearer ${getToken()}`,'Content-Type':'application/json'},body:JSON.stringify({both:true})}); activeChatId=null; loadChatList(); document.getElementById('chatMain').innerHTML='<div class="chat-empty"><div style="font-size:28px;opacity:.3">-</div>Chat closed.</div>'; toast('Chat closed.'); }
   catch(e){toast('Could not close chat.');}
 };
 window.restoreChat=async function(id){
@@ -2264,9 +2247,7 @@ function pollChats(){
   },8000);
 }
 
-/* ─────────────────────────────────────────────────────
-   REPORT
-───────────────────────────────────────────────────── */
+/* REPORT */
 let repCtx={type:null,targetId:null,targetIgn:null},selReason=null;
 window.openReport=function(type,tid,tign){ repCtx={type,targetId:tid,targetIgn:tign}; selReason=null; document.getElementById('repNotes').value=''; document.querySelectorAll('.rep-btn').forEach(b=>b.classList.remove('on')); openModal('reportModal'); };
 window.selRep=function(el,r){ selReason=r; document.querySelectorAll('.rep-btn').forEach(b=>b.classList.remove('on')); el.classList.add('on'); };
@@ -2281,9 +2262,7 @@ window.submitReport=async function(){
   finally{btn.disabled=false;btn.textContent='Submit';}
 };
 
-/* ─────────────────────────────────────────────────────
-   UTILITIES
-───────────────────────────────────────────────────── */
+/* UTILITIES */
 window.openModal=function(id){document.getElementById(id).classList.add('open');};
 window.closeModal=function(id){document.getElementById(id).classList.remove('open');};
 
@@ -2298,9 +2277,7 @@ function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function ago(ts){const d=Date.now()-ts,m=Math.floor(d/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return new Intl.DateTimeFormat('en-GB',{month:'short',day:'numeric'}).format(new Date(ts));}
 function fmtN(n){n=Number(n);if(n>=1e6)return(n/1e6).toFixed(1).replace(/\.0$/,'')+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n.toLocaleString('en-GB');}
 
-/* ─────────────────────────────────────────────────────
-   INIT
-───────────────────────────────────────────────────── */
+/* INIT */
 loadTheme();
 loadStoredUser();
 handleCallback();

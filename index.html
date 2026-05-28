@@ -1692,9 +1692,13 @@ window.openSetPanel=function(id){
     const isSkullHelmet=p.piece==='Helmet'&&!!getSkullUrl(at);
     const cls=isSkullHelmet?null:classifyHex(p.hex,at,p.piece),col=cls?.colour||'#888';
     const skullKey=isSkullHelmet?Object.keys(SKULL_HELMETS).find(k=>at.toLowerCase().includes(k)):null;
+    const skullVal=skullKey?SKULL_HELMETS[skullKey]:'';
+    const skullAvatarUrl=skullVal.length>36
+      ?`https://mc-heads.net/head/${skullVal}/24`
+      :`https://mc-heads.net/avatar/${skullVal}/24`;
     return`<div class="sp-piece">
       ${isSkullHelmet&&skullKey
-        ?`<img src="https://mc-heads.net/avatar/${SKULL_HELMETS[skullKey]}/24" style="width:24px;height:24px;border-radius:4px;image-rendering:pixelated;flex-shrink:0">`
+        ?`<img src="${skullAvatarUrl}" style="width:24px;height:24px;border-radius:4px;image-rendering:pixelated;flex-shrink:0">`
         :`<div class="sp-piece-dot" style="background:${p.hex||'transparent'};border-color:${col}55"></div>`}
       <div class="sp-piece-info">
         <div class="sp-piece-name">${esc(p.piece)}</div>
@@ -1821,9 +1825,29 @@ function renderPieceInputs(){
   container.innerHTML='';
   container.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px';
   pieces.forEach(piece=>{
-    const dy=isDyeable(at||'',piece), mat=at?getMat(at,piece):'leather';
+    const isSkull=piece==='Helmet'&&getSkullUrl(at);
+    const dy=!isSkull&&isDyeable(at||'',piece);
     const row=document.createElement('div'); row.className='piece-row'; row.dataset.piece=piece;
     row.style.cssText='display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:8px;padding:8px;';
+    if(isSkull){
+      // Skull helmet: show avatar, no hex, no tag
+      const skullKey=Object.keys(SKULL_HELMETS).find(k=>at.toLowerCase().includes(k));
+      const val=skullKey?SKULL_HELMETS[skullKey]:'';
+      const avatarUrl=val.length>36
+        ?`https://mc-heads.net/head/${val}/20`
+        :`https://mc-heads.net/avatar/${val}/20`;
+      const img=document.createElement('img');
+      img.src=avatarUrl; img.style.cssText='width:20px;height:20px;border-radius:3px;image-rendering:pixelated;flex-shrink:0';
+      row.appendChild(img);
+      const right=document.createElement('div'); right.style.cssText='flex:1;min-width:0;display:flex;flex-direction:column;gap:3px';
+      const lbl=document.createElement('div'); lbl.style.cssText='font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text)'; lbl.textContent='Helmet'; right.appendChild(lbl);
+      const sub=document.createElement('div'); sub.style.cssText='font-size:10px;color:var(--text3)'; sub.textContent='Skull — no dye'; right.appendChild(sub);
+      // Hidden hex input so form submission still works
+      const hi=document.createElement('input'); hi.type='hidden'; hi.className='hex-in'; hi.value=''; hi.dataset.piece=piece;
+      right.appendChild(hi);
+      row.appendChild(right); container.appendChild(row);
+      return;
+    }
     // Small colour dot instead of canvas preview
     const dot=document.createElement('div'); dot.style.cssText='width:20px;height:20px;border-radius:50%;border:1px solid var(--border);flex-shrink:0;background:#a06540';
     row.appendChild(dot);

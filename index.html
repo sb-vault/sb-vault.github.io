@@ -342,7 +342,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     </div>
     <div class="page-tabs" id="pageTabs"></div>
     <div class="filter-bar">
-      <input class="fsearch" id="setSearch" placeholder="Search sets…" oninput="renderSets()">
+      <input class="fsearch" id="setSearch" placeholder="Search sets or #hex…" oninput="renderSets()">
       <div class="cat-chips" id="catChips">
         <button class="chip on" data-cat="all" onclick="toggleCat(this)">All</button>
         <button class="chip" data-cat="exotic" onclick="toggleCat(this)">Exotic</button>
@@ -799,8 +799,8 @@ function loadStoredUser(){
 ───────────────────────────────────────────────────── */
 const BLEACHED='#a06540';
 const PURE_COLOURS={'#993333':'Red','#d87f33':'Orange','#e5e533':'Yellow','#7fcc19':'Green','#667f33':'Dark Green','#6699d8':'Light Blue','#4c7f99':'Cyan','#334cb2':'Dark Blue','#f27fa5':'Pink','#7f3fb2':'Purple','#b24cd8':'Magenta','#664c33':'Brown','#ffffff':'White','#999999':'Light Grey','#4c4c4c':'Dark Grey','#191919':'Black'};
-const CRYSTAL_HEXES=new Set(['#1f0030','#46085e','#54146e','#5d1c78','#63237d','#6a2c82','#7e4196','#8e51a6','#9c64b3','#a875bd','#b88bc9','#c6a3d4','#d9c1e3','#e5d1ed','#efe1f5','#fcf3ff']);
-const FAIRY_HEXES=new Set(['#660033','#99004c','#cc0066','#ff007f','#ff3399','#ff66b2','#ff99cc','#ffcce5','#660066','#990099','#cc00cc','#ff00ff','#ff33ff','#ff66ff','#ff99ff','#ffccff','#e5ccff','#cc99ff','#b266ff','#9933ff','#7f00ff','#6600cc','#4c0099','#330066']);
+const CRYSTAL_HEXES=new Set(['#fcf3ff','#efe1f5','#e5d1ed','#d9c1e3','#c6a3d4','#b88bc9','#a875bd','#9c64b3','#8e51a6','#7e4196','#6a2c82','#63237d','#5d1c78','#54146e','#46085e','#1f0030']);
+const FAIRY_HEXES=new Set(['#660066','#660033','#99004c','#cc0066','#ff007f','#ff3399','#ff66b2','#ff99cc','#ffcce5','#990099','#cc00cc','#ff00ff','#ff33ff','#ff66ff','#ff99ff','#ffccff','#e5ccff','#cc99ff','#b266ff','#9933ff','#7f00ff','#6600cc','#4c0099','#330066']);
 const ORIG_COLOURS={'superior dragon':{c:'#f2df11',l:'#f2df11',b:'#f25d18'},'wise dragon':{full:'#29f0e9'},'young dragon':{full:'#dde4f0'},'strong dragon':{c:'#d91e41',l:'#e09419',b:'#f0d124'},'unstable dragon':{full:'#b212e3'},'old dragon':{full:'#f0e6aa'},'protector dragon':{full:'#99978b'},'tarantula':{h:'#000000',l:'#000000'},'shark scale':{full:'#002ca6'},'angler':{full:'#0b004f'},'squid boots':{b:'#000000'},'bat person':{full:'#000000'},'farmer boots':{b:'#cc5500'},'farm suit':{full:'#ffff00'},'farm armor':{full:'#ffd700'},'farm armour':{full:'#ffd700'},'speedster':{full:'#e0fcf7'},'cactus':{full:'#00ff00'},'leaflet':{full:'#4dcc4d'},"miner's outfit":{full:'#7a7964'},'miner outfit':{full:'#7a7964'},'stereo pants':{l:'#04cfd3'},'mushroom':{full:'#ff0000'},'guardian':{c:'#117391'},'creeper pants':{l:'#7ae82c'},'emerald':{full:'#00ff00'},'pumpkin':{full:'#edaa36'},'obsidian':{c:'#000000'},'lapis':{full:'#0000ff'},'cheap tuxedo':{c:'#383838',l:'#c7c7c7',b:'#383838'},'fancy tuxedo':{c:'#332a2a',l:'#d4d4d4',b:'#332a2a'},'elegant tuxedo':{c:'#191919',l:'#fefdfc',b:'#191919'}};
 const PK={Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'};
 
@@ -895,7 +895,102 @@ function getSkullUrl(at){
   return Object.keys(SKULL_HELMETS).some(k=>al.includes(k));
 }
 function getSkull(at){return getSkullUrl(at);}
-const DEF_HEX={'superior dragon':{h:'#f2df11',c:'#f2df11',l:'#f2df11',b:'#f25d18'},'wise dragon':{h:'#29f0e9',c:'#29f0e9',l:'#29f0e9',b:'#29f0e9'},'young dragon':{h:'#dde4f0',c:'#dde4f0',l:'#dde4f0',b:'#dde4f0'},'old dragon':{h:'#f0e6aa',c:'#f0e6aa',l:'#f0e6aa',b:'#f0e6aa'},'unstable dragon':{h:'#b212e3',c:'#b212e3',l:'#b212e3',b:'#b212e3'},'strong dragon':{h:'#d91e41',c:'#d91e41',l:'#e09419',b:'#f0d124'},'protector dragon':{h:'#99978b',c:'#99978b',l:'#99978b',b:'#99978b'},'tarantula':{h:'#000000',c:'#3d1d1d',l:'#000000',b:'#3d1d1d'},'shark scale':{h:'#002ca6',c:'#002ca6',l:'#002ca6',b:'#002ca6'},'bat person':{h:'#000000',c:'#000000',l:'#000000',b:'#000000'},'angler':{h:'#0b004f',c:'#0b004f',l:'#0b004f',b:'#0b004f'},'necron':{h:'#1a1a1a',c:'#1a1a1a',l:'#1a1a1a',b:'#1a1a1a'},'farm suit':{h:'#ffff00',c:'#ffff00',l:'#ffff00',b:'#ffff00'},'farm armor':{h:'#ffd700',c:'#ffd700',l:'#ffd700',b:'#ffd700'},'lapis':{h:'#0000ff',c:'#0000ff',l:'#0000ff',b:'#0000ff'},'emerald':{h:'#00ff00',c:'#00ff00',l:'#00ff00',b:'#00ff00'},'pumpkin':{h:'#edaa36',c:'#edaa36',l:'#edaa36',b:'#edaa36'},'cheap tuxedo':{h:'#f0f0f0',c:'#383838',l:'#c7c7c7',b:'#383838'},'fancy tuxedo':{h:'#f5f5f5',c:'#332a2a',l:'#d4d4d4',b:'#332a2a'},'elegant tuxedo':{h:'#fefdfc',c:'#191919',l:'#fefdfc',b:'#191919'},'speedster':{h:'#e0fcf7',c:'#e0fcf7',l:'#e0fcf7',b:'#e0fcf7'},'mushroom':{h:'#ff0000',c:'#ff0000',l:'#ff0000',b:'#ff0000'}};
+const DEF_HEX={
+  // Dragon
+  'superior dragon':   {h:'#f2df11',c:'#f2df11',l:'#f2df11',b:'#f25d18'},
+  'strong dragon':     {h:'skull',c:'#d91e41',l:'#e09419',b:'#f0d124'},
+  'wise dragon':       {h:'skull',c:'#29f0e9',l:'#29f0e9',b:'#29f0e9'},
+  'young dragon':      {h:'skull',c:'#dde4f0',l:'#dde4f0',b:'#dde4f0'},
+  'old dragon':        {h:'skull',c:'#f0e6aa',l:'#f0e6aa',b:'#f0e6aa'},
+  'unstable dragon':   {h:'skull',c:'#b212e3',l:'#b212e3',b:'#b212e3'},
+  'protector dragon':  {h:'skull',c:'#99978b',l:'#99978b',b:'#99978b'},
+  'holy dragon':       {h:'skull',c:'#47d147',l:'#47d147',b:'#47d147'},
+  // Dungeon bosses
+  'necron':     {h:'skull',c:'#e7413c',l:'#e75c3c',b:'#e76e3c'},
+  'goldor':     {h:'skull',c:'#45413c',l:'#65605a',b:'#88837e'},
+  'storm':      {h:'skull',c:'#1793c4',l:'#17a8c4',b:'#1cd4e4'},
+  'maxor':      {h:'skull',c:'#4a14b7',l:'#5d2fb9',b:'#8969c8'},
+  // Dungeon mobs
+  'rotten':          {h:'#9e7003',c:'#017d31',l:'#017d31',b:'#9e7003'},
+  'bouncy':          {h:'#adff2f',c:'#adff2f',l:'#adff2f',b:'#adff2f'},
+  'heavy armor':     {h:'#828282',c:'#828282',l:'#828282',b:'#828282'},
+  'heavy armour':    {h:'#828282',c:'#828282',l:'#828282',b:'#828282'},
+  'skeleton grunt':  {h:'#e1eb34',c:'#e1eb34',l:'#e1eb34',b:'#e1eb34'},
+  'skeleton master': {h:'skull',c:'#ff6b0b',l:'#ff6b0b',b:'#ff6b0b'},
+  'skeleton soldier':{h:'#ffbc0b',c:'#ffbc0b',l:'#ffbc0b',b:'#ffbc0b'},
+  'skeleton lord':   {h:'#268105',c:'#268105',l:'#268105',b:'#268105'},
+  'zombie commander':{h:'#d51230',c:'#d51230',l:'#d51230',b:'#d51230'},
+  'zombie soldier':  {h:'#d07f00',c:'#d07f00',l:'#d07f00',b:'#d07f00'},
+  'zombie lord':     {h:'#9b01c1',c:'#9b01c1',l:'#9b01c1',b:'#9b01c1'},
+  'super heavy':     {h:'#e6e6e6',c:'#5a6464',l:'#5a6464',b:'#e6e6e6'},
+  'adaptive':        {h:'skull',c:'#bfbcb2',l:'#bfbcb2',b:'#bfbcb2'},
+  'necromancer lord':{h:'#370147',c:'#370147',l:'#370147',b:'#400352'},
+  // Nether
+  'crimson':   {h:'#ff6f0c',c:'#ff6f0c',l:'#e66105',b:'#e65300'},
+  'aurora':    {h:'#2841f1',c:'#2841f1',l:'#3f56fb',b:'#6184fc'},
+  'terror':    {h:'#3e05af',c:'#3e05af',l:'#5d23d1',b:'#7c44ec'},
+  'fervor':    {h:'#f04729',c:'#f04729',l:'#17bf89',b:'#07a674'},
+  'hollow':    {h:'#ffcb0d',c:'#ffcb0d',l:'#fff6a3',b:'#e3fffa'},
+  // Other sets from document
+  'tarantula':      {h:'#000000',c:'#3d1d1d',l:'#000000',b:'#3d1d1d'},
+  'shark scale':    {h:'skull',c:'#002ca6',l:'#002ca6',b:'#002ca6'},
+  'angler':         {h:'#0b004f',c:'#0b004f',l:'#0b004f',b:'#0b004f'},
+  'farm suit':      {h:'#ffd700',c:'#ffd700',l:'#ffd700',b:'#ffd700'},
+  'farm armour':    {h:'#ffd700',c:'#ffd700',l:'#ffd700',b:'#ffd700'},
+  'farm armor':     {h:'#ffd700',c:'#ffd700',l:'#ffd700',b:'#ffd700'},
+  'speedster':      {h:'#e0fcf7',c:'#e0fcf7',l:'#e0fcf7',b:'#e0fcf7'},
+  'lapis':          {h:'#0000ff',c:'#0000ff',l:'#0000ff',b:'#0000ff'},
+  'emerald':        {h:'#00ff00',c:'#00ff00',l:'#00ff00',b:'#00ff00'},
+  'pumpkin':        {h:'#edaa36',c:'#edaa36',l:'#edaa36',b:'#edaa36'},
+  'cheap tux':      {h:'#f0f0f0',c:'#383838',l:'#c7c7c7',b:'#383838'},
+  'fancy tux':      {h:'#f5f5f5',c:'#332a2a',l:'#d4d4d4',b:'#332a2a'},
+  'elegant tux':    {h:'#fefdfc',c:'#191919',l:'#fefdfc',b:'#191919'},
+  'mushroom':       {h:'#ff0000',c:'#ff0000',l:'#ff0000',b:'#ff0000'},
+  'reaper':         {h:'#1b1b1b',c:'#1b1b1b',l:'#1b1b1b',b:'#1b1b1b'},
+  'magma lord':     {h:'#6f0f08',c:'#6f0f08',l:'#6f0f08',b:'#6f0f08'},
+  'frozen blaze':   {h:'#a0daef',c:'#a0daef',l:'#a0daef',b:'#a0daef'},
+  'blaze':          {h:'skull',c:'#f7da33',l:'#f7da33',b:'#f7da33'},
+  'glacite':        {h:'skull',c:'#03fcf8',l:'#03fcf8',b:'#03fcf8'},
+  'mineral':        {h:'skull',c:'#cce5ff',l:'#cce5ff',b:'#cce5ff'},
+  'sponge':         {h:'skull',c:'#ffdc51',l:'#ffdc51',b:'#ffdc51'},
+  'spooky':         {h:'skull',c:'#606060',l:'#606060',b:'#606060'},
+  'arachne':        {h:'skull',c:'#8b0000',l:'#8b0000',b:'#8b0000'},
+  'thunder':        {h:'#24dde5',c:'#24dde5',l:'#24dde5',b:'#24dde5'},
+  'glossy mineral': {h:'#5b0dae',c:'#5b0dae',l:'#5b0dae',b:'#5b0dae'},
+  'werewolf':       {h:'#1d1105',c:'#1d1105',l:'#1d1105',b:'#1d1105'},
+  'sea walker':     {h:'#10616e',c:'#10616e',l:'#10616e',b:'#10616e'},
+  'sea emperor':    {h:'#990d00',c:'#990d00',l:'#990d00',b:'#990d00'},
+  'vanguard':       {h:'#3588ff',c:'#3588ff',l:'#3588ff',b:'#3588ff'},
+  'water hydra':    {h:'#101555',c:'#101555',l:'#101555',b:'#101555'},
+  'abyssal':        {h:'skull',c:'#0e666d',l:'#0e666d',b:'#0e666d'},
+  'primordial':     {h:'skull',c:'#0e1736',l:'#0e1736',b:'#0e1736'},
+  'fig':            {h:'skull',c:'#1c9759',l:'#1c9759',b:'#1c9759'},
+  'leaflet':        {h:'#4dcc4d',c:'#4dcc4d',l:'#4dcc4d',b:'#4dcc4d'},
+  'biohazard':      {h:'#ffac00',c:'#ffac00',l:'#ffac00',b:'#ffac00'},
+  'goblin':         {h:'#37b042',c:'#37b042',l:'#37b042',b:'#37b042'},
+  'growth':         {h:'#00be00',c:'#00be00',l:'#00be00',b:'#00be00'},
+  'heat':           {h:'#b3b3b3',c:'#b3b3b3',l:'#b3b3b3',b:'#b3b3b3'},
+  'rampart':        {h:'#df2e06',c:'#df2e06',l:'#df2e06',b:'#df2e06'},
+  'shimmering light':{h:'#07031b',c:'#07031b',l:'#07031b',b:'#07031b'},
+  'rabbit':         {h:'#cbd2db',c:'#cbd2db',l:'#cbd2db',b:'#cbd2db'},
+  'yog':            {h:'#c83200',c:'#c83200',l:'#c83200',b:'#c83200'},
+  'miner':          {h:'#7a7964',c:'#7a7964',l:'#7a7964',b:'#7a7964'},
+  'canopy':         {h:'skull',c:'#006633',l:'#006600',b:'#331900'},
+  'divan':          {h:'skull',c:'#7a7964',l:'#7a7964',b:'#7a7964'},
+  'wyld':           {h:'skull',c:'#35b73b',l:'#35b73b',b:'#154918'},
+  'shadow assassin':{h:'skull',c:'#a1aa14',l:'#a1aa14',b:'#a1aa14'},
+  'celeste':        {h:'#d48ef2',c:'#ff8ede',l:'#ff8eca',b:'#ff8eb6'},
+  'aurora chestplate':{h:'#2841f1',c:'#2841f1',l:'#3f56fb',b:'#6184fc'},
+  'nutcracker':     {h:'#fc2f3c',c:'#fc2f3c',l:'#fff9eb',b:'#46343a'},
+  'kuudra follower':{h:'#35530a',c:'#35530a',l:'#35530a',b:'#35530a'},
+  'melon':          {h:'#899e20',c:'#899e20',l:'#899e20',b:'#899e20'},
+  'cropie':         {h:'#7a2900',c:'#7a2900',l:'#94451f',b:'#bb6535'},
+  'squash':         {h:'#03430e',c:'#03430e',l:'#0c4a16',b:'#13561e'},
+  'fermento':       {h:'#58890c',c:'#58890c',l:'#6a9c1b',b:'#83b03b'},
+  'salmon':         {h:'#c13c0f',c:'#a82b76',l:'#a82b76',b:'#c13c0f'},
+  'minos hunter':   {h:'#ff0a0a',c:'#ff0a0a',l:'#ff0a0a',b:'#304b4e'},
+  'kelly':          {h:'#7a4120',c:'#7a4120',l:'#7a4120',b:'#7a4120'},
+}
 function getDefHex(at,piece){const key=at.toLowerCase(),pk={Helmet:'h',Chestplate:'c',Leggings:'l',Boots:'b'}[piece]||'h';for(const[k,v]of Object.entries(DEF_HEX)){if(key.includes(k))return v[pk]||BLEACHED;}return BLEACHED;}
 
 /* ─────────────────────────────────────────────────────
@@ -1605,7 +1700,17 @@ function renderSets(){
   if(currentPageId!=='all') sets=sets.filter(s=>s.page_id===currentPageId);
   if(!activeCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>activeCatFilter.has(c.cat));});
   if(offersFilterOn) sets=sets.filter(s=>s.for_offers);
-  if(q) sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q)));
+  if(q){
+    const isHex=/^#?[0-9a-f]{3,6}$/i.test(q);
+    const normQ=normHex(q.startsWith('#')?q:'#'+q);
+    sets=sets.filter(s=>{
+      if(isHex){
+        // Search by hex code — match any piece's hex
+        return (s.pieces||[]).some(p=>normHex(p.hex||'')===normQ);
+      }
+      return [(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q));
+    });
+  }
   const grid=document.getElementById('setsGrid');
   let html=sets.map(s=>setCard(s)).join('');
   if(isOwn) html+=`<div class="set-card set-card-add" onclick="openAddSetModal()"><div style="font-size:24px;opacity:.5">+</div><div>Add Armour Set</div></div>`;
@@ -1792,7 +1897,39 @@ window.selectAllPieces=function(){
   else { all.forEach(p=>addPieces.add(p)); document.querySelectorAll('.piece-toggle').forEach(t=>t.classList.add('on')); }
   renderPieceInputs();
 };
-window.ARMOUR_TYPES=["Superior Dragon Armour","Strong Dragon Armour","Unstable Dragon Armour","Young Dragon Armour","Old Dragon Armour","Wise Dragon Armour","Protector Dragon Armour","Holy Dragon Armour","Tarantula Armour","Necron’s Armour","Goldor’s Armour","Storm’s Armour","Maxor’s Armour","Wither Skeleton Armour","Sorrow Armour","Titanium Armour","Mineral Armour","Fairy Armour","Crystal Armour","Reaper Armour","Crimson Armour","Aurora Armour","Terror Armour","Fervor Armour","Hollow Armour","Farm Suit","Mastiff Armour","Thorn’s Armour","Frozen Blaze Armour","Magma Lord Armour","Lapis Armour","Emerald Armour","Gold Armour","Speedster Armour","Skeleton Master Armour","Revenant Armour","Shadow Assassin Armour","Glacite Armour","Blaze Armour"]
+window.ARMOUR_TYPES=[
+  // Dragon
+  "Superior Dragon Armour","Strong Dragon Armour","Unstable Dragon Armour","Young Dragon Armour",
+  "Old Dragon Armour","Wise Dragon Armour","Protector Dragon Armour","Holy Dragon Armour",
+  // Dungeon Bosses
+  "Necron's Armour","Goldor's Armour","Storm's Armour","Maxor's Armour",
+  // Dungeon Mobs
+  "Rotten Armour","Bouncy Armour","Heavy Armour","Super Heavy Armour",
+  "Skeleton Grunt Armour","Skeleton Master Armour","Skeleton Soldier Armour","Skeleton Lord Armour",
+  "Zombie Commander Armour","Zombie Soldier Armour","Zombie Lord Armour",
+  "Adaptive Armour","Necromancer Lord Armour",
+  // Nether
+  "Crimson Armour","Aurora Armour","Terror Armour","Fervor Armour","Hollow Armour",
+  // Island/Other
+  "Tarantula Armour","Shark Scale Armour","Angler Armour","Reaper Armour",
+  "Farm Suit","Farm Armour","Speedster Armour","Magma Lord Armour","Frozen Blaze Armour",
+  "Blaze Armour","Glacite Armour","Mineral Armour","Sponge Armour","Spooky Armour",
+  "Arachne Armour","Thunder Armour","Glossy Mineral Armour","Werewolf Armour",
+  "Sea Walker Armour","Sea Emperor Armour","Vanguard Armour","Water Hydra Armour",
+  "Abyssal Armour","Primordial Armour","Fig Armour","Leaflet Armour","Biohazard Armour",
+  "Goblin Armour","Growth Armour","Heat Armour","Rampart Armour","Shimmering Light Armour",
+  "Rabbit Armour","Yog Armour","Miner's Outfit","Canopy Armour","Divan's Armour",
+  "Wyld Armour","Shadow Assassin Armour","Celeste Armour","Nutcracker Armour",
+  "Kuudra Follower Armour","Melon Armour","Cropie Armour","Squash Armour","Fermento Armour",
+  "Salmon Armour","Minos Hunter Armour","Kelly Quest Armour",
+  // Tuxedos
+  "Cheap Tuxedo","Fancy Tuxedo","Elegant Tuxedo",
+  // Crops/Farming
+  "Lapis Armour","Emerald Armour","Pumpkin Armour","Mushroom Armour",
+  // Misc
+  "Sorrow Armour","Titanium Armour","Mastiff Armour","Fairy Armour","Crystal Armour",
+  "Revenant Armour","Skeleton Master Armour","Gold Armour",
+]
 window.onArmourTypeChange=function(){
   renderPieceInputs();
   const q=(document.getElementById('addArmourType')?.value||'').trim().toLowerCase();

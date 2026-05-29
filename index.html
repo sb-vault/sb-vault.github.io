@@ -277,6 +277,10 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .ss-toggle input:checked+.track{background:var(--text3)}
 .ss-toggle .track:before{content:'';position:absolute;width:12px;height:12px;left:2px;top:2px;background:#fff;border-radius:50%;transition:transform .2s}
 .ss-toggle input:checked+.track:before{transform:translateX(12px)}
+
+/* Hide scrollbar */
+::-webkit-scrollbar{display:none}
+*{scrollbar-width:none;-ms-overflow-style:none}
 </style>
 </head>
 <body>
@@ -343,8 +347,8 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     </div>
     <!-- Museum sub-tabs -->
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:12px;position:relative;z-index:1">
-      <button id="museumTabExotic" onclick="switchMuseumTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;font-size:13px;transition:all .15s">Exotic</button>
-      <button id="museumTabSeymour" onclick="switchMuseumTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;font-size:13px">Seymour</button>
+      <button id="museumTabExotic" onclick="switchMuseumTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;font-size:13px;transition:all .15s;pointer-events:all;position:relative;z-index:2">Exotic</button>
+      <button id="museumTabSeymour" onclick="switchMuseumTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Seymour</button>
     </div>
     <!-- Exotic sub-view -->
     <div id="museumExoticView">
@@ -1949,7 +1953,7 @@ async function loadMuseumSets(uuid){
 function renderSets(){
   const isOwn=currentUser&&currentUser.uuid===viewingUuid;
   const q=(document.getElementById('setSearch')?.value||'').trim();
-  const isHex=(q.startsWith('#')||(/^[0-9A-Fa-fXx]{1,6}$/.test(q)&&q.length>=1&&(q.length<=2||/^[0-9A-Fa-fXx]+$/.test(q))));
+  const isHex=(q.startsWith('#')||/^[0-9A-Fa-fXx]{1,6}$/.test(q.replace('#',''))&&/^[#0-9A-Fa-fXx]+$/.test(q));
   let sets=allSets.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
   if(currentPageId!=='all') sets=sets.filter(s=>s.page_id===currentPageId);
   if(!activeCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>activeCatFilter.has(c.cat));});
@@ -1958,7 +1962,14 @@ function renderSets(){
     if(isHex){
       sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));
     } else {
-      sets=sets.filter(s=>[(s.set_name||'').toLowerCase(),(s.armour_type||'').toLowerCase()].some(f=>f.includes(q.toLowerCase())));
+      const ql=q.toLowerCase();
+      sets=sets.filter(s=>{
+        if([(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(ql))) return true;
+        return (s.pieces||[]).some(p=>{
+          const cls=classifyHex(p.hex||'',s.armour_type||'',p.piece);
+          return cls&&cls.label&&cls.label.toLowerCase().includes(ql);
+        });
+      });
     }
   }
   const grid=document.getElementById('setsGrid');
@@ -2117,7 +2128,7 @@ function renderSeymourSets(){
   if(!grid) return;
   const q=(document.getElementById('seymourSearch')?.value||'').trim();
   const sort=document.getElementById('seymourSort')?.value||'newest';
-  const isHexQ=(q.startsWith('#')||(/^[0-9A-Fa-fXx]{1,6}$/.test(q)&&q.length>=1&&(q.length<=2||/^[0-9A-Fa-fXx]+$/.test(q))));
+  const isHexQ=(q.startsWith('#')||/^[0-9A-Fa-fXx]{1,6}$/.test(q.replace('#',''))&&/^[#0-9A-Fa-fXx]+$/.test(q));
   const pieceAll=seymourActivePieces.has('all');
   const activePieceArr=pieceAll?[]:Array.from(seymourActivePieces);
 
@@ -2191,12 +2202,13 @@ function seymourSetCard(s, activePieces, hexQuery){
     const cls=p.hex?classifySeymour(p.hex):null;
     const col=cls?.colour||'#888';
     const isHighlight=!!(hexQuery&&seymourHexMatch(p.hex||'',hexQuery));
-    const tagText=cls?esc(cls.label)+' \u0394E:'+cls.deltaE.toFixed(2)+' Abs:'+cls.abs:'N/A';
+    const tagText=cls?esc(cls.label):'N/A';
+    const tagTitle=cls?`${cls.label} ΔE:${cls.deltaE.toFixed(2)} Abs:${cls.abs}`:'';
     return`<div class="set-piece-row" style="${isHighlight?'border:1.5px solid #4ade80;border-radius:4px;background:#4ade8008;':'border:1.5px solid transparent;'}">
       <div class="set-piece-dot" style="background:${p.hex?'#'+p.hex.replace('#',''):'transparent'};border-color:${col}55"></div>
       <span class="set-piece-name" style="white-space:nowrap;overflow:visible;text-overflow:unset">${esc(p.piece)}</span>
       ${p.hex?`<span style="font-size:8px;color:var(--text3);font-family:monospace;flex-shrink:0">${esc(p.hex.toUpperCase())}</span>`:''}
-      ${cls?`<span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10;white-space:nowrap;flex-shrink:0">${tagText}</span>`:'<span class="set-piece-tag" style="color:#888;border-color:#8884;background:#8881;flex-shrink:0">N/A</span>'}
+      ${cls?`<span class="set-piece-tag" title="${tagTitle}" style="color:${col};border-color:${col}55;background:${col}10;white-space:nowrap;flex-shrink:0">${tagText}</span>`:'<span class="set-piece-tag" style="color:#888;border-color:#8884;background:#8881;flex-shrink:0">N/A</span>'}
     </div>`;
   }).join('');
   const _hp=activePieces&&activePieces.length>0?activePieces[0]:null;
@@ -2223,20 +2235,20 @@ function seymourSetCard(s, activePieces, hexQuery){
 function renderBrowseAll(){
   const grid=document.getElementById('browseAllGrid'); if(!grid) return;
   const q=(document.getElementById('browseAllSearch')?.value||'').trim();
-  const isHexQ=(q.startsWith('#')||(/^[0-9A-Fa-fXx]{1,6}$/.test(q)&&q.length>=1&&(q.length<=2||/^[0-9A-Fa-fXx]+$/.test(q))));
+  const isHexQ=(q.startsWith('#')||/^[0-9A-Fa-fXx]{1,6}$/.test(q.replace('#',''))&&/^[#0-9A-Fa-fXx]+$/.test(q));
   let sets=allSetsGlobal.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
   if(browseAllOffersOn) sets=sets.filter(s=>s.for_offers);
   if(!browseAllCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>browseAllCatFilter.has(c.cat));});
   if(q){if(isHexQ){sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));}else{sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q.toLowerCase())));}}
   grid.innerHTML=sets.map(s=>setCard(s)).join('');
-  requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`model-${s.id}`);if(el&&!el.dataset.rendered){el.dataset.rendered='1';const _pr=pieceAll?s.pieces||[]:(s.pieces||[]).filter(p=>seymourActivePieces.has(p.piece));renderPlayerInto(el,s.uuid,_pr,s.armour_type||'',{width:150,height:230,interactive:false});}});});
+  requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`model-${s.id}`);if(el){el.dataset.rendered='1';renderPlayerInto(el,s.uuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false});}});});
 }
 
 function renderBrowseAllSeymour(){
   const grid=document.getElementById('browseAllSeymourGrid'); if(!grid) return;
   const q=(document.getElementById('browseAllSeymourSearch')?.value||'').trim();
   const sort=document.getElementById('browseAllSeymourSort')?.value||'newest';
-  const isHexQ=(q.startsWith('#')||(/^[0-9A-Fa-fXx]{1,6}$/.test(q)&&q.length>=1&&(q.length<=2||/^[0-9A-Fa-fXx]+$/.test(q))));
+  const isHexQ=(q.startsWith('#')||/^[0-9A-Fa-fXx]{1,6}$/.test(q.replace('#',''))&&/^[#0-9A-Fa-fXx]+$/.test(q));
   const pieceAll=browseAllActivePieces.has('all');
   const activePieceArr=pieceAll?[]:Array.from(browseAllActivePieces);
   let sets=allSetsGlobal.filter(s=>(s.armour_type||'').toLowerCase().includes('seymour'));
@@ -2248,8 +2260,9 @@ function renderBrowseAllSeymour(){
   else if(sort==='abs'&&firstPiece) sets=sets.slice().sort((a,b)=>{const pa=(a.pieces||[]).find(p=>p.piece===firstPiece),pb=(b.pieces||[]).find(p=>p.piece===firstPiece);return(pa&&pa.hex?classifySeymour(pa.hex)?.abs??999:999)-(pb&&pb.hex?classifySeymour(pb.hex)?.abs??999:999);});
   else if(sort==='name') sets=sets.slice().sort((a,b)=>(a.set_name||'').localeCompare(b.set_name||''));
   grid.innerHTML=sets.map(s=>seymourSetCard(s,activePieceArr,isHexQ?q:null)).join('');
-  requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`model-${s.id}`);if(el&&!el.dataset.rendered){el.dataset.rendered='1';const pr=browseAllActivePieces.has('all')?s.pieces||[]:(s.pieces||[]).filter(p=>browseAllActivePieces.has(p.piece));renderPlayerInto(el,s.uuid,pr,s.armour_type||'',{width:150,height:230,interactive:false});}});});
+  requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`model-${s.id}`);if(el){el.dataset.rendered='1';renderPlayerInto(el,s.uuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false});}});});
 }
+
 
 /* SET DETAIL PANEL */
 let activePanelSet=null;
@@ -3057,8 +3070,8 @@ setInterval(loadStats,60000);
     </div>
     <!-- Sub-tabs: Exotic / Seymour -->
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:12px">
-      <button id="browseAllTabExotic" onclick="switchBrowseAllTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;font-size:13px">Exotic</button>
-      <button id="browseAllTabSeymour" onclick="switchBrowseAllTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;font-size:13px">Seymour</button>
+      <button id="browseAllTabExotic" onclick="switchBrowseAllTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Exotic</button>
+      <button id="browseAllTabSeymour" onclick="switchBrowseAllTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Seymour</button>
     </div>
     <!-- Exotic sub-view -->
     <div id="browseAllExoticView">

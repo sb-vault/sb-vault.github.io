@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Vault – SkyBlock Exotic Armour Museum</title>
+<title>The Vault</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root[data-theme="dark"]{--bg:#111113;--bg2:#1a1a1e;--bg3:#222228;--border:#2e2e36;--text:#f0f0f2;--text2:#9090a0;--text3:#55555f;--green:#4ecb71;--red:#e85555;--shadow:0 2px 16px rgba(0,0,0,.5)}
@@ -297,7 +297,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
         <button class="tm active" id="tmLight" onclick="setTheme('light')">Light</button>
       </div>
       <div class="chat-wrap" id="chatWrap" style="display:none">
-        <button class="btn" onclick="openChatPanel()" style="gap:6px">Messages</button>
+        <button class="btn" onclick="openChatPanel()" style="gap:6px">Chat</button>
         <div class="chat-badge" id="chatBadge"></div>
       </div>
       <div id="authArea">
@@ -311,17 +311,31 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 <div id="view-home">
   <div class="page">
     <div class="hero">
-      <div class="hero-title">Exotic Armour Museum</div>
+      <div class="hero-title">The Vault</div>
       <p class="hero-sub">Showcase your dyed leather collection. Browse and discover rare armour from the SkyBlock community.</p>
       <div class="hero-btns">
         <button class="btn btn-p" onclick="openMyMuseum()">Open My Museum</button>
-        <button class="btn" onclick="document.getElementById('browse-sec').scrollIntoView({behavior:'smooth'})">Browse Museums</button>
+        <button class="btn" onclick="openBrowseAll()">Browse All Sets</button>
       </div>
     </div>
     <div class="stats-row">
-      <div class="stat-chip"><div class="stat-n" id="statMuseums">–</div><div class="stat-l">Museums</div></div>
-      <div class="stat-chip"><div class="stat-n" id="statSets">–</div><div class="stat-l">Sets</div></div>
-      <div class="stat-chip"><div class="stat-n" id="statMsgs">–</div><div class="stat-l">Messages</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)">Exotic Pieces</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+          <div class="stat-chip"><div class="stat-n" id="statExotic">–</div><div class="stat-l">Exotic</div></div>
+          <div class="stat-chip"><div class="stat-n" id="statCrystal">–</div><div class="stat-l">Crystal</div></div>
+          <div class="stat-chip"><div class="stat-n" id="statFairy">–</div><div class="stat-l">Fairy</div></div>
+          <div class="stat-chip"><div class="stat-n" id="statPure">–</div><div class="stat-l">Pure</div></div>
+          <div class="stat-chip"><div class="stat-n" id="statBleached">–</div><div class="stat-l">Bleached</div></div>
+        </div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-top:6px">Seymour Pieces</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+          <div class="stat-chip"><div class="stat-n" id="statSeyT0" style="background:linear-gradient(90deg,#e03030,#4a90d9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">–</div><div class="stat-l">T0</div></div>
+          <div class="stat-chip"><div class="stat-n" id="statSeyT1" style="background:linear-gradient(90deg,#f472b6,#7ecef4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">–</div><div class="stat-l">T1</div></div>
+          <div class="stat-chip"><div class="stat-n" id="statSeyT2" style="background:linear-gradient(90deg,#f97316,#f5c842);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">–</div><div class="stat-l">T2</div></div>
+          <div class="stat-chip"><div class="stat-n" style="color:#888" id="statSeyT3">–</div><div class="stat-l">T3+</div></div>
+        </div>
+      </div>
     </div>
     <div id="browse-sec">
       <div class="section-head">
@@ -350,7 +364,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     <div id="museumExoticView">
       <div class="page-tabs" id="pageTabs"></div>
       <div class="filter-bar">
-        <input class="fsearch" id="setSearch" placeholder="Search sets, #hex or Xwildcard…" oninput="renderSets()">
+        <input class="fsearch" id="setSearch" placeholder="Search sets or #hex…" oninput="renderSets()">
         <div class="cat-chips" id="catChips">
           <button class="chip on" data-cat="all" onclick="toggleCat(this)">All</button>
           <button class="chip" data-cat="exotic" onclick="toggleCat(this)">Exotic</button>
@@ -370,8 +384,21 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     </div>
     <!-- Seymour sub-view -->
     <div id="museumSeymourView" style="display:none">
-      <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
-        <!-- Piece multi-toggle -->
+      <!-- Seymour pages (separate from exotic) -->
+      <div class="page-tabs" id="seymourPageTabs"></div>
+      <div class="filter-bar" style="flex-wrap:wrap;gap:8px;align-items:center">
+        <!-- Sort + Search on left -->
+        <select id="seymourSort" onchange="renderSeymourSets()" style="height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 14px 0 10px;font-size:13px;flex-shrink:0">
+          <option value="newest">Newest</option>
+          <option value="deltaE">Sort by ΔE</option>
+          <option value="abs">Sort by Abs</option>
+          <option value="name">Name A–Z</option>
+        </select>
+        <input class="fsearch" id="seymourSearch" placeholder="Search sets, #hex or colour name…" oninput="renderSeymourSets()" style="flex:1;min-width:140px">
+        <button class="offers-tog" id="seymourOffersToggle" onclick="toggleSeymourOffersFilter()">
+          <input type="checkbox" id="seymourOffersChk" onchange="toggleSeymourOffersFilter()"> For sale only
+        </button>
+        <!-- Piece chips on right -->
         <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
           <button class="chip on" data-spiece="all" onclick="toggleSeymourPiece(this)">All pieces</button>
           <button class="chip" data-spiece="Velvet Top Hat" onclick="toggleSeymourPiece(this)">Top Hat</button>
@@ -379,18 +406,6 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
           <button class="chip" data-spiece="Satin Trousers" onclick="toggleSeymourPiece(this)">Trousers</button>
           <button class="chip" data-spiece="Oxford Shoes" onclick="toggleSeymourPiece(this)">Shoes</button>
         </div>
-        <!-- Sort -->
-        <select id="seymourSort" onchange="renderSeymourSets()" style="height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 14px 0 10px;font-size:13px">
-          <option value="newest">Newest</option>
-          <option value="deltaE">Sort by ΔE</option>
-          <option value="abs">Sort by Abs</option>
-          <option value="name">Name A–Z</option>
-        </select>
-        <!-- Search -->
-        <input class="fsearch" id="seymourSearch" placeholder="Search sets, #hex or Xwildcard…" oninput="renderSeymourSets()" style="flex:1;min-width:160px">
-        <button class="offers-tog" id="seymourOffersToggle" onclick="toggleSeymourOffersFilter()">
-          <input type="checkbox" id="seymourOffersChk" onchange="toggleSeymourOffersFilter()"> For sale only
-        </button>
       </div>
       <div class="sets-grid" id="seymourSetsGrid">
         <div class="loading"><div class="spinner"></div>Loading sets…</div>
@@ -411,7 +426,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 <div class="chat-panel" id="chatPanel">
   <div class="chat-list-col">
     <div class="chat-list-head">
-      <span class="chat-list-title">Messages</span>
+      <span class="chat-list-title">Chat</span>
       <button class="btn btn-icon" style="font-size:13px" onclick="closeChatPanel()">✕</button>
     </div>
     <div style="padding:8px 10px;border-bottom:1px solid var(--border)">
@@ -477,6 +492,33 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
             <span id="addForOffersIndicator" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .15s"></span>
           </button>
           <input type="checkbox" id="addForOffers" style="display:none">
+          <!-- Current offer fields (shown when Taking Offers is on) -->
+          <div id="addOfferDetails" style="display:none;flex-direction:column;gap:8px;margin-top:8px">
+            <div style="display:flex;gap:8px">
+              <div style="flex:1">
+                <label class="modal-label">Current Offer</label>
+                <input id="addCurrentOffer" type="text" class="modal-input" placeholder="e.g. 500m" maxlength="30" oninput="editParseAmount(this,'addCurrentOfferParsed')">
+                <div id="addCurrentOfferParsed" style="font-size:10px;color:var(--text3);margin-top:2px"></div>
+              </div>
+              <div style="flex:1">
+                <label class="modal-label">Offer by (IGN)</label>
+                <input id="addCurrentOfferIgn" type="text" class="modal-input" placeholder="Leave blank = anonymous" maxlength="30">
+              </div>
+            </div>
+          </div>
+          <!-- Bought for (optional) -->
+          <div style="margin-top:8px">
+            <label class="modal-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="addShowBoughtFor" onchange="document.getElementById('addBoughtForRow').style.display=this.checked?'flex':'none'">
+              Show what I paid
+            </label>
+            <div id="addBoughtForRow" style="display:none;gap:8px;margin-top:6px;align-items:flex-start">
+              <div style="flex:1">
+                <input id="addBoughtFor" type="text" class="modal-input" placeholder="e.g. 2.3b" maxlength="20" oninput="editParseAmount(this,'addBoughtForParsed')">
+                <div id="addBoughtForParsed" style="font-size:10px;color:var(--text3);margin-top:2px"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -597,7 +639,7 @@ function loadTheme(){
 
 /* VIEW ROUTING */
 function showView(name){
-  ['home','museum'].forEach(v => {
+  ['home','museum','browseall'].forEach(v => {
     document.getElementById('view-'+v).style.display = v===name?'block':'none';
   });
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -791,16 +833,19 @@ window.toggleForOffers=function(){
   const btn=document.getElementById('addForOffersBtn');
   const dot=document.getElementById('addForOffersIndicator');
   cb.checked=!cb.checked;
+  const det=document.getElementById('addOfferDetails');
   if(cb.checked){
     btn.style.borderColor='var(--green)';
     btn.style.background='rgba(78,203,113,.08)';
     btn.style.color='var(--green)';
     dot.style.background='var(--green)';
+    if(det) det.style.display='flex';
   } else {
     btn.style.borderColor='var(--border)';
     btn.style.background='var(--bg3)';
     btn.style.color='var(--text2)';
     dot.style.background='var(--border)';
+    if(det) det.style.display='none';
   }
 };
 window.togglePill=function(e){
@@ -1766,11 +1811,36 @@ function adjustBright(hex,f){
 /* HOME / BROWSE */
 async function loadStats(){
   try{
-    const r=await fetch(`${API}/listings/stats`);
+    const r=await fetch(`${API}/listings?status=active`);
     const d=await r.json();
-    document.getElementById('statMuseums').textContent=d.users??'–';
-    document.getElementById('statSets').textContent=d.active??'–';
-    document.getElementById('statMsgs').textContent=fmtN(d.messages??0);
+    const sets=d.listings||[];
+    // Exotic counts by category
+    const cats={exotic:0,crystal:0,fairy:0,pure:0,bleached:0};
+    const sey={t0:0,t1:0,t2:0,t3:0};
+    sets.forEach(s=>{
+      const at=s.armour_type||'';
+      const pieces=s.pieces||[];
+      const isSeymour=at.toLowerCase().includes('seymour');
+      if(isSeymour){
+        pieces.forEach(p=>{
+          if(!p.hex) return;
+          const cls=classifySeymour(p.hex);
+          if(!cls){sey.t3++;return;}
+          if(cls.tier===0) sey.t0++;
+          else if(cls.tier===1) sey.t1++;
+          else if(cls.tier===2) sey.t2++;
+          else sey.t3++;
+        });
+      } else {
+        const pieceCats=classifyPieces(pieces,at);
+        pieceCats.forEach(c=>{
+          if(cats[c.cat]!==undefined) cats[c.cat]++;
+        });
+      }
+    });
+    const set=id=>{ const el=document.getElementById(id); if(el) el.textContent=cats[id.replace('stat','').toLowerCase()]??0; };
+    ['statExotic','statCrystal','statFairy','statPure','statBleached'].forEach(set);
+    ['t0','t1','t2','t3'].forEach(t=>{ const el=document.getElementById('statSey'+t.charAt(0).toUpperCase()+t.slice(1)); if(el) el.textContent=sey[t]; });
   }catch(e){}
 }
 
@@ -1840,7 +1910,7 @@ async function openMuseum(uuid){
   const u=new URL(location.href); u.searchParams.set('museum',uuid);
   history.replaceState({},'',(u.toString()));
   await Promise.all([loadMuseumHdr(uuid), loadMuseumPages(uuid)]);
-  renderPageTabs();
+  renderPageTabs(); renderSeymourPageTabs();
   await loadMuseumSets(uuid);
 }
 
@@ -1878,16 +1948,49 @@ async function loadMuseumPages(uuid){
   try{ const r=await fetch(`${API}/pages?uuid=${uuid}`); if(r.ok){ const d=await r.json(); museumPages=d.pages||[]; } else museumPages=[]; }catch(e){ museumPages=[]; }
 }
 
+let seymourMuseumPages=[];
+let currentSeymourPageId='all';
+
 function renderPageTabs(){
   const isOwn=currentUser&&currentUser.uuid===viewingUuid;
   const tabs=document.getElementById('pageTabs');
+  if(!tabs) return;
   const all=`<button class="ptab${currentPageId==='all'?' active':''}" onclick="selectPage('all')">All Sets</button>`;
   const pages=museumPages.map(p=>`<button class="ptab${currentPageId===p.id?' active':''}" onclick="selectPage('${esc(p.id)}')">${esc(p.name)}</button>`).join('');
-  const add=isOwn?`<button class="ptab-add" onclick="openAddPageModal()">+</button>`:'';
+  const add=isOwn?`<button class="ptab-add" onclick="openAddPageModal('exotic')">+</button>`:'';
+  tabs.innerHTML=all+pages+add;
+}
+
+function renderSeymourPageTabs(){
+  const isOwn=currentUser&&currentUser.uuid===viewingUuid;
+  const tabs=document.getElementById('seymourPageTabs');
+  if(!tabs) return;
+  const all=`<button class="ptab${currentSeymourPageId==='all'?' active':''}" onclick="selectSeymourPage('all')">All Sets</button>`;
+  const pages=seymourMuseumPages.map(p=>`<button class="ptab${currentSeymourPageId===p.id?' active':''}" onclick="selectSeymourPage('${esc(p.id)}')">${esc(p.name)}</button>`).join('');
+  const add=isOwn?`<button class="ptab-add" onclick="openAddPageModal('seymour')">+</button>`:'';
   tabs.innerHTML=all+pages+add;
 }
 
 function selectPage(id){ currentPageId=id; renderPageTabs(); renderSets(); }
+function selectSeymourPage(id){ currentSeymourPageId=id; renderSeymourPageTabs(); renderSeymourSets(); }
+
+window.openAddPageModal=function(tab){
+  window._addPageTab=tab||currentMuseumTab||'exotic';
+  document.getElementById('addPageName').value='';
+  openModal('addPageModal');
+};
+
+async function loadMuseumPages(uuid){
+  try{
+    const r=await fetch(`${API}/pages?uuid=${uuid}`);
+    if(r.ok){
+      const d=await r.json();
+      const all=d.pages||[];
+      museumPages=all.filter(p=>p.tab!=='seymour');
+      seymourMuseumPages=all.filter(p=>p.tab==='seymour');
+    } else { museumPages=[]; seymourMuseumPages=[]; }
+  }catch(e){ museumPages=[]; seymourMuseumPages=[]; }
+}
 
 async function loadMuseumSets(uuid){
   document.getElementById('setsGrid').innerHTML='<div class="loading"><div class="spinner"></div>Loading…</div>';
@@ -1896,6 +1999,7 @@ async function loadMuseumSets(uuid){
     const d=await r.json();
     allSets=(d.listings||[]).filter(l=>l.uuid===uuid);
     renderSets();
+    if(currentMuseumTab==='seymour') renderSeymourSets();
   }catch(e){
     document.getElementById('setsGrid').innerHTML=`<div class="empty"><div class="empty-icon">🏺</div><div class="empty-title">No sets yet</div></div>`;
   }
@@ -1903,28 +2007,24 @@ async function loadMuseumSets(uuid){
 
 function renderSets(){
   const isOwn=currentUser&&currentUser.uuid===viewingUuid;
-  const q=(document.getElementById('setSearch')?.value||'').toLowerCase();
+  const q=(document.getElementById('setSearch')?.value||'').trim();
+  const isHex=/^#?[0-9A-Fa-fXx]{1,}$/.test(q)&&q.replace('#','').length>=1;
   let sets=allSets.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
   if(currentPageId!=='all') sets=sets.filter(s=>s.page_id===currentPageId);
   if(!activeCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>activeCatFilter.has(c.cat));});
   if(offersFilterOn) sets=sets.filter(s=>s.for_offers);
   if(q){
-    const isHex=/^#?[0-9A-Fa-fXx]{2,}$/.test(q);
-    const normQ=normHex(q.startsWith('#')?q:'#'+q);
-    sets=sets.filter(s=>{
-      if(isHex){
-        // Search by hex code - match any piece's hex
-        return (s.pieces||[]).some(p=>normHex(p.hex||'')===normQ);
-      }
-      return [(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q));
-    });
+    if(isHex){
+      sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));
+    } else {
+      sets=sets.filter(s=>[(s.set_name||'').toLowerCase(),(s.armour_type||'').toLowerCase()].some(f=>f.includes(q.toLowerCase())));
+    }
   }
   const grid=document.getElementById('setsGrid');
   let html=sets.map(s=>setCard(s)).join('');
   if(isOwn) html+=`<div class="set-card set-card-add" onclick="openAddSetModal()"><div style="font-size:24px;opacity:.5">+</div><div>Add Armour Set</div></div>`;
   if(!sets.length&&!isOwn) html=`<div class="empty"><div class="empty-icon">🏺</div><div class="empty-title">No sets here yet</div></div>`;
   grid.innerHTML=html;
-  // Render 3D models
   requestAnimationFrame(()=>{
     sets.forEach(s=>{
       const el=document.getElementById(`model-${s.id}`);
@@ -1935,7 +2035,7 @@ function renderSets(){
 
 function setCard(s){
   const _hexQ=(document.getElementById('setSearch')?.value||'').trim();
-  const _isHexQ=/^#?[0-9A-Fa-fXx]{2,}$/.test(_hexQ);
+  const _isHexQ=/^#?[0-9A-Fa-fXx]{1,}$/.test(_hexQ)&&_hexQ.replace('#','').length>=1;
   const pieces=s.pieces||[], at=s.armour_type||'';
   const cats=classifyPieces(pieces,at);
   const pCols=pieces.map(p=>{const c=classifyHex(p.hex,at,p.piece);return c?c.colour:'#888';});
@@ -1947,8 +2047,8 @@ function setCard(s){
     const dot=isSkullHelmet
       ?`<img src="https://mc-heads.net/avatar/${SKULL_HELMETS[Object.keys(SKULL_HELMETS).find(k=>at.toLowerCase().includes(k))]}/16" style="width:12px;height:12px;border-radius:2px;image-rendering:pixelated">`
       :`<div class="set-piece-dot" style="background:${p.hex||'transparent'};border-color:${col}55"></div>`;
-    const _pieceMatch=_isHexQ&&seymourHexMatch(p.hex||"",_hexQ);
-    return`<div class="set-piece-row" style="${_pieceMatch?"background:var(--accent)20;border-radius:4px;padding:1px 3px;":""}">
+    const _pm=_isHexQ&&seymourHexMatch(p.hex||"",_hexQ);
+    return`<div class="set-piece-row" style="${_pm?'border:1.5px solid #4ade80;border-radius:4px;background:#4ade8010;':'border:1.5px solid transparent'}">
       ${dot}
       <span class="set-piece-name">${esc(p.piece)}</span>
       ${(!isSkullHelmet&&p.hex)?`<span style="font-size:8px;color:var(--text3);font-family:monospace">${esc(p.hex.toUpperCase())}</span>`:''}
@@ -1974,6 +2074,7 @@ function setCard(s){
   </div>`;
 }
 
+
 /* FILTERS */
 window.toggleCat=function(el){
   const cat=el.dataset.cat;
@@ -1983,33 +2084,58 @@ window.toggleCat=function(el){
 };
 window.toggleOffersFilter=function(){ offersFilterOn=!offersFilterOn; document.getElementById('offersToggle').classList.toggle('on',offersFilterOn); document.getElementById('offersChk').checked=offersFilterOn; renderSets(); };
 
-let currentMuseumTab='exotic';
-let seymourOffersOn=false;
+/* BROWSE ALL */
+let browseAllCatFilter=new Set(['all']);
+let browseAllOffersOn=false;
+let browseAllSeymourOffersOn=false;
+let browseAllActivePieces=new Set(['all']);
+let browseAllTab='exotic';
+let allSetsGlobal=[];
 
-window.switchMuseumTab=function(tab){
-  currentMuseumTab=tab;
-  const exoBtn=document.getElementById('museumTabExotic');
-  const seyBtn=document.getElementById('museumTabSeymour');
-  const exoView=document.getElementById('museumExoticView');
-  const seyView=document.getElementById('museumSeymourView');
-  [exoBtn,seyBtn].forEach(b=>{if(b){b.style.borderBottomColor='transparent';b.style.color='var(--text3)';b.style.fontWeight='600';}});
+window.openBrowseAll=async function(){
+  showView('browseall');
+  if(!allSetsGlobal.length){
+    try{
+      const r=await fetch(`${API}/listings?status=active`);
+      const d=await r.json();
+      allSetsGlobal=d.listings||[];
+    }catch(e){}
+  }
+  switchBrowseAllTab('exotic');
+};
+
+window.switchBrowseAllTab=function(tab){
+  browseAllTab=tab;
+  const exo=document.getElementById('browseAllTabExotic');
+  const sey=document.getElementById('browseAllTabSeymour');
+  const exoV=document.getElementById('browseAllExoticView');
+  const seyV=document.getElementById('browseAllSeymourView');
+  [exo,sey].forEach(b=>{if(b){b.style.borderBottomColor='transparent';b.style.color='var(--text3)';b.style.fontWeight='600';}});
   if(tab==='seymour'){
-    if(seyBtn){seyBtn.style.borderBottomColor='var(--accent)';seyBtn.style.color='var(--text)';seyBtn.style.fontWeight='700';}
-    if(exoView) exoView.style.display='none';
-    if(seyView) seyView.style.display='block';
-    renderSeymourSets();
+    if(sey){sey.style.borderBottomColor='var(--accent)';sey.style.color='var(--text)';sey.style.fontWeight='700';}
+    if(exoV) exoV.style.display='none'; if(seyV) seyV.style.display='block';
+    renderBrowseAllSeymour();
   } else {
-    if(exoBtn){exoBtn.style.borderBottomColor='var(--accent)';exoBtn.style.color='var(--text)';exoBtn.style.fontWeight='700';}
-    if(seyView) seyView.style.display='none';
-    if(exoView) exoView.style.display='block';
+    if(exo){exo.style.borderBottomColor='var(--accent)';exo.style.color='var(--text)';exo.style.fontWeight='700';}
+    if(seyV) seyV.style.display='none'; if(exoV) exoV.style.display='block';
+    renderBrowseAll();
   }
 };
 
-window.toggleSeymourOffersFilter=function(){
-  seymourOffersOn=!seymourOffersOn;
-  document.getElementById('seymourOffersToggle').classList.toggle('on',seymourOffersOn);
-  document.getElementById('seymourOffersChk').checked=seymourOffersOn;
-  renderSeymourSets();
+window.toggleBrowseAllCat=function(el){
+  const cat=el.dataset.bcat;
+  if(cat==='all'){browseAllCatFilter=new Set(['all']);document.querySelectorAll('[data-bcat]').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+  else{browseAllCatFilter.delete('all');document.querySelector('[data-bcat="all"]')?.classList.remove('on');if(browseAllCatFilter.has(cat)){browseAllCatFilter.delete(cat);el.classList.remove('on');}else{browseAllCatFilter.add(cat);el.classList.add('on');}if(!browseAllCatFilter.size){browseAllCatFilter.add('all');document.querySelector('[data-bcat="all"]')?.classList.add('on');}}
+  renderBrowseAll();
+};
+window.toggleBrowseAllOffers=function(){browseAllOffersOn=!browseAllOffersOn;document.getElementById('browseAllOffersToggle').classList.toggle('on',browseAllOffersOn);document.getElementById('browseAllOffersChk').checked=browseAllOffersOn;renderBrowseAll();};
+window.toggleBrowseAllSeymourOffers=function(){browseAllSeymourOffersOn=!browseAllSeymourOffersOn;document.getElementById('browseAllSeymourOffersToggle').classList.toggle('on',browseAllSeymourOffersOn);document.getElementById('browseAllSeymourOffersChk').checked=browseAllSeymourOffersOn;renderBrowseAllSeymour();};
+window.toggleBrowseAllPiece=function(btn){
+  const piece=btn.dataset.baspiece;
+  const allBtn=document.querySelector('[data-baspiece="all"]');
+  if(piece==='all'){browseAllActivePieces=new Set(['all']);document.querySelectorAll('[data-baspiece]').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+  else{browseAllActivePieces.delete('all');if(allBtn)allBtn.classList.remove('on');if(browseAllActivePieces.has(piece)){browseAllActivePieces.delete(piece);btn.classList.remove('on');}else{browseAllActivePieces.add(piece);btn.classList.add('on');}if(!browseAllActivePieces.size){browseAllActivePieces.add('all');if(allBtn)allBtn.classList.add('on');}}
+  renderBrowseAllSeymour();
 };
 
 let seymourActivePieces=new Set(['all']);
@@ -2018,41 +2144,28 @@ window.toggleSeymourPiece=function(btn){
   const allBtn=document.querySelector('[data-spiece="all"]');
   if(piece==='all'){
     seymourActivePieces=new Set(['all']);
-    document.querySelectorAll('[data-spiece]').forEach(b=>{b.classList.remove('on');});
+    document.querySelectorAll('[data-spiece]').forEach(b=>b.classList.remove('on'));
     btn.classList.add('on');
   } else {
     seymourActivePieces.delete('all');
     if(allBtn) allBtn.classList.remove('on');
-    if(seymourActivePieces.has(piece)){
-      seymourActivePieces.delete(piece);
-      btn.classList.remove('on');
-    } else {
-      seymourActivePieces.add(piece);
-      btn.classList.add('on');
-    }
-    if(!seymourActivePieces.size){
-      seymourActivePieces.add('all');
-      if(allBtn) allBtn.classList.add('on');
-    }
+    if(seymourActivePieces.has(piece)){ seymourActivePieces.delete(piece); btn.classList.remove('on'); }
+    else { seymourActivePieces.add(piece); btn.classList.add('on'); }
+    if(!seymourActivePieces.size){ seymourActivePieces.add('all'); if(allBtn) allBtn.classList.add('on'); }
   }
   renderSeymourSets();
 };
 
 function seymourHexMatch(hex, query){
-  // Match hex against query with X as wildcard for any hex digit
-  // Also match substring (e.g. "77" matches "887733")
   if(!hex||!query) return false;
   const h=hex.replace('#','').toUpperCase();
   const q=query.replace('#','').toUpperCase();
-  if(q.includes('X')){
-    // X wildcard - try matching at each position
-    const re=new RegExp(q.replace(/X/g,'[0-9A-F]'));
-    for(let i=0;i+q.length<=h.length;i++){
-      if(re.test(h.substr(i,q.length))) return true;
-    }
+  if(q.length===0) return false;
+  if(/X/i.test(q)){
+    const re=new RegExp(q.replace(/X/gi,'[0-9A-F]'));
+    for(let i=0;i+q.length<=h.length;i++){ if(re.test(h.substr(i,q.length))) return true; }
     return false;
   }
-  // Substring match
   return h.includes(q);
 }
 
@@ -2061,43 +2174,43 @@ function renderSeymourSets(){
   if(!grid) return;
   const q=(document.getElementById('seymourSearch')?.value||'').trim();
   const sort=document.getElementById('seymourSort')?.value||'newest';
-  const isHexQ=/^#?[0-9A-Fa-fXx]{2,}$/.test(q);
+  const isHexQ=q.length>0&&/^#?[0-9A-Fa-fXx]+$/.test(q);
   const pieceAll=seymourActivePieces.has('all');
   const activePieceArr=pieceAll?[]:Array.from(seymourActivePieces);
 
   let sets=allSets.filter(s=>(s.armour_type||'').toLowerCase().includes('seymour'));
+  if(currentSeymourPageId!=='all') sets=sets.filter(s=>s.page_id===currentSeymourPageId);
   if(seymourOffersOn) sets=sets.filter(s=>s.for_offers);
-  
-  // Piece filter
   if(!pieceAll) sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourActivePieces.has(p.piece)));
-
-  // Search filter  
   if(q){
     if(isHexQ){
       sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));
     } else {
-      sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q.toLowerCase())));
+      const ql=q.toLowerCase();
+      sets=sets.filter(s=>{
+        if([(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(ql))) return true;
+        return (s.pieces||[]).some(p=>{
+          if(!p.hex) return false;
+          const cls=classifySeymour(p.hex);
+          return cls&&cls.label.toLowerCase().includes(ql);
+        });
+      });
     }
   }
-
-  // Sort
   const firstPiece=activePieceArr[0]||null;
   if(sort==='deltaE'&&firstPiece){
     sets=sets.slice().sort((a,b)=>{
-      const pa=(a.pieces||[]).find(p=>p.piece===firstPiece);
-      const pb=(b.pieces||[]).find(p=>p.piece===firstPiece);
+      const pa=(a.pieces||[]).find(p=>p.piece===firstPiece), pb=(b.pieces||[]).find(p=>p.piece===firstPiece);
       return (pa&&pa.hex?classifySeymour(pa.hex)?.deltaE??999:999)-(pb&&pb.hex?classifySeymour(pb.hex)?.deltaE??999:999);
     });
   } else if(sort==='abs'&&firstPiece){
     sets=sets.slice().sort((a,b)=>{
-      const pa=(a.pieces||[]).find(p=>p.piece===firstPiece);
-      const pb=(b.pieces||[]).find(p=>p.piece===firstPiece);
+      const pa=(a.pieces||[]).find(p=>p.piece===firstPiece), pb=(b.pieces||[]).find(p=>p.piece===firstPiece);
       return (pa&&pa.hex?classifySeymour(pa.hex)?.abs??999:999)-(pb&&pb.hex?classifySeymour(pb.hex)?.abs??999:999);
     });
   } else if(sort==='name'){
     sets=sets.slice().sort((a,b)=>(a.set_name||'').localeCompare(b.set_name||''));
   }
-
   if(!sets.length){
     grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No Seymour sets found</div></div>';
     return;
@@ -2109,30 +2222,32 @@ function renderSeymourSets(){
   requestAnimationFrame(()=>{
     sets.forEach(s=>{
       const el=document.getElementById(`model-${s.id}`);
-      if(el&&!el.dataset.rendered){ el.dataset.rendered='1'; renderPlayerInto(el,viewingUuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false}); }
+      if(el&&!el.dataset.rendered){
+        el.dataset.rendered='1';
+        const piecesToRender=pieceAll?s.pieces||[]:(s.pieces||[]).filter(p=>seymourActivePieces.has(p.piece));
+        renderPlayerInto(el,viewingUuid,piecesToRender,s.armour_type||'',{width:150,height:230,interactive:false});
+      }
     });
   });
 }
 
-
 function seymourSetCard(s, activePieces, hexQuery){
   const pieces=s.pieces||[], at=s.armour_type||'';
-  // Stripe: use seymour tier colours
   const pCols=pieces.map(p=>{const c=p.hex?classifySeymour(p.hex):null;return c?c.colour:'#888';});
   const stripe=pCols.length>1?'linear-gradient(90deg,'+pCols.map((c,i)=>c+' '+Math.round(i/pCols.length*100)+'%,'+c+' '+Math.round((i+1)/pCols.length*100)+'%').join(',')+')':pCols[0]||'var(--border)';
-  // Compact single-line piece row: dot | name | hex | tag
   const pHtml=pieces.map(p=>{
     const cls=p.hex?classifySeymour(p.hex):null;
     const col=cls?.colour||'#888';
-    const isHighlight=(activePieces&&activePieces.length>0&&activePieces.includes(p.piece))||(hexQuery&&seymourHexMatch(p.hex||"",hexQuery));
-    return`<div class="set-piece-row" style="${isHighlight?'background:var(--bg3);border-radius:4px;padding:1px 3px;':''}">
+    const isHighlight=(activePieces&&activePieces.length>0&&activePieces.includes(p.piece))||(hexQuery&&seymourHexMatch(p.hex||'',hexQuery));
+    const tagText=cls?esc(cls.label)+' \u0394E:'+cls.deltaE.toFixed(2)+' Abs:'+cls.abs:'N/A';
+    return`<div class="set-piece-row" style="${isHighlight?'border:1.5px solid #4ade80;border-radius:4px;background:#4ade8008;':'border:1.5px solid transparent;'}">
       <div class="set-piece-dot" style="background:${p.hex?'#'+p.hex.replace('#',''):'transparent'};border-color:${col}55"></div>
-      <span class="set-piece-name">${esc(p.piece)}</span>
-      ${p.hex?`<span style="font-size:8px;color:var(--text3);font-family:monospace">${esc(p.hex.toUpperCase())}</span>`:''}
-      ${cls?`<span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${esc(cls.label.length>18?cls.label.slice(0,16)+'…':cls.label)} \u0394E:${cls.deltaE.toFixed(2)} Abs:${cls.abs}</span>`:'<span class="set-piece-tag" style="color:#888;border-color:#8884;background:#8881">N/A</span>'}
+      <span class="set-piece-name" style="white-space:nowrap;overflow:visible;text-overflow:unset">${esc(p.piece)}</span>
+      ${p.hex?`<span style="font-size:8px;color:var(--text3);font-family:monospace;flex-shrink:0">${esc(p.hex.toUpperCase())}</span>`:''}
+      ${cls?`<span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10;white-space:nowrap;flex-shrink:0">${tagText}</span>`:'<span class="set-piece-tag" style="color:#888;border-color:#8884;background:#8881;flex-shrink:0">N/A</span>'}
     </div>`;
   }).join('');
-  const _hp=(activePieces&&activePieces.length>0)?activePieces[0]:null;
+  const _hp=activePieces&&activePieces.length>0?activePieces[0]:null;
   const highlightDelta=_hp?(()=>{const p=pieces.find(x=>x.piece===_hp);if(!p||!p.hex)return'';const c=classifySeymour(p.hex);return c?`<div style="font-size:11px;color:${c.colour};font-weight:700;margin-top:4px">\u0394E: ${c.deltaE.toFixed(2)} \u00b7 Abs: ${c.abs}</div>`:''})():'';
   return`<div class="set-card" onclick="openSetPanel('${esc(s.id)}')">
     <div style="height:3px;background:${stripe}"></div>
@@ -2153,161 +2268,36 @@ function seymourSetCard(s, activePieces, hexQuery){
   </div>`;
 }
 
-
-/* MUSEUM VIEW */
-async function openMuseum(uuid){
-  viewingUuid=uuid; currentPageId='all';
-  activeCatFilter=new Set(['all']); offersFilterOn=false;
-  document.getElementById('offersToggle').classList.remove('on');
-  document.getElementById('offersChk').checked=false;
-  document.querySelectorAll('#catChips .chip').forEach(c=>c.classList.remove('on'));
-  document.querySelector('#catChips .chip[data-cat="all"]')?.classList.add('on');
-  showView('museum');
-  document.getElementById('nav-museum').classList.add('active');
-  document.getElementById('nav-home').classList.remove('active');
-  // Share URL
-  const u=new URL(location.href); u.searchParams.set('museum',uuid);
-  history.replaceState({},'',(u.toString()));
-  await Promise.all([loadMuseumHdr(uuid), loadMuseumPages(uuid)]);
-  renderPageTabs();
-  await loadMuseumSets(uuid);
+function renderBrowseAll(){
+  const grid=document.getElementById('browseAllGrid'); if(!grid) return;
+  const q=(document.getElementById('browseAllSearch')?.value||'').trim();
+  const isHexQ=/^#?[0-9A-Fa-fXx]{1,}$/.test(q)&&q.length>=1;
+  let sets=allSetsGlobal.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
+  if(browseAllOffersOn) sets=sets.filter(s=>s.for_offers);
+  if(!browseAllCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>browseAllCatFilter.has(c.cat));});
+  if(q){if(isHexQ){sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));}else{sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q.toLowerCase())));}}
+  grid.innerHTML=sets.map(s=>setCard(s)).join('');
+  requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`model-${s.id}`);if(el&&!el.dataset.rendered){el.dataset.rendered='1';const _pr=pieceAll?s.pieces||[]:(s.pieces||[]).filter(p=>seymourActivePieces.has(p.piece));renderPlayerInto(el,viewingUuid,_pr,s.armour_type||'',{width:150,height:230,interactive:false});}});});
 }
 
-async function loadMuseumHdr(uuid){
-  const hdr=document.getElementById('museumHdr');
-  let ign='', discord='';
-  try{
-    const r=await fetch(`${API}/listings?status=active`);
-    const d=await r.json();
-    const s=(d.listings||[]).find(l=>l.uuid===uuid);
-    if(s) ign=s.ign||'';
-    if(currentUser&&currentUser.uuid===uuid){
-      const pr=await fetch(`${API}/users/preferences`,{headers:{Authorization:`Bearer ${getToken()}`}});
-      if(pr.ok){ const pd=await pr.json(); discord=pd.prefs?.discord||''; }
-    }
-  }catch(e){}
-  const isOwn=currentUser&&currentUser.uuid===uuid;
-  const shareUrl=`${location.origin}${location.pathname}?museum=${uuid}`;
-  const discHtml = discord ? '<div class="museum-disc">Discord: '+esc(discord)+'</div>' : '';
-  const ownBtns = isOwn ? '<button class="btn" onclick="openAddSetModal()">+ Add Set</button><button class="btn" onclick="openAddPageModal()">+ Add Page</button>' : '';
-  const repBtn = !isOwn ? '<button class="btn btn-d" onclick="openReport(\'user\',\''+esc(uuid)+'\',\''+esc(ign)+'\')">Report</button>' : '';
-  hdr.innerHTML =
-    '<img class="museum-av" src="'+HEAD(uuid)+'" alt="'+esc(ign)+'">' +
-    '<div class="museum-info">' +
-    '<div class="museum-ign">'+esc(ign||uuid.slice(0,8))+'</div>' +
-    discHtml +
-    '<div class="museum-btns">' +
-    ownBtns +
-    '<button class="btn" onclick="copyShare(\''+esc(shareUrl)+'\')">🔗 Share</button>' +
-    repBtn +
-    '</div></div>';
+function renderBrowseAllSeymour(){
+  const grid=document.getElementById('browseAllSeymourGrid'); if(!grid) return;
+  const q=(document.getElementById('browseAllSeymourSearch')?.value||'').trim();
+  const sort=document.getElementById('browseAllSeymourSort')?.value||'newest';
+  const isHexQ=/^#?[0-9A-Fa-fXx]{1,}$/.test(q)&&q.length>=1;
+  const pieceAll=browseAllActivePieces.has('all');
+  const activePieceArr=pieceAll?[]:Array.from(browseAllActivePieces);
+  let sets=allSetsGlobal.filter(s=>(s.armour_type||'').toLowerCase().includes('seymour'));
+  if(browseAllSeymourOffersOn) sets=sets.filter(s=>s.for_offers);
+  if(!pieceAll) sets=sets.filter(s=>(s.pieces||[]).some(p=>browseAllActivePieces.has(p.piece)));
+  if(q){if(isHexQ){sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));}else{sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q.toLowerCase())));}}
+  const firstPiece=activePieceArr[0]||null;
+  if(sort==='deltaE'&&firstPiece) sets=sets.slice().sort((a,b)=>{const pa=(a.pieces||[]).find(p=>p.piece===firstPiece),pb=(b.pieces||[]).find(p=>p.piece===firstPiece);return(pa&&pa.hex?classifySeymour(pa.hex)?.deltaE??999:999)-(pb&&pb.hex?classifySeymour(pb.hex)?.deltaE??999:999);});
+  else if(sort==='abs'&&firstPiece) sets=sets.slice().sort((a,b)=>{const pa=(a.pieces||[]).find(p=>p.piece===firstPiece),pb=(b.pieces||[]).find(p=>p.piece===firstPiece);return(pa&&pa.hex?classifySeymour(pa.hex)?.abs??999:999)-(pb&&pb.hex?classifySeymour(pb.hex)?.abs??999:999);});
+  else if(sort==='name') sets=sets.slice().sort((a,b)=>(a.set_name||'').localeCompare(b.set_name||''));
+  grid.innerHTML=sets.map(s=>seymourSetCard(s,activePieceArr,isHexQ?q:null)).join('');
+  requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`model-${s.id}`);if(el&&!el.dataset.rendered){el.dataset.rendered='1';const pr=browseAllActivePieces.has('all')?s.pieces||[]:(s.pieces||[]).filter(p=>browseAllActivePieces.has(p.piece));renderPlayerInto(el,s.uuid,pr,s.armour_type||'',{width:150,height:230,interactive:false});}});});
 }
-
-async function loadMuseumPages(uuid){
-  try{ const r=await fetch(`${API}/pages?uuid=${uuid}`); if(r.ok){ const d=await r.json(); museumPages=d.pages||[]; } else museumPages=[]; }catch(e){ museumPages=[]; }
-}
-
-function renderPageTabs(){
-  const isOwn=currentUser&&currentUser.uuid===viewingUuid;
-  const tabs=document.getElementById('pageTabs');
-  const all=`<button class="ptab${currentPageId==='all'?' active':''}" onclick="selectPage('all')">All Sets</button>`;
-  const pages=museumPages.map(p=>`<button class="ptab${currentPageId===p.id?' active':''}" onclick="selectPage('${esc(p.id)}')">${esc(p.name)}</button>`).join('');
-  const add=isOwn?`<button class="ptab-add" onclick="openAddPageModal()">+</button>`:'';
-  tabs.innerHTML=all+pages+add;
-}
-
-function selectPage(id){ currentPageId=id; renderPageTabs(); renderSets(); }
-
-async function loadMuseumSets(uuid){
-  document.getElementById('setsGrid').innerHTML='<div class="loading"><div class="spinner"></div>Loading…</div>';
-  try{
-    const r=await fetch(`${API}/listings?status=active`);
-    const d=await r.json();
-    allSets=(d.listings||[]).filter(l=>l.uuid===uuid);
-    renderSets();
-  }catch(e){
-    document.getElementById('setsGrid').innerHTML=`<div class="empty"><div class="empty-icon">🏺</div><div class="empty-title">No sets yet</div></div>`;
-  }
-}
-
-function renderSets(){
-  const isOwn=currentUser&&currentUser.uuid===viewingUuid;
-  const q=(document.getElementById('setSearch')?.value||'').toLowerCase();
-  let sets=allSets.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
-  if(currentPageId!=='all') sets=sets.filter(s=>s.page_id===currentPageId);
-  if(!activeCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>activeCatFilter.has(c.cat));});
-  if(offersFilterOn) sets=sets.filter(s=>s.for_offers);
-  if(q){
-    const isHex=/^#?[0-9a-f]{3,6}$/i.test(q);
-    const normQ=normHex(q.startsWith('#')?q:'#'+q);
-    sets=sets.filter(s=>{
-      if(isHex){
-        // Search by hex code - match any piece's hex
-        return (s.pieces||[]).some(p=>normHex(p.hex||'')===normQ);
-      }
-      return [(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q));
-    });
-  }
-  const grid=document.getElementById('setsGrid');
-  let html=sets.map(s=>setCard(s)).join('');
-  if(isOwn) html+=`<div class="set-card set-card-add" onclick="openAddSetModal()"><div style="font-size:24px;opacity:.5">+</div><div>Add Armour Set</div></div>`;
-  if(!sets.length&&!isOwn) html=`<div class="empty"><div class="empty-icon">🏺</div><div class="empty-title">No sets here yet</div></div>`;
-  grid.innerHTML=html;
-  // Render 3D models
-  requestAnimationFrame(()=>{
-    sets.forEach(s=>{
-      const el=document.getElementById(`model-${s.id}`);
-      if(el&&!el.dataset.rendered){ el.dataset.rendered='1'; renderPlayerInto(el,viewingUuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false}); }
-    });
-  });
-}
-
-function setCard(s){
-  const pieces=s.pieces||[], at=s.armour_type||'';
-  const cats=classifyPieces(pieces,at);
-  const pCols=pieces.map(p=>{const c=classifyHex(p.hex,at,p.piece);return c?c.colour:'#888';});
-  const stripe=pCols.length>1?'linear-gradient(90deg,'+pCols.map((c,i)=>c+' '+Math.round(i/pCols.length*100)+'%,'+c+' '+Math.round((i+1)/pCols.length*100)+'%').join(',')+')':pCols[0]||'var(--border)';
-  const pHtml=pieces.map(p=>{
-    const isSkullHelmet=p.piece==='Helmet'&&!!getSkullUrl(at);
-    const isSeymourPiece=['Velvet Top Hat','Cashmere Jacket','Satin Trousers','Oxford Shoes'].includes(p.piece);
-    const cls=isSkullHelmet?null:(isSeymourPiece&&p.hex?classifySeymour(p.hex):classifyHex(p.hex,at,p.piece)),col=cls?.colour||'#888';
-    const dot=isSkullHelmet
-      ?`<img src="https://mc-heads.net/avatar/${SKULL_HELMETS[Object.keys(SKULL_HELMETS).find(k=>at.toLowerCase().includes(k))]}/16" style="width:12px;height:12px;border-radius:2px;image-rendering:pixelated">`
-      :`<div class="set-piece-dot" style="background:${p.hex||'transparent'};border-color:${col}55"></div>`;
-    return`<div class="set-piece-row">
-      ${dot}
-      <span class="set-piece-name">${esc(p.piece)}</span>
-      ${(!isSkullHelmet&&p.hex)?`<span style="font-size:8px;color:var(--text3);font-family:monospace">${esc(p.hex.toUpperCase())}</span>`:''}
-      ${isSkullHelmet?`<span class="set-piece-tag" style="color:#888;border-color:#88844;background:#8882">Skull</span>`:`<span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${cls?esc(cls.cat==='seymour'?cls.label+' \u0394E:'+cls.deltaE.toFixed(2)+' Abs:'+cls.abs:cls.label):'N/A'}</span>`}
-    </div>`;
-  }).join('');
-  const catPills=cats.map(c=>`<span style="font-size:9px;padding:2px 5px;border-radius:4px;border:1px solid ${c.colour}44;color:${c.colour};font-weight:600;background:${c.colour}10">${esc(c.label)}</span>`).join('');
-  return`<div class="set-card" onclick="openSetPanel('${esc(s.id)}')">
-    <div style="height:3px;background:${stripe}"></div>
-    <div class="set-card-inner">
-      <div class="set-card-model" id="model-${esc(s.id)}">
-        <div class="spinner" style="opacity:.3"></div>
-      </div>
-      <div class="set-card-right">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
-          <div><div class="set-name">${esc(s.set_name||s.armour_type||'Unnamed Set')}</div><div class="set-type">${esc(s.armour_type||'')}</div></div>
-          ${s.for_offers?'<div class="set-offers">For Sale</div>':''}
-        </div>
-        <div class="set-piece-list">${pHtml}</div>
-        <div class="set-foot"><div class="set-cats">${catPills}</div><div class="set-ts">${ago(s.ts||Date.now())}</div></div>
-      </div>
-    </div>
-  </div>`;
-}
-
-/* FILTERS */
-window.toggleCat=function(el){
-  const cat=el.dataset.cat;
-  if(cat==='all'){ activeCatFilter=new Set(['all']); document.querySelectorAll('#catChips .chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); }
-  else { activeCatFilter.delete('all'); document.querySelector('#catChips .chip[data-cat="all"]')?.classList.remove('on'); if(activeCatFilter.has(cat)){ activeCatFilter.delete(cat); el.classList.remove('on'); } else { activeCatFilter.add(cat); el.classList.add('on'); } if(!activeCatFilter.size){ activeCatFilter.add('all'); document.querySelector('#catChips .chip[data-cat="all"]')?.classList.add('on'); } }
-  renderSets();
-};
-window.toggleOffersFilter=function(){ offersFilterOn=!offersFilterOn; document.getElementById('offersToggle').classList.toggle('on',offersFilterOn); document.getElementById('offersChk').checked=offersFilterOn; renderSets(); };
 
 /* SET DETAIL PANEL */
 let activePanelSet=null;
@@ -2420,7 +2410,7 @@ window.openEditModal=function(id){
     if(p.id===s.page_id) opt.selected=true;
     sel.appendChild(opt);
   });
-  openModal('editModal');
+  openModal('editModalOv');
 };
 
 window.toggleEditOffers=function(){
@@ -2726,7 +2716,10 @@ window.submitAddSet=async function(){
   const btn=document.getElementById('addSetBtn');
   btn.disabled=true; btn.textContent='Adding…';
   try{
-    const res=await fetch(`${API}/listings`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({armourType:at,setName:sn,pieces,cat:pCat.cat,catLabel:cats.map(r=>r.label).join(' + '),price:0,proof:'',notes:'',ign:currentUser.username,forOffers:fo,pageId:pid||null})});
+    const currentOffer=fo?(document.getElementById('addCurrentOffer')?.value.trim()||''):'';
+    const currentOfferIgn=fo?(document.getElementById('addCurrentOfferIgn')?.value.trim()||''):'';
+    const boughtFor=document.getElementById('addShowBoughtFor')?.checked?(document.getElementById('addBoughtFor')?.value.trim()||''):'';
+    const res=await fetch(`${API}/listings`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({armourType:at,setName:sn,pieces,cat:pCat.cat,catLabel:cats.map(r=>r.label).join(' + '),price:0,proof:'',notes:'',ign:currentUser.username,forOffers:fo,pageId:pid||null,currentOffer,currentOfferIgn,boughtFor})});
     const data=await res.json();
     if(!res.ok){toast(data.error||'Failed.');return;}
     closeModal('addSetModal'); toast('Set added!');
@@ -2740,12 +2733,14 @@ window.openAddPageModal=function(){ document.getElementById('addPageName').value
 window.submitAddPage=async function(){
   const name=document.getElementById('addPageName').value.trim();
   if(!name){toast('Enter a page name.');return;}
+  const tab=window._addPageTab||'exotic';
   try{
-    const res=await fetch(`${API}/pages`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({name})});
+    const res=await fetch(`${API}/pages`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({name,tab})});
     const data=await res.json();
     if(!res.ok){toast(data.error||'Failed.');return;}
     closeModal('addPageModal'); toast('Page created!');
-    await loadMuseumPages(currentUser.uuid); renderPageTabs();
+    await loadMuseumPages(currentUser.uuid);
+    renderPageTabs(); renderSeymourPageTabs();
   }catch(e){toast('Failed.');}
 };
 
@@ -2989,7 +2984,7 @@ setInterval(loadStats,60000);
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "900fd7499dcf40d6ad7834003bd09674"}'></script><!-- End Cloudflare Web Analytics -->
 
 <!-- EDIT LISTING MODAL -->
-<div class="modal-ov" id="editModalOv" onclick="closeModal('editModal')">
+<div class="modal-ov open-target" id="editModal" onclick="if(event.target===this)closeModal('editModal')">
   <div class="modal" style="max-width:520px;width:520px" onclick="event.stopPropagation()">
     <div class="modal-head">
       <div class="modal-title">Edit Listing</div>
@@ -3033,6 +3028,117 @@ setInterval(loadStats,60000);
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button class="btn" onclick="closeModal('editModal')">Cancel</button>
+        <button class="btn btn-p" onclick="saveEditListing()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BROWSE ALL VIEW -->
+<div id="view-browseall" style="display:none">
+  <div class="page">
+    <div style="margin-bottom:16px">
+      <div style="font-size:22px;font-weight:700;margin-bottom:4px">Browse All Sets</div>
+      <div style="font-size:13px;color:var(--text3)">Every listing across all museums.</div>
+    </div>
+    <!-- Sub-tabs: Exotic / Seymour -->
+    <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:12px">
+      <button id="browseAllTabExotic" onclick="switchBrowseAllTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;font-size:13px">Exotic</button>
+      <button id="browseAllTabSeymour" onclick="switchBrowseAllTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;font-size:13px">Seymour</button>
+    </div>
+    <!-- Exotic sub-view -->
+    <div id="browseAllExoticView">
+      <div class="filter-bar">
+        <input class="fsearch" id="browseAllSearch" placeholder="Search sets or #hex…" oninput="renderBrowseAll()">
+        <div class="cat-chips" id="browseAllCatChips">
+          <button class="chip on" data-bcat="all" onclick="toggleBrowseAllCat(this)">All</button>
+          <button class="chip" data-bcat="exotic" onclick="toggleBrowseAllCat(this)">Exotic</button>
+          <button class="chip" data-bcat="crystal" onclick="toggleBrowseAllCat(this)">Crystal</button>
+          <button class="chip" data-bcat="fairy" onclick="toggleBrowseAllCat(this)">Fairy</button>
+          <button class="chip" data-bcat="pure" onclick="toggleBrowseAllCat(this)">Pure</button>
+          <button class="chip" data-bcat="bleached" onclick="toggleBrowseAllCat(this)">Bleached</button>
+        </div>
+        <button class="offers-tog" id="browseAllOffersToggle" onclick="toggleBrowseAllOffers()">
+          <input type="checkbox" id="browseAllOffersChk" onchange="toggleBrowseAllOffers()"> For sale only
+        </button>
+      </div>
+      <div class="sets-grid" id="browseAllGrid">
+        <div class="loading"><div class="spinner"></div>Loading…</div>
+      </div>
+    </div>
+    <!-- Seymour sub-view -->
+    <div id="browseAllSeymourView" style="display:none">
+      <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+          <button class="chip on" data-baspiece="all" onclick="toggleBrowseAllPiece(this)">All pieces</button>
+          <button class="chip" data-baspiece="Velvet Top Hat" onclick="toggleBrowseAllPiece(this)">Top Hat</button>
+          <button class="chip" data-baspiece="Cashmere Jacket" onclick="toggleBrowseAllPiece(this)">Jacket</button>
+          <button class="chip" data-baspiece="Satin Trousers" onclick="toggleBrowseAllPiece(this)">Trousers</button>
+          <button class="chip" data-baspiece="Oxford Shoes" onclick="toggleBrowseAllPiece(this)">Shoes</button>
+        </div>
+        <select id="browseAllSeymourSort" onchange="renderBrowseAllSeymour()" style="height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 14px 0 10px;font-size:13px">
+          <option value="newest">Newest</option>
+          <option value="deltaE">Sort by ΔE</option>
+          <option value="abs">Sort by Abs</option>
+          <option value="name">Name A–Z</option>
+        </select>
+        <input class="fsearch" id="browseAllSeymourSearch" placeholder="Search sets or #hex…" oninput="renderBrowseAllSeymour()" style="flex:1;min-width:160px">
+        <button class="offers-tog" id="browseAllSeymourOffersToggle" onclick="toggleBrowseAllSeymourOffers()">
+          <input type="checkbox" id="browseAllSeymourOffersChk" onchange="toggleBrowseAllSeymourOffers()"> For sale only
+        </button>
+      </div>
+      <div class="sets-grid" id="browseAllSeymourGrid">
+        <div class="loading"><div class="spinner"></div>Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT LISTING MODAL -->
+<div class="modal-ov" id="editModalOv" onclick="if(event.target===this)closeModal('editModalOv')">
+  <div class="modal" style="max-width:520px;width:92vw" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title">Edit Listing</div>
+      <button class="btn btn-icon" style="font-size:13px" onclick="closeModal('editModalOv')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label class="modal-label">Set Name</label>
+        <input id="editSetName" type="text" class="modal-input" placeholder="e.g. Full Superior Dragon" maxlength="60">
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button id="editOffersBtn" onclick="toggleEditOffers()" class="btn" style="min-width:150px">Taking Offers</button>
+        <span style="font-size:12px;color:var(--text3)">Toggle whether this is for sale</span>
+      </div>
+      <div id="editOfferDetails" style="display:none;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:10px">
+          <div style="flex:1">
+            <label class="modal-label">Current Offer</label>
+            <input id="editCurrentOffer" type="text" class="modal-input" placeholder="e.g. 500m" maxlength="30" oninput="editParseAmount(this,'editCurrentOfferParsed')">
+            <div id="editCurrentOfferParsed" style="font-size:10px;color:var(--text3);margin-top:2px"></div>
+          </div>
+          <div style="flex:1">
+            <label class="modal-label">Offer by (IGN)</label>
+            <input id="editCurrentOfferIgn" type="text" class="modal-input" placeholder="Leave blank for anonymous" maxlength="30">
+          </div>
+        </div>
+      </div>
+      <div>
+        <label class="modal-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="editShowBoughtFor" onchange="document.getElementById('editBoughtForRow').style.display=this.checked?'block':'none'">
+          Show what I paid for this
+        </label>
+        <div id="editBoughtForRow" style="display:none;margin-top:6px">
+          <input id="editBoughtFor" type="text" class="modal-input" placeholder="e.g. 2.3b" maxlength="20" oninput="editParseAmount(this,'editBoughtForParsed')">
+          <div id="editBoughtForParsed" style="font-size:10px;color:var(--text3);margin-top:2px"></div>
+        </div>
+      </div>
+      <div>
+        <label class="modal-label">Page</label>
+        <select id="editPageId" class="modal-input" style="height:38px"></select>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" onclick="closeModal('editModalOv')">Cancel</button>
         <button class="btn btn-p" onclick="saveEditListing()">Save Changes</button>
       </div>
     </div>

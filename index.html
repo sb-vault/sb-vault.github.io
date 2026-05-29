@@ -289,6 +289,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     <nav class="header-nav">
       <button class="nav-btn active" id="nav-home" onclick="showView('home')">Browse</button>
       <button class="nav-btn" id="nav-museum" onclick="openMyMuseum()">My Museum</button>
+      <a class="nav-btn" href="https://sb-vault.github.io/tools" target="_blank" rel="noopener" style="text-decoration:none">Skyblock Tools</a>
     </nav>
     <div class="header-right">
       <div class="theme-tog">
@@ -2267,7 +2268,7 @@ window.openSetPanel=function(id){
         <div class="sp-piece-name">${esc(p.piece)}</div>
         <div class="sp-piece-hex">${isSkullHelmet?'Skull Helmet':p.hex?esc(p.hex.toUpperCase()):'N/A'}</div>
       </div>
-      <span class="sp-piece-tag" style="color:${isSkullHelmet?'#888':col};border-color:${isSkullHelmet?'#88844':col+'55'};background:${isSkullHelmet?'#8882':col+'10'}">${isSkullHelmet?'Skull':cls?esc(cls.label):'—'}</span>
+      <span class="sp-piece-tag" style="color:${isSkullHelmet?'#888':col};border-color:${isSkullHelmet?'#88844':col+'55'};background:${isSkullHelmet?'#8882':col+'10'}">${isSkullHelmet?'Skull':cls?(cls.cat==='seymour'?esc(cls.label)+' \u0394E:'+cls.deltaE.toFixed(2)+' Abs:'+cls.abs:esc(cls.label)):'—'}</span>
     </div>`;
   }).join('');
   const ownerActions=isOwn?`

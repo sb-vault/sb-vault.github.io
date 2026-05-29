@@ -348,7 +348,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     <!-- Museum sub-tabs -->
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:12px;position:relative;z-index:1">
       <button id="museumTabExotic" onclick="switchMuseumTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;font-size:13px;transition:all .15s;pointer-events:all;position:relative;z-index:2">Exotic</button>
-      <button id="museumTabSeymour" onclick="switchMuseumTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Seymour</button>
+      <button id="museumTabSeymour" onclick="switchMuseumTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Seymour</button>;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Seymour</button>
     </div>
     <!-- Exotic sub-view -->
     <div id="museumExoticView">
@@ -2025,8 +2025,8 @@ function renderSets(){
   });
 }
 
-function setCard(s){
-  const _hexQ=(document.getElementById('setSearch')?.value||'').trim();
+function setCard(s, _baCtx){
+  const _hexQ=_baCtx?(document.getElementById('browseAllSearch')?.value||''):(document.getElementById('setSearch')?.value||'').trim();
   const _isHexQ=/^#?[0-9A-Fa-fXx]{1,}$/.test(_hexQ)&&_hexQ.replace('#','').length>=1;
   const pieces=s.pieces||[], at=s.armour_type||'';
   const cats=classifyPieces(pieces,at);
@@ -2051,7 +2051,7 @@ function setCard(s){
   return`<div class="set-card" onclick="openSetPanel('${esc(s.id)}')">
     <div style="height:3px;background:${stripe}"></div>
     <div class="set-card-inner">
-      <div class="set-card-model" id="model-${esc(s.id)}">
+      <div class="set-card-model" id="${_baCtx?'ba-model-':'model-'}${esc(s.id)}">
         <div class="spinner" style="opacity:.3"></div>
       </div>
       <div class="set-card-right">
@@ -2176,8 +2176,11 @@ function renderSeymourSets(){
   if(currentSeymourPageId!=='all') sets=sets.filter(s=>s.page_id===currentSeymourPageId);
   if(seymourOffersOn) sets=sets.filter(s=>s.for_offers);
   if(!pieceAll) sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourActivePieces.has(p.piece)));
-  if(q){
+  // Full 6-char hex: show ALL sets sorted by ΔE, don't filter
+  const isFullHex6=/^#?[0-9A-Fa-f]{6}$/.test(q);
+  if(q&&!isFullHex6){
     if(isHexQ){
+      // Partial hex / wildcard: filter to sets that have a matching piece hex
       sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));
     } else {
       const ql=q.toLowerCase();
@@ -2191,15 +2194,23 @@ function renderSeymourSets(){
       });
     }
   }
-  // If full 6-char hex entered, auto-sort by deltaE to that hex
-  const isFullHex=/^#?[0-9A-Fa-f]{6}$/.test(q);
-  const effectiveSort=isFullHex&&sort==='newest'?'deltaE':sort;
+  // Full 6-char hex forces deltaE sort
+  const effectiveSort=isFullHex6&&sort==='newest'?'deltaE':sort;
   const firstPiece=activePieceArr[0]||null;
   if(effectiveSort==='deltaE'){
     sets=sets.slice().sort((a,b)=>{
       const getBest=s=>{
         const pcs=firstPiece?(s.pieces||[]).filter(p=>p.piece===firstPiece):s.pieces||[];
-        return Math.min(...pcs.map(p=>p.hex?classifySeymour(p.hex)?.deltaE??999:999).filter(v=>v!==undefined),...[999]);
+        if(isFullHex6){
+          // Sort by deltaE to the typed hex specifically
+          const targetLab=hexToLab(q.replace('#',''));
+          return Math.min(...pcs.map(p=>{
+            if(!p.hex) return 999;
+            const pLab=hexToLab(p.hex.replace('#',''));
+            return calculateDeltaEWithLab(pLab,targetLab);
+          }),...[999]);
+        }
+        return Math.min(...pcs.map(p=>p.hex?classifySeymour(p.hex)?.deltaE??999:999),...[999]);
       };
       return getBest(a)-getBest(b);
     });
@@ -2280,8 +2291,8 @@ function renderBrowseAll(){
   if(browseAllOffersOn) sets=sets.filter(s=>s.for_offers);
   if(!browseAllCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>browseAllCatFilter.has(c.cat));});
   if(q){if(isHexQ){sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));}else{sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q.toLowerCase())));}}
-  grid.innerHTML=sets.map(s=>setCard(s)).join('');
-  requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`model-${s.id}`);if(el){el.dataset.rendered='1';renderPlayerInto(el,s.uuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false});}});});
+  grid.innerHTML=sets.map(s=>setCard(s,true)).join('');
+  requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`ba-model-${s.id}`);if(el&&!el.dataset.rendered){el.dataset.rendered='1';renderPlayerInto(el,s.uuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false});}});});
 }
 
 function renderBrowseAllSeymour(){

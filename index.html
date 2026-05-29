@@ -126,7 +126,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .offers-tog.on{border-color:var(--green);color:var(--green);background:rgba(78,203,113,.06)}
 
 /* Sets grid: 3 columns */
-.sets-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.sets-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 @media(max-width:900px){.sets-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:580px){.sets-grid{grid-template-columns:1fr}}
 
@@ -1689,10 +1689,13 @@ async function renderPlayerInto(containerEl,ownerUuid,pieces,armourType,opts={})
 
   // Add leather armour layer if any dyeable pieces
   const pc={};
+  // Map Seymour piece names to canonical armour slots
+  const SEYMOUR_TO_SLOT={'Velvet Top Hat':'Helmet','Cashmere Jacket':'Chestplate','Satin Trousers':'Leggings','Oxford Shoes':'Boots'};
   // Include skull helmet only if Helmet piece is selected
-  if(getSkullUrl(armourType||'')&&(pieces||[]).some(p=>p.piece==='Helmet')) pc['Helmet']='skull';
+  if(getSkullUrl(armourType||'')&&(pieces||[]).some(p=>p.piece==='Helmet'||p.piece==='Velvet Top Hat')) pc['Helmet']='skull';
   (pieces||[]).forEach(p=>{
-    if(p.hex&&isDyeable(armourType||'',p.piece)) pc[p.piece]=normHex(p.hex)||BLEACHED;
+    const slot=SEYMOUR_TO_SLOT[p.piece]||p.piece;
+    if(p.hex) pc[slot]=normHex(p.hex)||BLEACHED;
   });
   if(Object.keys(pc).length>0){
     const P=1/16;
@@ -1891,7 +1894,7 @@ async function loadMuseumSets(uuid){
 function renderSets(){
   const isOwn=currentUser&&currentUser.uuid===viewingUuid;
   const q=(document.getElementById('setSearch')?.value||'').toLowerCase();
-  let sets=allSets;
+  let sets=allSets.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
   if(currentPageId!=='all') sets=sets.filter(s=>s.page_id===currentPageId);
   if(!activeCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>activeCatFilter.has(c.cat));});
   if(offersFilterOn) sets=sets.filter(s=>s.for_offers);
@@ -2003,77 +2006,231 @@ function renderSeymourSets(){
   const isHex=/^#?[0-9a-f]{3,6}$/i.test(q);
   const normQ=isHex?normHex(q.startsWith('#')?q:'#'+q):'';
 
-  // Get all sets belonging to this museum owner
-  let sets=allSets.filter(s=>{
-    // Must be Seymour armour type
-    if(!(s.armour_type||'').toLowerCase().includes('seymour')) return false;
-    if(seymourOffersOn&&!s.for_offers) return false;
-    return true;
-  });
-
-  // Filter by piece name
-  if(pieceFilter){
-    sets=sets.filter(s=>(s.pieces||[]).some(p=>p.piece===pieceFilter));
-  }
-
-  // Filter by search
+  let sets=allSets.filter(s=>(s.armour_type||'').toLowerCase().includes('seymour'));
+  if(seymourOffersOn) sets=sets.filter(s=>s.for_offers);
+  if(pieceFilter) sets=sets.filter(s=>(s.pieces||[]).some(p=>p.piece===pieceFilter));
   if(q){
-    if(isHex){
-      sets=sets.filter(s=>(s.pieces||[]).some(p=>normHex(p.hex||'')===normQ));
-    } else {
-      sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q)));
-    }
+    if(isHex){ sets=sets.filter(s=>(s.pieces||[]).some(p=>normHex(p.hex||'')===normQ)); }
+    else { sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q))); }
   }
-
-  if(sets.length===0){
-    grid.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">No Seymour sets found</div></div>';
-    return;
-  }
-
-  // Sort: if piece filter active, sort by deltaE of that piece; otherwise by set name
+  // Sort by deltaE of filtered piece (if filter active), else by set name
   if(pieceFilter){
     sets=sets.slice().sort((a,b)=>{
       const pa=(a.pieces||[]).find(p=>p.piece===pieceFilter);
       const pb=(b.pieces||[]).find(p=>p.piece===pieceFilter);
-      const da=pa&&pa.hex?classifySeymour(pa.hex)?.deltaE??999:999;
-      const db=pb&&pb.hex?classifySeymour(pb.hex)?.deltaE??999:999;
+      const da=pa&&pa.hex?(classifySeymour(pa.hex)?.deltaE??999):999;
+      const db=pb&&pb.hex?(classifySeymour(pb.hex)?.deltaE??999):999;
       return da-db;
     });
   }
+  if(!sets.length){
+    grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No Seymour sets found</div></div>';
+    return;
+  }
+  const isOwn=currentUser&&currentUser.uuid===viewingUuid;
+  let html=sets.map(s=>seymourSetCard(s,pieceFilter)).join('');
+  if(isOwn) html+=`<div class="set-card set-card-add" onclick="openAddSetModal()"><div style="font-size:24px;opacity:.5">+</div><div>Add Armour Set</div></div>`;
+  grid.innerHTML=html;
+  requestAnimationFrame(()=>{
+    sets.forEach(s=>{
+      const el=document.getElementById(`model-${s.id}`);
+      if(el&&!el.dataset.rendered){ el.dataset.rendered='1'; renderPlayerInto(el,viewingUuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false}); }
+    });
+  });
+}
 
-  grid.innerHTML=sets.map(s=>{
-    const isOwn=currentUser&&currentUser.uuid===viewingUuid;
-    // Find the relevant piece
-    const dispPiece=pieceFilter?(s.pieces||[]).find(p=>p.piece===pieceFilter):null;
-    const piecesHtml=(s.pieces||[]).map(p=>{
-      const cls=p.hex?classifySeymour(p.hex):null;
-      const col=cls?.colour||'#888';
-      const hexSpan=p.hex?`<span style="font-size:9px;color:var(--text3);font-family:monospace">#${esc(p.hex.toUpperCase())}</span>`:'';
-      const tagText=cls?esc(p.piece.slice(0,3).toUpperCase()+' \u0394E:'+cls.deltaE.toFixed(2)):'N/A';
-      return `<div style="display:flex;align-items:center;gap:4px;min-width:0">
-        <div style="width:10px;height:10px;border-radius:50%;background:${p.hex?'#'+p.hex.replace('#',''):'#888'};border:1px solid ${col}44;flex-shrink:0"></div>
-        <span style="font-size:9px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.piece)}</span>
-        ${hexSpan}
-        <span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${tagText}</span>
-      </div>`;
-    }).join('');
-
-    const deltaInfo=dispPiece&&dispPiece.hex?(()=>{const c=classifySeymour(dispPiece.hex);return c?`<div style="font-size:11px;color:${c.colour};font-weight:700;margin-top:4px">\u0394E: ${c.deltaE.toFixed(2)} &middot; Abs: ${c.abs} &middot; ${esc(c.label)}</div>`:''})():'';
-
-    return `<div class="set-card" onclick="openSetPanel('${esc(s.id)}')">
-      <div style="height:3px;background:#7ecef4"></div>
-      <div class="set-body">
-        <div class="set-name">${esc(s.set_name||'Unnamed')}</div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Seymour Armour</div>
-        <div style="display:flex;flex-direction:column;gap:3px">${piecesHtml}</div>
-        ${deltaInfo}
-      </div>
-      <div class="set-foot">
-        ${s.for_offers?`<span style="font-size:10px;color:#4ade80;font-weight:600">For sale</span>`:'<span></span>'}
-      </div>
+function seymourSetCard(s, highlightPiece){
+  const pieces=s.pieces||[], at=s.armour_type||'';
+  // Stripe: use seymour tier colours
+  const pCols=pieces.map(p=>{const c=p.hex?classifySeymour(p.hex):null;return c?c.colour:'#888';});
+  const stripe=pCols.length>1?'linear-gradient(90deg,'+pCols.map((c,i)=>c+' '+Math.round(i/pCols.length*100)+'%,'+c+' '+Math.round((i+1)/pCols.length*100)+'%').join(',')+')':pCols[0]||'var(--border)';
+  // Compact single-line piece row: dot | name | hex | tag
+  const pHtml=pieces.map(p=>{
+    const cls=p.hex?classifySeymour(p.hex):null;
+    const col=cls?.colour||'#888';
+    const isHighlight=highlightPiece&&p.piece===highlightPiece;
+    return`<div class="set-piece-row" style="${isHighlight?'background:var(--bg3);border-radius:4px;padding:1px 3px;':''}">
+      <div class="set-piece-dot" style="background:${p.hex?'#'+p.hex.replace('#',''):'transparent'};border-color:${col}55"></div>
+      <span class="set-piece-name">${esc(p.piece)}</span>
+      ${p.hex?`<span style="font-size:8px;color:var(--text3);font-family:monospace">${esc(p.hex.toUpperCase())}</span>`:''}
+      ${cls?`<span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${esc(cls.label.length>18?cls.label.slice(0,16)+'…':cls.label)} \u0394E:${cls.deltaE.toFixed(2)} Abs:${cls.abs}</span>`:'<span class="set-piece-tag" style="color:#888;border-color:#8884;background:#8881">N/A</span>'}
     </div>`;
   }).join('');
+  const highlightDelta=highlightPiece?(()=>{const p=pieces.find(x=>x.piece===highlightPiece);if(!p||!p.hex)return'';const c=classifySeymour(p.hex);return c?`<div style="font-size:11px;color:${c.colour};font-weight:700;margin-top:4px">\u0394E: ${c.deltaE.toFixed(2)} \u00b7 Abs: ${c.abs}</div>`:''})():'';
+  return`<div class="set-card" onclick="openSetPanel('${esc(s.id)}')">
+    <div style="height:3px;background:${stripe}"></div>
+    <div class="set-card-inner">
+      <div class="set-card-model" id="model-${esc(s.id)}">
+        <div class="spinner" style="opacity:.3"></div>
+      </div>
+      <div class="set-card-right">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+          <div><div class="set-name">${esc(s.set_name||s.armour_type||'Unnamed Set')}</div><div class="set-type">${esc(at)}</div></div>
+          ${s.for_offers?'<div class="set-offers">For Sale</div>':''}
+        </div>
+        <div class="set-piece-list">${pHtml}</div>
+        ${highlightDelta}
+        <div class="set-foot"><div class="set-cats"></div><div class="set-ts">${ago(s.ts||Date.now())}</div></div>
+      </div>
+    </div>
+  </div>`;
 }
+
+
+/* MUSEUM VIEW */
+async function openMuseum(uuid){
+  viewingUuid=uuid; currentPageId='all';
+  activeCatFilter=new Set(['all']); offersFilterOn=false;
+  document.getElementById('offersToggle').classList.remove('on');
+  document.getElementById('offersChk').checked=false;
+  document.querySelectorAll('#catChips .chip').forEach(c=>c.classList.remove('on'));
+  document.querySelector('#catChips .chip[data-cat="all"]')?.classList.add('on');
+  showView('museum');
+  document.getElementById('nav-museum').classList.add('active');
+  document.getElementById('nav-home').classList.remove('active');
+  // Share URL
+  const u=new URL(location.href); u.searchParams.set('museum',uuid);
+  history.replaceState({},'',(u.toString()));
+  await Promise.all([loadMuseumHdr(uuid), loadMuseumPages(uuid)]);
+  renderPageTabs();
+  await loadMuseumSets(uuid);
+}
+
+async function loadMuseumHdr(uuid){
+  const hdr=document.getElementById('museumHdr');
+  let ign='', discord='';
+  try{
+    const r=await fetch(`${API}/listings?status=active`);
+    const d=await r.json();
+    const s=(d.listings||[]).find(l=>l.uuid===uuid);
+    if(s) ign=s.ign||'';
+    if(currentUser&&currentUser.uuid===uuid){
+      const pr=await fetch(`${API}/users/preferences`,{headers:{Authorization:`Bearer ${getToken()}`}});
+      if(pr.ok){ const pd=await pr.json(); discord=pd.prefs?.discord||''; }
+    }
+  }catch(e){}
+  const isOwn=currentUser&&currentUser.uuid===uuid;
+  const shareUrl=`${location.origin}${location.pathname}?museum=${uuid}`;
+  const discHtml = discord ? '<div class="museum-disc">Discord: '+esc(discord)+'</div>' : '';
+  const ownBtns = isOwn ? '<button class="btn" onclick="openAddSetModal()">+ Add Set</button><button class="btn" onclick="openAddPageModal()">+ Add Page</button>' : '';
+  const repBtn = !isOwn ? '<button class="btn btn-d" onclick="openReport(\'user\',\''+esc(uuid)+'\',\''+esc(ign)+'\')">Report</button>' : '';
+  hdr.innerHTML =
+    '<img class="museum-av" src="'+HEAD(uuid)+'" alt="'+esc(ign)+'">' +
+    '<div class="museum-info">' +
+    '<div class="museum-ign">'+esc(ign||uuid.slice(0,8))+'</div>' +
+    discHtml +
+    '<div class="museum-btns">' +
+    ownBtns +
+    '<button class="btn" onclick="copyShare(\''+esc(shareUrl)+'\')">🔗 Share</button>' +
+    repBtn +
+    '</div></div>';
+}
+
+async function loadMuseumPages(uuid){
+  try{ const r=await fetch(`${API}/pages?uuid=${uuid}`); if(r.ok){ const d=await r.json(); museumPages=d.pages||[]; } else museumPages=[]; }catch(e){ museumPages=[]; }
+}
+
+function renderPageTabs(){
+  const isOwn=currentUser&&currentUser.uuid===viewingUuid;
+  const tabs=document.getElementById('pageTabs');
+  const all=`<button class="ptab${currentPageId==='all'?' active':''}" onclick="selectPage('all')">All Sets</button>`;
+  const pages=museumPages.map(p=>`<button class="ptab${currentPageId===p.id?' active':''}" onclick="selectPage('${esc(p.id)}')">${esc(p.name)}</button>`).join('');
+  const add=isOwn?`<button class="ptab-add" onclick="openAddPageModal()">+</button>`:'';
+  tabs.innerHTML=all+pages+add;
+}
+
+function selectPage(id){ currentPageId=id; renderPageTabs(); renderSets(); }
+
+async function loadMuseumSets(uuid){
+  document.getElementById('setsGrid').innerHTML='<div class="loading"><div class="spinner"></div>Loading…</div>';
+  try{
+    const r=await fetch(`${API}/listings?status=active`);
+    const d=await r.json();
+    allSets=(d.listings||[]).filter(l=>l.uuid===uuid);
+    renderSets();
+  }catch(e){
+    document.getElementById('setsGrid').innerHTML=`<div class="empty"><div class="empty-icon">🏺</div><div class="empty-title">No sets yet</div></div>`;
+  }
+}
+
+function renderSets(){
+  const isOwn=currentUser&&currentUser.uuid===viewingUuid;
+  const q=(document.getElementById('setSearch')?.value||'').toLowerCase();
+  let sets=allSets.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
+  if(currentPageId!=='all') sets=sets.filter(s=>s.page_id===currentPageId);
+  if(!activeCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>activeCatFilter.has(c.cat));});
+  if(offersFilterOn) sets=sets.filter(s=>s.for_offers);
+  if(q){
+    const isHex=/^#?[0-9a-f]{3,6}$/i.test(q);
+    const normQ=normHex(q.startsWith('#')?q:'#'+q);
+    sets=sets.filter(s=>{
+      if(isHex){
+        // Search by hex code - match any piece's hex
+        return (s.pieces||[]).some(p=>normHex(p.hex||'')===normQ);
+      }
+      return [(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q));
+    });
+  }
+  const grid=document.getElementById('setsGrid');
+  let html=sets.map(s=>setCard(s)).join('');
+  if(isOwn) html+=`<div class="set-card set-card-add" onclick="openAddSetModal()"><div style="font-size:24px;opacity:.5">+</div><div>Add Armour Set</div></div>`;
+  if(!sets.length&&!isOwn) html=`<div class="empty"><div class="empty-icon">🏺</div><div class="empty-title">No sets here yet</div></div>`;
+  grid.innerHTML=html;
+  // Render 3D models
+  requestAnimationFrame(()=>{
+    sets.forEach(s=>{
+      const el=document.getElementById(`model-${s.id}`);
+      if(el&&!el.dataset.rendered){ el.dataset.rendered='1'; renderPlayerInto(el,viewingUuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false}); }
+    });
+  });
+}
+
+function setCard(s){
+  const pieces=s.pieces||[], at=s.armour_type||'';
+  const cats=classifyPieces(pieces,at);
+  const pCols=pieces.map(p=>{const c=classifyHex(p.hex,at,p.piece);return c?c.colour:'#888';});
+  const stripe=pCols.length>1?'linear-gradient(90deg,'+pCols.map((c,i)=>c+' '+Math.round(i/pCols.length*100)+'%,'+c+' '+Math.round((i+1)/pCols.length*100)+'%').join(',')+')':pCols[0]||'var(--border)';
+  const pHtml=pieces.map(p=>{
+    const isSkullHelmet=p.piece==='Helmet'&&!!getSkullUrl(at);
+    const isSeymourPiece=['Velvet Top Hat','Cashmere Jacket','Satin Trousers','Oxford Shoes'].includes(p.piece);
+    const cls=isSkullHelmet?null:(isSeymourPiece&&p.hex?classifySeymour(p.hex):classifyHex(p.hex,at,p.piece)),col=cls?.colour||'#888';
+    const dot=isSkullHelmet
+      ?`<img src="https://mc-heads.net/avatar/${SKULL_HELMETS[Object.keys(SKULL_HELMETS).find(k=>at.toLowerCase().includes(k))]}/16" style="width:12px;height:12px;border-radius:2px;image-rendering:pixelated">`
+      :`<div class="set-piece-dot" style="background:${p.hex||'transparent'};border-color:${col}55"></div>`;
+    return`<div class="set-piece-row">
+      ${dot}
+      <span class="set-piece-name">${esc(p.piece)}</span>
+      ${(!isSkullHelmet&&p.hex)?`<span style="font-size:8px;color:var(--text3);font-family:monospace">${esc(p.hex.toUpperCase())}</span>`:''}
+      ${isSkullHelmet?`<span class="set-piece-tag" style="color:#888;border-color:#88844;background:#8882">Skull</span>`:`<span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${cls?esc(cls.cat==='seymour'?cls.label+' \u0394E:'+cls.deltaE.toFixed(2)+' Abs:'+cls.abs:cls.label):'N/A'}</span>`}
+    </div>`;
+  }).join('');
+  const catPills=cats.map(c=>`<span style="font-size:9px;padding:2px 5px;border-radius:4px;border:1px solid ${c.colour}44;color:${c.colour};font-weight:600;background:${c.colour}10">${esc(c.label)}</span>`).join('');
+  return`<div class="set-card" onclick="openSetPanel('${esc(s.id)}')">
+    <div style="height:3px;background:${stripe}"></div>
+    <div class="set-card-inner">
+      <div class="set-card-model" id="model-${esc(s.id)}">
+        <div class="spinner" style="opacity:.3"></div>
+      </div>
+      <div class="set-card-right">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+          <div><div class="set-name">${esc(s.set_name||s.armour_type||'Unnamed Set')}</div><div class="set-type">${esc(s.armour_type||'')}</div></div>
+          ${s.for_offers?'<div class="set-offers">For Sale</div>':''}
+        </div>
+        <div class="set-piece-list">${pHtml}</div>
+        <div class="set-foot"><div class="set-cats">${catPills}</div><div class="set-ts">${ago(s.ts||Date.now())}</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* FILTERS */
+window.toggleCat=function(el){
+  const cat=el.dataset.cat;
+  if(cat==='all'){ activeCatFilter=new Set(['all']); document.querySelectorAll('#catChips .chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); }
+  else { activeCatFilter.delete('all'); document.querySelector('#catChips .chip[data-cat="all"]')?.classList.remove('on'); if(activeCatFilter.has(cat)){ activeCatFilter.delete(cat); el.classList.remove('on'); } else { activeCatFilter.add(cat); el.classList.add('on'); } if(!activeCatFilter.size){ activeCatFilter.add('all'); document.querySelector('#catChips .chip[data-cat="all"]')?.classList.add('on'); } }
+  renderSets();
+};
+window.toggleOffersFilter=function(){ offersFilterOn=!offersFilterOn; document.getElementById('offersToggle').classList.toggle('on',offersFilterOn); document.getElementById('offersChk').checked=offersFilterOn; renderSets(); };
 
 /* SET DETAIL PANEL */
 let activePanelSet=null;

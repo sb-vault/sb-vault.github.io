@@ -376,26 +376,31 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     <div id="museumSeymourView" style="display:none">
       <!-- Seymour pages (separate from exotic) -->
       <div class="page-tabs" id="seymourPageTabs"></div>
-      <div class="filter-bar" style="flex-wrap:wrap;gap:8px;align-items:center">
-        <!-- Sort + Search on left -->
-        <select id="seymourSort" onchange="renderSeymourSets()" style="height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 14px 0 10px;font-size:13px;flex-shrink:0">
-          <option value="newest">Newest</option>
-          <option value="deltaE">Sort by ΔE</option>
-          <option value="abs">Sort by Abs</option>
-          <option value="name">Name A–Z</option>
-        </select>
-        <input class="fsearch" id="seymourSearch" placeholder="Search sets, #hex or colour name…" oninput="renderSeymourSets()" style="flex:1;min-width:140px">
-        <button class="offers-tog" id="seymourOffersToggle" onclick="toggleSeymourOffersFilter()">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <!-- Sort (compact, left) -->
+        <div style="position:relative;flex-shrink:0">
+          <select id="seymourSort" onchange="renderSeymourSets()" style="height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 28px 0 10px;font-size:12px;appearance:none;-webkit-appearance:none;cursor:pointer;min-width:90px">
+            <option value="newest">Newest</option>
+            <option value="deltaE">By ΔE</option>
+            <option value="abs">By Abs</option>
+            <option value="name">A–Z</option>
+          </select>
+          <span style="pointer-events:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3)">▾</span>
+        </div>
+        <!-- Search -->
+        <input class="fsearch" id="seymourSearch" placeholder="Search…" oninput="renderSeymourSets()" style="height:32px;flex:1;min-width:120px;max-width:200px">
+        <!-- Divider -->
+        <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
+        <!-- Piece chips -->
+        <button class="chip on" data-spiece="all" onclick="toggleSeymourPiece(this)">All pieces</button>
+        <button class="chip" data-spiece="Velvet Top Hat" onclick="toggleSeymourPiece(this)">Top Hat</button>
+        <button class="chip" data-spiece="Cashmere Jacket" onclick="toggleSeymourPiece(this)">Jacket</button>
+        <button class="chip" data-spiece="Satin Trousers" onclick="toggleSeymourPiece(this)">Trousers</button>
+        <button class="chip" data-spiece="Oxford Shoes" onclick="toggleSeymourPiece(this)">Shoes</button>
+        <!-- For sale -->
+        <button class="offers-tog" id="seymourOffersToggle" onclick="toggleSeymourOffersFilter()" style="margin-left:auto">
           <input type="checkbox" id="seymourOffersChk" onchange="toggleSeymourOffersFilter()"> For sale only
         </button>
-        <!-- Piece chips on right -->
-        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
-          <button class="chip on" data-spiece="all" onclick="toggleSeymourPiece(this)">All pieces</button>
-          <button class="chip" data-spiece="Velvet Top Hat" onclick="toggleSeymourPiece(this)">Top Hat</button>
-          <button class="chip" data-spiece="Cashmere Jacket" onclick="toggleSeymourPiece(this)">Jacket</button>
-          <button class="chip" data-spiece="Satin Trousers" onclick="toggleSeymourPiece(this)">Trousers</button>
-          <button class="chip" data-spiece="Oxford Shoes" onclick="toggleSeymourPiece(this)">Shoes</button>
-        </div>
       </div>
       <div class="sets-grid" id="seymourSetsGrid">
         <div class="loading"><div class="spinner"></div>Loading sets…</div>
@@ -606,6 +611,40 @@ let activeChatId = null;
 let chatList = [];
 let archivedChats = [];
 let lastMessageTs = 0;
+let currentMuseumTab = 'exotic';
+let seymourOffersOn = false;
+let editingSetId = null;
+let editForOffers = false;
+
+window.switchMuseumTab=function(tab){
+  currentMuseumTab=tab;
+  const exoBtn=document.getElementById('museumTabExotic');
+  const seyBtn=document.getElementById('museumTabSeymour');
+  const exoView=document.getElementById('museumExoticView');
+  const seyView=document.getElementById('museumSeymourView');
+  if(!exoBtn||!seyBtn) return;
+  // Reset both
+  exoBtn.style.borderBottomColor='transparent'; exoBtn.style.color='var(--text3)'; exoBtn.style.fontWeight='600';
+  seyBtn.style.borderBottomColor='transparent'; seyBtn.style.color='var(--text3)'; seyBtn.style.fontWeight='600';
+  if(tab==='seymour'){
+    seyBtn.style.borderBottomColor='var(--accent)'; seyBtn.style.color='var(--text)'; seyBtn.style.fontWeight='700';
+    if(exoView) exoView.style.display='none';
+    if(seyView) seyView.style.display='block';
+    renderSeymourSets();
+  } else {
+    exoBtn.style.borderBottomColor='var(--accent)'; exoBtn.style.color='var(--text)'; exoBtn.style.fontWeight='700';
+    if(seyView) seyView.style.display='none';
+    if(exoView) exoView.style.display='block';
+    renderSets();
+  }
+};
+
+window.toggleSeymourOffersFilter=function(){
+  seymourOffersOn=!seymourOffersOn;
+  document.getElementById('seymourOffersToggle').classList.toggle('on',seymourOffersOn);
+  document.getElementById('seymourOffersChk').checked=seymourOffersOn;
+  renderSeymourSets();
+};
 
 /* THEME */
 function setTheme(t){
@@ -1857,6 +1896,7 @@ async function openMuseum(uuid){
   await Promise.all([loadMuseumHdr(uuid), loadMuseumPages(uuid)]);
   renderPageTabs(); renderSeymourPageTabs();
   await loadMuseumSets(uuid);
+  switchMuseumTab('exotic');
 }
 
 async function loadMuseumHdr(uuid){
@@ -1953,7 +1993,7 @@ async function loadMuseumSets(uuid){
 function renderSets(){
   const isOwn=currentUser&&currentUser.uuid===viewingUuid;
   const q=(document.getElementById('setSearch')?.value||'').trim();
-  const isHex=(q.startsWith('#')||/^[0-9A-Fa-fXx]{1,6}$/.test(q.replace('#',''))&&/^[#0-9A-Fa-fXx]+$/.test(q));
+  const isHex=(q.startsWith('#')||(/^[0-9A-Fa-fXx]{2,6}$/.test(q.replace('#','')))&&/^[#0-9A-Fa-fXx]+$/.test(q));
   let sets=allSets.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
   if(currentPageId!=='all') sets=sets.filter(s=>s.page_id===currentPageId);
   if(!activeCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>activeCatFilter.has(c.cat));});
@@ -2128,7 +2168,7 @@ function renderSeymourSets(){
   if(!grid) return;
   const q=(document.getElementById('seymourSearch')?.value||'').trim();
   const sort=document.getElementById('seymourSort')?.value||'newest';
-  const isHexQ=(q.startsWith('#')||/^[0-9A-Fa-fXx]{1,6}$/.test(q.replace('#',''))&&/^[#0-9A-Fa-fXx]+$/.test(q));
+  const isHexQ=(q.startsWith('#')||(/^[0-9A-Fa-fXx]{2,6}$/.test(q.replace('#','')))&&/^[#0-9A-Fa-fXx]+$/.test(q));
   const pieceAll=seymourActivePieces.has('all');
   const activePieceArr=pieceAll?[]:Array.from(seymourActivePieces);
 
@@ -2235,7 +2275,7 @@ function seymourSetCard(s, activePieces, hexQuery){
 function renderBrowseAll(){
   const grid=document.getElementById('browseAllGrid'); if(!grid) return;
   const q=(document.getElementById('browseAllSearch')?.value||'').trim();
-  const isHexQ=(q.startsWith('#')||/^[0-9A-Fa-fXx]{1,6}$/.test(q.replace('#',''))&&/^[#0-9A-Fa-fXx]+$/.test(q));
+  const isHexQ=(q.startsWith('#')||(/^[0-9A-Fa-fXx]{2,6}$/.test(q.replace('#','')))&&/^[#0-9A-Fa-fXx]+$/.test(q));
   let sets=allSetsGlobal.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
   if(browseAllOffersOn) sets=sets.filter(s=>s.for_offers);
   if(!browseAllCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>browseAllCatFilter.has(c.cat));});
@@ -2248,7 +2288,7 @@ function renderBrowseAllSeymour(){
   const grid=document.getElementById('browseAllSeymourGrid'); if(!grid) return;
   const q=(document.getElementById('browseAllSeymourSearch')?.value||'').trim();
   const sort=document.getElementById('browseAllSeymourSort')?.value||'newest';
-  const isHexQ=(q.startsWith('#')||/^[0-9A-Fa-fXx]{1,6}$/.test(q.replace('#',''))&&/^[#0-9A-Fa-fXx]+$/.test(q));
+  const isHexQ=(q.startsWith('#')||(/^[0-9A-Fa-fXx]{2,6}$/.test(q.replace('#','')))&&/^[#0-9A-Fa-fXx]+$/.test(q));
   const pieceAll=browseAllActivePieces.has('all');
   const activePieceArr=pieceAll?[]:Array.from(browseAllActivePieces);
   let sets=allSetsGlobal.filter(s=>(s.armour_type||'').toLowerCase().includes('seymour'));
@@ -2342,9 +2382,6 @@ async function deleteSet(id){
   if(!confirm('Delete this set?')) return;
   try{ await fetch(`${API}/listings/${id}/delete`,{method:'PUT',headers:{Authorization:`Bearer ${getToken()}`}}); closeSetPanel(); toast('Set deleted.'); loadMuseumSets(currentUser.uuid); }catch(e){ toast('Failed to delete.'); }
 }
-
-let editingSetId = null;
-let editForOffers = false;
 
 window.openEditModal=function(id){
   const s=allSets.find(x=>x.id===id);

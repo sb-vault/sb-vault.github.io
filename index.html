@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Vault – SkyBlock Exotic Armour Museum</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root[data-theme="dark"]{--bg:#111113;--bg2:#1a1a1e;--bg3:#222228;--border:#2e2e36;--text:#f0f0f2;--text2:#9090a0;--text3:#55555f;--green:#4ecb71;--red:#e85555;--shadow:0 2px 16px rgba(0,0,0,.5)}
 :root[data-theme="light"]{--bg:#f5f5f7;--bg2:#fff;--bg3:#ebebef;--border:#dddde8;--text:#111114;--text2:#606070;--text3:#aaaabc;--green:#1a9940;--red:#c83030;--shadow:0 2px 12px rgba(0,0,0,.08)}
@@ -17,7 +17,7 @@ button{cursor:pointer}
 /* Header */
 header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:0 24px}
 .header-inner{max-width:1280px;margin:0 auto;height:56px;display:flex;align-items:center;gap:16px}
-.logo{font-family:'Cinzel',serif;font-size:18px;font-weight:700;letter-spacing:.04em;cursor:pointer;display:flex;align-items:baseline;gap:10px}
+.logo{font-family:'Inter',sans-serif;font-size:18px;font-weight:700;letter-spacing:.04em;cursor:pointer;display:flex;align-items:baseline;gap:10px}
 .logo-sub{font-size:11px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;font-family:'Inter',sans-serif;font-weight:400}
 .header-nav{display:flex;gap:4px;margin-left:8px}
 .nav-btn{font-size:13px;color:var(--text2);padding:5px 10px;border-radius:7px;border:none;background:none;font-weight:500;transition:all .15s}
@@ -68,17 +68,17 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 
 /* Hero */
 .hero{padding:64px 0 48px;text-align:center}
-.hero-title{font-family:'Cinzel',serif;font-size:clamp(28px,5vw,52px);font-weight:700;letter-spacing:.02em;margin-bottom:14px}
+.hero-title{font-family:'Inter',sans-serif;font-size:clamp(28px,5vw,52px);font-weight:700;letter-spacing:.02em;margin-bottom:14px}
 .hero-sub{font-size:15px;color:var(--text2);line-height:1.7;max-width:520px;margin:0 auto 28px}
 .hero-btns{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
 .stats-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:40px}
 .stat-chip{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 24px;text-align:center;min-width:110px}
-.stat-n{font-family:'Cinzel',serif;font-size:24px;font-weight:700;line-height:1}
+.stat-n{font-family:'Inter',sans-serif;font-size:24px;font-weight:700;line-height:1}
 .stat-l{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-top:4px}
 
 /* Section */
 .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px}
-.section-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
+.section-title{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
 
 /* Museum browse grid */
 .museum-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
@@ -100,7 +100,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .museum-hdr{display:flex;align-items:flex-start;gap:20px;margin-bottom:24px;padding:24px;background:var(--bg2);border:1px solid var(--border);border-radius:16px}
 .museum-av{width:64px;height:64px;border-radius:12px;image-rendering:pixelated;flex-shrink:0}
 .museum-info{flex:1;min-width:0}
-.museum-ign{font-family:'Cinzel',serif;font-size:22px;font-weight:700;margin-bottom:3px}
+.museum-ign{font-family:'Inter',sans-serif;font-size:22px;font-weight:700;margin-bottom:3px}
 .museum-disc{font-size:13px;color:var(--text3);margin-bottom:10px}
 .museum-btns{display:flex;gap:8px;flex-wrap:wrap}
 
@@ -159,7 +159,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .side-panel{position:fixed;right:0;top:0;bottom:0;width:760px;max-width:96vw;background:var(--bg2);border-left:1px solid var(--border);z-index:301;display:flex;flex-direction:column;box-shadow:-6px 0 40px rgba(0,0,0,.35);transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.2,1)}
 .side-panel.open{transform:translateX(0)}
 .sp-head{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-shrink:0}
-.sp-title{font-family:'Cinzel',serif;font-size:18px;font-weight:700;line-height:1.2}
+.sp-title{font-family:'Inter',sans-serif;font-size:18px;font-weight:700;line-height:1.2}
 .sp-type{font-size:12px;color:var(--text2);margin-top:3px}
 .sp-body{padding:20px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px}
 .sp-model-wrap{display:flex;gap:20px;align-items:flex-start}
@@ -182,7 +182,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .chat-panel.open{transform:translateX(0)}
 .chat-list-col{width:240px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column}
 .chat-list-head{padding:14px 12px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.chat-list-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700}
+.chat-list-title{font-family:'Inter',sans-serif;font-size:13px;font-weight:700}
 .chat-list-scroll{flex:1;overflow-y:auto}
 .chat-item{padding:11px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
 .chat-item:hover{background:var(--bg3)}
@@ -192,7 +192,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .chat-item-time{font-size:10px;color:var(--text3);margin-top:2px}
 .chat-main{flex:1;display:flex;flex-direction:column;min-width:0}
 .chat-main-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-.chat-main-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700}
+.chat-main-title{font-family:'Inter',sans-serif;font-size:13px;font-weight:700}
 .chat-main-sub{font-size:11px;color:var(--text3);margin-top:1px}
 .chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:7px;overscroll-behavior:contain}
 .msg-row{display:flex;gap:8px;align-items:flex-end;max-width:100%}
@@ -221,7 +221,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .modal-ov.open{display:flex;animation:fadeIn .15s ease}
 .modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;overflow:hidden;max-height:90vh;display:flex;flex-direction:column}
 .modal-head{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.modal-title{font-family:'Cinzel',serif;font-size:15px;font-weight:700}
+.modal-title{font-family:'Inter',sans-serif;font-size:15px;font-weight:700}
 .modal-body{padding:18px 20px;overflow-y:auto;flex:1}
 .modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
 .field{margin-bottom:14px}
@@ -343,14 +343,14 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     </div>
     <!-- Museum sub-tabs -->
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:12px">
-      <button id="museumTabExotic" onclick="switchMuseumTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;font-size:13px">Exotic</button>
+      <button id="museumTabExotic" onclick="switchMuseumTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;font-size:13px;transition:all .15s">Exotic</button>
       <button id="museumTabSeymour" onclick="switchMuseumTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;font-size:13px">Seymour</button>
     </div>
     <!-- Exotic sub-view -->
     <div id="museumExoticView">
       <div class="page-tabs" id="pageTabs"></div>
       <div class="filter-bar">
-        <input class="fsearch" id="setSearch" placeholder="Search sets or #hex…" oninput="renderSets()">
+        <input class="fsearch" id="setSearch" placeholder="Search sets, #hex or Xwildcard…" oninput="renderSets()">
         <div class="cat-chips" id="catChips">
           <button class="chip on" data-cat="all" onclick="toggleCat(this)">All</button>
           <button class="chip" data-cat="exotic" onclick="toggleCat(this)">Exotic</button>
@@ -370,15 +370,24 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     </div>
     <!-- Seymour sub-view -->
     <div id="museumSeymourView" style="display:none">
-      <div class="filter-bar">
-        <select id="seymourPieceFilter" onchange="renderSeymourSets()" style="height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 10px;font-size:13px">
-          <option value="">All pieces</option>
-          <option value="Velvet Top Hat">Velvet Top Hat</option>
-          <option value="Cashmere Jacket">Cashmere Jacket</option>
-          <option value="Satin Trousers">Satin Trousers</option>
-          <option value="Oxford Shoes">Oxford Shoes</option>
+      <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
+        <!-- Piece multi-toggle -->
+        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+          <button class="chip on" data-spiece="all" onclick="toggleSeymourPiece(this)">All pieces</button>
+          <button class="chip" data-spiece="Velvet Top Hat" onclick="toggleSeymourPiece(this)">Top Hat</button>
+          <button class="chip" data-spiece="Cashmere Jacket" onclick="toggleSeymourPiece(this)">Jacket</button>
+          <button class="chip" data-spiece="Satin Trousers" onclick="toggleSeymourPiece(this)">Trousers</button>
+          <button class="chip" data-spiece="Oxford Shoes" onclick="toggleSeymourPiece(this)">Shoes</button>
+        </div>
+        <!-- Sort -->
+        <select id="seymourSort" onchange="renderSeymourSets()" style="height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 14px 0 10px;font-size:13px">
+          <option value="newest">Newest</option>
+          <option value="deltaE">Sort by ΔE</option>
+          <option value="abs">Sort by Abs</option>
+          <option value="name">Name A–Z</option>
         </select>
-        <input class="fsearch" id="seymourSearch" placeholder="Search sets or #hex…" oninput="renderSeymourSets()" style="max-width:200px">
+        <!-- Search -->
+        <input class="fsearch" id="seymourSearch" placeholder="Search sets, #hex or Xwildcard…" oninput="renderSeymourSets()" style="flex:1;min-width:160px">
         <button class="offers-tog" id="seymourOffersToggle" onclick="toggleSeymourOffersFilter()">
           <input type="checkbox" id="seymourOffersChk" onchange="toggleSeymourOffersFilter()"> For sale only
         </button>
@@ -1900,7 +1909,7 @@ function renderSets(){
   if(!activeCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>activeCatFilter.has(c.cat));});
   if(offersFilterOn) sets=sets.filter(s=>s.for_offers);
   if(q){
-    const isHex=/^#?[0-9a-f]{3,6}$/i.test(q);
+    const isHex=/^#?[0-9A-Fa-fXx]{2,}$/.test(q);
     const normQ=normHex(q.startsWith('#')?q:'#'+q);
     sets=sets.filter(s=>{
       if(isHex){
@@ -1925,6 +1934,8 @@ function renderSets(){
 }
 
 function setCard(s){
+  const _hexQ=(document.getElementById('setSearch')?.value||'').trim();
+  const _isHexQ=/^#?[0-9A-Fa-fXx]{2,}$/.test(_hexQ);
   const pieces=s.pieces||[], at=s.armour_type||'';
   const cats=classifyPieces(pieces,at);
   const pCols=pieces.map(p=>{const c=classifyHex(p.hex,at,p.piece);return c?c.colour:'#888';});
@@ -1936,7 +1947,8 @@ function setCard(s){
     const dot=isSkullHelmet
       ?`<img src="https://mc-heads.net/avatar/${SKULL_HELMETS[Object.keys(SKULL_HELMETS).find(k=>at.toLowerCase().includes(k))]}/16" style="width:12px;height:12px;border-radius:2px;image-rendering:pixelated">`
       :`<div class="set-piece-dot" style="background:${p.hex||'transparent'};border-color:${col}55"></div>`;
-    return`<div class="set-piece-row">
+    const _pieceMatch=_isHexQ&&seymourHexMatch(p.hex||"",_hexQ);
+    return`<div class="set-piece-row" style="${_pieceMatch?"background:var(--accent)20;border-radius:4px;padding:1px 3px;":""}">
       ${dot}
       <span class="set-piece-name">${esc(p.piece)}</span>
       ${(!isSkullHelmet&&p.hex)?`<span style="font-size:8px;color:var(--text3);font-family:monospace">${esc(p.hex.toUpperCase())}</span>`:''}
@@ -1980,15 +1992,16 @@ window.switchMuseumTab=function(tab){
   const seyBtn=document.getElementById('museumTabSeymour');
   const exoView=document.getElementById('museumExoticView');
   const seyView=document.getElementById('museumSeymourView');
+  [exoBtn,seyBtn].forEach(b=>{if(b){b.style.borderBottomColor='transparent';b.style.color='var(--text3)';b.style.fontWeight='600';}});
   if(tab==='seymour'){
-    exoBtn.style.borderBottomColor='transparent'; exoBtn.style.color='var(--text3)'; exoBtn.style.fontWeight='600';
-    seyBtn.style.borderBottomColor='var(--accent)'; seyBtn.style.color='var(--text)'; seyBtn.style.fontWeight='700';
-    exoView.style.display='none'; seyView.style.display='block';
+    if(seyBtn){seyBtn.style.borderBottomColor='var(--accent)';seyBtn.style.color='var(--text)';seyBtn.style.fontWeight='700';}
+    if(exoView) exoView.style.display='none';
+    if(seyView) seyView.style.display='block';
     renderSeymourSets();
   } else {
-    seyBtn.style.borderBottomColor='transparent'; seyBtn.style.color='var(--text3)'; seyBtn.style.fontWeight='600';
-    exoBtn.style.borderBottomColor='var(--accent)'; exoBtn.style.color='var(--text)'; exoBtn.style.fontWeight='700';
-    seyView.style.display='none'; exoView.style.display='block';
+    if(exoBtn){exoBtn.style.borderBottomColor='var(--accent)';exoBtn.style.color='var(--text)';exoBtn.style.fontWeight='700';}
+    if(seyView) seyView.style.display='none';
+    if(exoView) exoView.style.display='block';
   }
 };
 
@@ -1999,37 +2012,98 @@ window.toggleSeymourOffersFilter=function(){
   renderSeymourSets();
 };
 
+let seymourActivePieces=new Set(['all']);
+window.toggleSeymourPiece=function(btn){
+  const piece=btn.dataset.spiece;
+  const allBtn=document.querySelector('[data-spiece="all"]');
+  if(piece==='all'){
+    seymourActivePieces=new Set(['all']);
+    document.querySelectorAll('[data-spiece]').forEach(b=>{b.classList.remove('on');});
+    btn.classList.add('on');
+  } else {
+    seymourActivePieces.delete('all');
+    if(allBtn) allBtn.classList.remove('on');
+    if(seymourActivePieces.has(piece)){
+      seymourActivePieces.delete(piece);
+      btn.classList.remove('on');
+    } else {
+      seymourActivePieces.add(piece);
+      btn.classList.add('on');
+    }
+    if(!seymourActivePieces.size){
+      seymourActivePieces.add('all');
+      if(allBtn) allBtn.classList.add('on');
+    }
+  }
+  renderSeymourSets();
+};
+
+function seymourHexMatch(hex, query){
+  // Match hex against query with X as wildcard for any hex digit
+  // Also match substring (e.g. "77" matches "887733")
+  if(!hex||!query) return false;
+  const h=hex.replace('#','').toUpperCase();
+  const q=query.replace('#','').toUpperCase();
+  if(q.includes('X')){
+    // X wildcard - try matching at each position
+    const re=new RegExp(q.replace(/X/g,'[0-9A-F]'));
+    for(let i=0;i+q.length<=h.length;i++){
+      if(re.test(h.substr(i,q.length))) return true;
+    }
+    return false;
+  }
+  // Substring match
+  return h.includes(q);
+}
+
 function renderSeymourSets(){
   const grid=document.getElementById('seymourSetsGrid');
   if(!grid) return;
-  const pieceFilter=(document.getElementById('seymourPieceFilter')?.value||'').trim();
-  const q=(document.getElementById('seymourSearch')?.value||'').toLowerCase().trim();
-  const isHex=/^#?[0-9a-f]{3,6}$/i.test(q);
-  const normQ=isHex?normHex(q.startsWith('#')?q:'#'+q):'';
+  const q=(document.getElementById('seymourSearch')?.value||'').trim();
+  const sort=document.getElementById('seymourSort')?.value||'newest';
+  const isHexQ=/^#?[0-9A-Fa-fXx]{2,}$/.test(q);
+  const pieceAll=seymourActivePieces.has('all');
+  const activePieceArr=pieceAll?[]:Array.from(seymourActivePieces);
 
   let sets=allSets.filter(s=>(s.armour_type||'').toLowerCase().includes('seymour'));
   if(seymourOffersOn) sets=sets.filter(s=>s.for_offers);
-  if(pieceFilter) sets=sets.filter(s=>(s.pieces||[]).some(p=>p.piece===pieceFilter));
+  
+  // Piece filter
+  if(!pieceAll) sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourActivePieces.has(p.piece)));
+
+  // Search filter  
   if(q){
-    if(isHex){ sets=sets.filter(s=>(s.pieces||[]).some(p=>normHex(p.hex||'')===normQ)); }
-    else { sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q))); }
+    if(isHexQ){
+      sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));
+    } else {
+      sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q.toLowerCase())));
+    }
   }
-  // Sort by deltaE of filtered piece (if filter active), else by set name
-  if(pieceFilter){
+
+  // Sort
+  const firstPiece=activePieceArr[0]||null;
+  if(sort==='deltaE'&&firstPiece){
     sets=sets.slice().sort((a,b)=>{
-      const pa=(a.pieces||[]).find(p=>p.piece===pieceFilter);
-      const pb=(b.pieces||[]).find(p=>p.piece===pieceFilter);
-      const da=pa&&pa.hex?(classifySeymour(pa.hex)?.deltaE??999):999;
-      const db=pb&&pb.hex?(classifySeymour(pb.hex)?.deltaE??999):999;
-      return da-db;
+      const pa=(a.pieces||[]).find(p=>p.piece===firstPiece);
+      const pb=(b.pieces||[]).find(p=>p.piece===firstPiece);
+      return (pa&&pa.hex?classifySeymour(pa.hex)?.deltaE??999:999)-(pb&&pb.hex?classifySeymour(pb.hex)?.deltaE??999:999);
     });
+  } else if(sort==='abs'&&firstPiece){
+    sets=sets.slice().sort((a,b)=>{
+      const pa=(a.pieces||[]).find(p=>p.piece===firstPiece);
+      const pb=(b.pieces||[]).find(p=>p.piece===firstPiece);
+      return (pa&&pa.hex?classifySeymour(pa.hex)?.abs??999:999)-(pb&&pb.hex?classifySeymour(pb.hex)?.abs??999:999);
+    });
+  } else if(sort==='name'){
+    sets=sets.slice().sort((a,b)=>(a.set_name||'').localeCompare(b.set_name||''));
   }
+
   if(!sets.length){
     grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No Seymour sets found</div></div>';
     return;
   }
   const isOwn=currentUser&&currentUser.uuid===viewingUuid;
-  let html=sets.map(s=>seymourSetCard(s,pieceFilter)).join('');
+  let html=sets.map(s=>seymourSetCard(s,activePieceArr,isHexQ?q:null)).join('');
   if(isOwn) html+=`<div class="set-card set-card-add" onclick="openAddSetModal()"><div style="font-size:24px;opacity:.5">+</div><div>Add Armour Set</div></div>`;
   grid.innerHTML=html;
   requestAnimationFrame(()=>{
@@ -2040,7 +2114,8 @@ function renderSeymourSets(){
   });
 }
 
-function seymourSetCard(s, highlightPiece){
+
+function seymourSetCard(s, activePieces, hexQuery){
   const pieces=s.pieces||[], at=s.armour_type||'';
   // Stripe: use seymour tier colours
   const pCols=pieces.map(p=>{const c=p.hex?classifySeymour(p.hex):null;return c?c.colour:'#888';});
@@ -2049,7 +2124,7 @@ function seymourSetCard(s, highlightPiece){
   const pHtml=pieces.map(p=>{
     const cls=p.hex?classifySeymour(p.hex):null;
     const col=cls?.colour||'#888';
-    const isHighlight=highlightPiece&&p.piece===highlightPiece;
+    const isHighlight=(activePieces&&activePieces.length>0&&activePieces.includes(p.piece))||(hexQuery&&seymourHexMatch(p.hex||"",hexQuery));
     return`<div class="set-piece-row" style="${isHighlight?'background:var(--bg3);border-radius:4px;padding:1px 3px;':''}">
       <div class="set-piece-dot" style="background:${p.hex?'#'+p.hex.replace('#',''):'transparent'};border-color:${col}55"></div>
       <span class="set-piece-name">${esc(p.piece)}</span>
@@ -2057,7 +2132,8 @@ function seymourSetCard(s, highlightPiece){
       ${cls?`<span class="set-piece-tag" style="color:${col};border-color:${col}55;background:${col}10">${esc(cls.label.length>18?cls.label.slice(0,16)+'…':cls.label)} \u0394E:${cls.deltaE.toFixed(2)} Abs:${cls.abs}</span>`:'<span class="set-piece-tag" style="color:#888;border-color:#8884;background:#8881">N/A</span>'}
     </div>`;
   }).join('');
-  const highlightDelta=highlightPiece?(()=>{const p=pieces.find(x=>x.piece===highlightPiece);if(!p||!p.hex)return'';const c=classifySeymour(p.hex);return c?`<div style="font-size:11px;color:${c.colour};font-weight:700;margin-top:4px">\u0394E: ${c.deltaE.toFixed(2)} \u00b7 Abs: ${c.abs}</div>`:''})():'';
+  const _hp=(activePieces&&activePieces.length>0)?activePieces[0]:null;
+  const highlightDelta=_hp?(()=>{const p=pieces.find(x=>x.piece===_hp);if(!p||!p.hex)return'';const c=classifySeymour(p.hex);return c?`<div style="font-size:11px;color:${c.colour};font-weight:700;margin-top:4px">\u0394E: ${c.deltaE.toFixed(2)} \u00b7 Abs: ${c.abs}</div>`:''})():'';
   return`<div class="set-card" onclick="openSetPanel('${esc(s.id)}')">
     <div style="height:3px;background:${stripe}"></div>
     <div class="set-card-inner">
@@ -2275,6 +2351,7 @@ window.openSetPanel=function(id){
     <button class="btn${s.for_offers?' btn-p':''}" id="offersBtn-${esc(s.id)}" onclick="toggleForOffers('${esc(s.id)}',${s.for_offers?0:1})" style="gap:6px">
       ${s.for_offers?'✓ Taking Offers':'Taking Offers'}
     </button>
+    <button class="btn" onclick="openEditModal('${esc(s.id)}')">Edit</button>
     <button class="btn btn-d" onclick="deleteSet('${esc(s.id)}')">Delete Set</button>`:
     (!isOwn&&s.for_offers)?`<button class="btn btn-p" onclick="openChatForSet('${esc(s.id)}')">Start Chat</button>`:
     '';
@@ -2291,6 +2368,12 @@ window.openSetPanel=function(id){
         ${!isOwn?`<button class="btn btn-d" style="margin-left:auto;font-size:12px;height:30px" onclick="openReport('listing','${esc(s.id)}','${esc(s.ign||'')}')">Report</button>`:''}
       </div>
     </div>
+    ${s.for_offers&&s.current_offer?`<div style="background:var(--bg3);border-radius:8px;padding:10px 14px;margin-top:4px;border:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:4px">Current Offer</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text)">${esc(s.current_offer)}</div>
+      ${s.current_offer_ign?`<div style="font-size:11px;color:var(--text3);margin-top:2px">from ${esc(s.current_offer_ign)}</div>`:'<div style="font-size:11px;color:var(--text3);margin-top:2px">Anonymous</div>'}
+    </div>`:''}
+    ${s.bought_for?`<div style="font-size:11px;color:var(--text3);margin-top:6px">Bought for: <span style="color:var(--text);font-weight:600">${esc(s.bought_for)}</span></div>`:''}
     ${ownerActions?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${ownerActions}</div>`:''}`;
   // Render player
   const el=document.getElementById('spPlayer');
@@ -2304,6 +2387,93 @@ async function deleteSet(id){
   if(!confirm('Delete this set?')) return;
   try{ await fetch(`${API}/listings/${id}/delete`,{method:'PUT',headers:{Authorization:`Bearer ${getToken()}`}}); closeSetPanel(); toast('Set deleted.'); loadMuseumSets(currentUser.uuid); }catch(e){ toast('Failed to delete.'); }
 }
+
+let editingSetId = null;
+let editForOffers = false;
+
+window.openEditModal=function(id){
+  const s=allSets.find(x=>x.id===id);
+  if(!s) return;
+  editingSetId=id;
+  editForOffers=!!(s.for_offers);
+  document.getElementById('editSetName').value=s.set_name||'';
+  // Offers toggle
+  const btn=document.getElementById('editOffersBtn');
+  btn.classList.toggle('btn-p',editForOffers);
+  btn.textContent=editForOffers?'✓ Taking Offers':'Taking Offers';
+  document.getElementById('editOfferDetails').style.display=editForOffers?'flex':'none';
+  document.getElementById('editCurrentOffer').value=s.current_offer||'';
+  document.getElementById('editCurrentOfferIgn').value=s.current_offer_ign||'';
+  document.getElementById('editCurrentOfferParsed').textContent='';
+  // Bought for
+  const hasBF=!!(s.bought_for);
+  document.getElementById('editShowBoughtFor').checked=hasBF;
+  document.getElementById('editBoughtForRow').style.display=hasBF?'block':'none';
+  document.getElementById('editBoughtFor').value=s.bought_for||'';
+  document.getElementById('editBoughtForParsed').textContent='';
+  // Pages dropdown
+  const sel=document.getElementById('editPageId');
+  sel.innerHTML='<option value="">No page</option>';
+  museumPages.forEach(p=>{
+    const opt=document.createElement('option');
+    opt.value=p.id; opt.textContent=p.name;
+    if(p.id===s.page_id) opt.selected=true;
+    sel.appendChild(opt);
+  });
+  openModal('editModal');
+};
+
+window.toggleEditOffers=function(){
+  editForOffers=!editForOffers;
+  const btn=document.getElementById('editOffersBtn');
+  btn.classList.toggle('btn-p',editForOffers);
+  btn.textContent=editForOffers?'✓ Taking Offers':'Taking Offers';
+  document.getElementById('editOfferDetails').style.display=editForOffers?'flex':'none';
+};
+
+function editParseAmount(inp, outId){
+  const v=inp.value.trim().toLowerCase();
+  const out=document.getElementById(outId);
+  if(!v){out.textContent='';return;}
+  const num=parseFloat(v);
+  if(isNaN(num)){out.textContent='Invalid';out.style.color='var(--danger)';return;}
+  let val=num;
+  const last=v.slice(-1);
+  if(last==='k') val=num*1e3;
+  else if(last==='m') val=num*1e6;
+  else if(last==='b') val=num*1e9;
+  out.textContent='= '+val.toLocaleString('en-GB');
+  out.style.color='var(--text3)';
+}
+
+async function saveEditListing(){
+  if(!editingSetId) return;
+  const body={
+    set_name: document.getElementById('editSetName').value.trim(),
+    for_offers: editForOffers,
+    page_id: document.getElementById('editPageId').value||null,
+  };
+  if(editForOffers){
+    body.current_offer=document.getElementById('editCurrentOffer').value.trim();
+    body.current_offer_ign=document.getElementById('editCurrentOfferIgn').value.trim();
+  } else {
+    body.current_offer=''; body.current_offer_ign='';
+  }
+  if(document.getElementById('editShowBoughtFor').checked){
+    body.bought_for=document.getElementById('editBoughtFor').value.trim();
+  } else {
+    body.bought_for='';
+  }
+  try{
+    const r=await fetch(`${API}/listings/${editingSetId}/edit`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify(body)});
+    if(!r.ok){ const d=await r.json().catch(()=>{}); toast('Failed: '+(d?.error||r.status)); return; }
+    closeModal('editModal');
+    toast('Changes saved!');
+    await loadMuseumSets(viewingUuid);
+    openSetPanel(editingSetId);
+  }catch(e){ toast('Network error'); }
+}
+
 async function toggleForOffers(id, val){
   try{
     const res=await fetch(`${API}/listings/${id}/offers`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({for_offers:val})});
@@ -2675,15 +2845,18 @@ window.openChat=async function(id){
     if(msgs) msgs.scrollTop=msgs.scrollHeight;
   }catch(e){ main.innerHTML='<div class="chat-empty">Could not load chat.</div>'; }
 };
+const pendingMsgContent=new Set();
 window.sendMsg=async function(){
   const inp=document.getElementById('chatInputField');
   if(!inp||!activeChatId) return;
   const content=inp.value.trim(); if(!content) return;
   inp.value=''; inp.style.height='auto';
-  lastMessageTs=Date.now();
+  pendingMsgContent.add(content);
+  const sentTs=Date.now();
   const con=document.getElementById('chatMsgs');
   if(con&&currentUser){
-    const el=document.createElement('div'); el.className='msg-row mine';
+    const el=document.createElement('div'); el.className='msg-row mine optimistic';
+    el.dataset.content=content;
     el.innerHTML=`<img class="msg-av" src="${HEAD(currentUser.uuid)}" alt="">
       <div class="msg-col mine">
         <div class="msg-bub mine">${esc(content)}</div>
@@ -2691,8 +2864,12 @@ window.sendMsg=async function(){
       </div>`;
     con.appendChild(el); con.scrollTop=con.scrollHeight;
   }
-  try{ await fetch(`${API}/chats/${activeChatId}/messages`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({content})}); }
-  catch(e){ toast('Failed to send.'); }
+  try{
+    await fetch(`${API}/chats/${activeChatId}/messages`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({content})});
+    lastMessageTs=sentTs;
+    setTimeout(()=>pendingMsgContent.delete(content),5000);
+  }
+  catch(e){ toast('Failed to send.'); pendingMsgContent.delete(content); }
 };
 window.triggerImg=function(){ document.getElementById('chatImgInput')?.click(); };
 window.handleImgUpload=async function(event){
@@ -2742,6 +2919,13 @@ function pollChats(){
           if(con){
             newM.forEach(m=>{
               if(m.content?.startsWith('__offer__')&&!m.image_url) return;
+              // Skip optimistically-rendered messages
+              if(m.sender_uuid===currentUser?.uuid && pendingMsgContent.has(m.content)){
+                // Remove the optimistic element and re-render with real data
+                const opt=document.querySelector(`.optimistic[data-content="${m.content}"]`);
+                if(opt) opt.remove();
+                pendingMsgContent.delete(m.content);
+              }
               const im=m.sender_uuid===currentUser?.uuid;
               const side=im?'mine':'theirs';
               const txt=m.content&&!m.content.startsWith('__offer__')?esc(m.content):'';
@@ -2803,5 +2987,56 @@ setInterval(loadStats,60000);
 
 <div class="modal-ov" id="skinSettingsModal" onclick="if(event.target===this)closeModal('skinSettingsModal')"><div id="skinSettingsInner"></div></div>
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "900fd7499dcf40d6ad7834003bd09674"}'></script><!-- End Cloudflare Web Analytics -->
+
+<!-- EDIT LISTING MODAL -->
+<div class="modal-ov" id="editModalOv" onclick="closeModal('editModal')">
+  <div class="modal" style="max-width:520px;width:520px" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title">Edit Listing</div>
+      <button class="btn btn-icon" style="font-size:13px" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label class="modal-label">Set Name</label>
+        <input id="editSetName" type="text" class="modal-input" placeholder="e.g. Full Superior Dragon" maxlength="60">
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button id="editOffersBtn" onclick="toggleEditOffers()" class="btn" style="min-width:140px">Taking Offers</button>
+        <span style="font-size:12px;color:var(--text3)">Toggle whether this is for sale</span>
+      </div>
+      <div id="editOfferDetails" style="display:none;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:10px">
+          <div style="flex:1">
+            <label class="modal-label">Current Offer</label>
+            <input id="editCurrentOffer" type="text" class="modal-input" placeholder="e.g. 500m" maxlength="30" oninput="editParseAmount(this,'editCurrentOfferParsed')">
+            <div id="editCurrentOfferParsed" style="font-size:10px;color:var(--text3);margin-top:2px"></div>
+          </div>
+          <div style="flex:1">
+            <label class="modal-label">Offer by (IGN)</label>
+            <input id="editCurrentOfferIgn" type="text" class="modal-input" placeholder="Leave blank for anonymous" maxlength="30">
+          </div>
+        </div>
+      </div>
+      <div>
+        <label class="modal-label" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="editShowBoughtFor" onchange="document.getElementById('editBoughtForRow').style.display=this.checked?'block':'none'">
+          Show what I paid for this
+        </label>
+        <div id="editBoughtForRow" style="display:none;margin-top:6px">
+          <input id="editBoughtFor" type="text" class="modal-input" placeholder="e.g. 2.3b" maxlength="20" oninput="editParseAmount(this,'editBoughtForParsed')">
+          <div id="editBoughtForParsed" style="font-size:10px;color:var(--text3);margin-top:2px"></div>
+        </div>
+      </div>
+      <div>
+        <label class="modal-label">Page</label>
+        <select id="editPageId" class="modal-input" style="height:38px"></select>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" onclick="closeModal('editModal')">Cancel</button>
+        <button class="btn btn-p" onclick="saveEditListing()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

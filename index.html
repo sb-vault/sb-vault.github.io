@@ -481,7 +481,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
         <div class="field">
           <label>Armour Type</label>
           <div style="position:relative">
-            <input type="text" id="addArmourType" placeholder="e.g. Superior Dragon Armour" oninput="onArmourTypeChange()" autocomplete="off" style="width:100%">
+            <input type="text" id="addArmourType" placeholder="e.g. Superior Dragon Armour" oninput="this.value=this.value.replace(/\b\w/g,c=>c.toUpperCase());onArmourTypeChange()" autocomplete="off" style="width:100%">
             <div id="armourTypeSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:var(--shadow)"></div>
           </div>
         </div>
@@ -2555,7 +2555,7 @@ window.openSetPanel=function(id){
       ${s.current_offer_ign?`<div style="font-size:11px;color:var(--text3);margin-top:2px">from ${esc(s.current_offer_ign)}</div>`:'<div style="font-size:11px;color:var(--text3);margin-top:2px">Anonymous</div>'}
     </div>`:''}
     ${s.bought_for?`<div style="font-size:11px;color:var(--text3);margin-top:6px">Bought for: <span style="color:var(--text);font-weight:600">${esc(s.bought_for)}</span></div>`:''}
-    ${(()=>{if(!s.scuffness) return '';const sc=s.scuffness;const rows=[];if(sc.reforge&&sc.reforge!=='none')rows.push(['Reforge',sc.reforge+(sc.reforge==='OG Reforge'?'':sc.reforge?'':'')]);
+    ${(()=>{if(!s.scuffness) return '';const sc=s.scuffness;const rows=[];if(sc.reforge&&sc.reforge!==''&&sc.reforge!=='none')rows.push(['Reforge',sc.reforge]);
 if(sc.potato&&sc.potato!=='none')rows.push(['Potato Books',sc.potato.charAt(0).toUpperCase()+sc.potato.slice(1)]);
 if(sc.recomb&&sc.recomb!=='none')rows.push(['Recombobulator','Applied']);
 if(sc.aop&&sc.aop!=='none')rows.push(['Art of Peace','Applied']);
@@ -2611,7 +2611,7 @@ window.openEditModal=function(id){
     // Fill hexes after pieces are toggled
     setTimeout(()=>{
       (s.pieces||[]).forEach(p=>{
-        const hi=document.querySelector(`input.hex-input[data-piece="${p.piece}"]`);
+        const hi=document.querySelector(`input.hex-in[data-piece="${p.piece}"]`) || document.querySelector(`input[data-piece="${p.piece}"].hex-in`);
         if(hi){hi.value=(p.hex||'').replace('#','');hi.dispatchEvent(new Event('input'));}
       });
       updateAddSetPreview&&updateAddSetPreview();
@@ -2644,7 +2644,7 @@ window.openEditModal=function(id){
 
 async function saveEditFromAddModal(){
   if(!editingSetId) return;
-  const at=(document.getElementById('addArmourType')?.value||'').trim();
+  const at=(document.getElementById('addArmourType')?.value||'').trim().replace(/\b\w/g,c=>c.toUpperCase());
   const sn=(document.getElementById('addSetName')?.value||'').trim();
   const pid=document.getElementById('addPageSelect')?.value||null;
   const fo=!!(document.getElementById('addForOffers')?.checked);
@@ -2847,7 +2847,8 @@ window.onArmourTypeChange=function(){
     div.onmouseenter=()=>div.style.background='var(--bg3)';
     div.onmouseleave=()=>div.style.background='';
     div.onclick=()=>{
-      document.getElementById('addArmourType').value=a;
+      const capitalised=a.replace(/\b\w/g,c=>c.toUpperCase());
+      document.getElementById('addArmourType').value=capitalised;
       box.style.display='none';
       onArmourTypeChange();
     };
@@ -3317,7 +3318,8 @@ function resetScuffness(){
 function loadScuffness(s){
   if(!s) return resetScuffness();
   _ogReforge=s.reforge==='OG Reforge'; _potato=s.potato||'none'; _recomb=s.recomb||'none'; _aop=s.aop||'none'; _dungeon=s.dungeon||'no';
-  const rf=document.getElementById('addReforge'); if(rf) rf.value=_ogReforge?'':s.reforge||'';
+  const rf=document.getElementById('addReforge'); 
+  if(rf){rf.value=_ogReforge?'OG Reforge':s.reforge||'';rf.disabled=_ogReforge;}
   const ogBtn=document.getElementById('addOgReforgeBtn'); if(ogBtn) ogBtn.classList.toggle('on',_ogReforge);
   document.querySelectorAll('[data-potato]').forEach(b=>b.classList.toggle('on',b.dataset.potato===_potato));
   document.querySelectorAll('[data-recomb]').forEach(b=>b.classList.toggle('on',b.dataset.recomb===_recomb));

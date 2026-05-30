@@ -511,7 +511,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
               <span style="font-size:12px;color:var(--text2);width:90px;flex-shrink:0">Reforge</span>
               <div style="flex:1;position:relative">
-                <input id="addReforge" type="text" class="modal-input" placeholder="None" style="height:28px;font-size:12px" oninput="filterReforgeList(this.value)" onfocus="showReforgeList()" onblur="setTimeout(hideReforgeList,200)">
+                <input id="addReforge" type="text" class="modal-input" placeholder="None" style="height:32px;font-size:13px" oninput="filterReforgeList(this.value)" onfocus="showReforgeList()" onblur="setTimeout(hideReforgeList,200)">
                 <div id="reforgeDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:140px;overflow-y:auto"></div>
               </div>
               <button class="chip" id="addOgReforgeBtn" onclick="toggleOgReforge()" style="flex-shrink:0;height:28px;padding:0 10px;font-size:11px">OG</button>
@@ -2579,61 +2579,67 @@ window.openEditModal=function(id){
   const s=allSets.find(x=>x.id===id)||allSetsGlobal.find(x=>x.id===id);
   if(!s) return;
   editingSetId=id;
-  // Reset modal to clean Add Set state first
+
+  // Step 1: reset to clean state
   openAddSetModal();
-  // Then populate everything from the existing set after a tick
+
+  // Step 2: change title/button immediately
+  const title=document.querySelector('#addSetModal .modal-title');
+  if(title) title.textContent='Edit Set';
+  const addBtn=document.getElementById('addSetBtn');
+  if(addBtn){addBtn.textContent='Save Changes';addBtn.onclick=()=>saveEditFromAddModal();}
+
+  // Step 3: fill armour type + name + page
+  const atInp=document.getElementById('addArmourType');
+  if(atInp){atInp.value=s.armour_type||'';}
+  const snInp=document.getElementById('addSetName');
+  if(snInp) snInp.value=s.set_name||'';
+  const ps=document.getElementById('addPageSelect');
+  if(ps){
+    const allPages=[...museumPages,...seymourMuseumPages];
+    ps.innerHTML='<option value="">No specific page</option>'+allPages.map(p=>`<option value="${esc(p.id)}"${p.id===s.page_id?' selected':''}>${esc(p.name)}</option>`).join('');
+  }
+
+  // Step 4: trigger armour type change to load piece slots, then fill pieces
+  if(atInp) atInp.dispatchEvent(new Event('input'));
   setTimeout(()=>{
-    // Armour type + name
-    const atInp=document.getElementById('addArmourType');
-    if(atInp){ atInp.value=s.armour_type||''; atInp.dispatchEvent(new Event('input')); }
-    const snInp=document.getElementById('addSetName');
-    if(snInp) snInp.value=s.set_name||'';
-    // Trigger armour type change to load piece slots
-    onArmourTypeChange&&onArmourTypeChange();
+    // Fill piece toggles
+    (s.pieces||[]).forEach(p=>{
+      const tb=document.querySelector(`.piece-toggle[data-piece="${p.piece}"]`);
+      if(tb&&!tb.classList.contains('on')) tb.click();
+    });
+    // Fill hexes after pieces are toggled
     setTimeout(()=>{
-      // Pieces + hexes
       (s.pieces||[]).forEach(p=>{
-        const tb=document.querySelector(`.piece-toggle[data-piece="${p.piece}"]`);
-        if(tb&&!tb.classList.contains('on')) tb.click();
-        setTimeout(()=>{
-          const hi=document.querySelector(`input.hex-input[data-piece="${p.piece}"]`);
-          if(hi){ hi.value=(p.hex||'').replace('#',''); hi.dispatchEvent(new Event('input')); }
-        },30);
+        const hi=document.querySelector(`input.hex-input[data-piece="${p.piece}"]`);
+        if(hi){hi.value=(p.hex||'').replace('#','');hi.dispatchEvent(new Event('input'));}
       });
-      // Page
-      const ps=document.getElementById('addPageSelect');
-      if(ps){ for(let i=0;i<ps.options.length;i++) ps.options[i].selected=(ps.options[i].value===(s.page_id||'')); }
+      updateAddSetPreview&&updateAddSetPreview();
+
       // Scuffness
       loadScuffness(s.scuffness||null);
+
       // For offers
       const fo=!!(s.for_offers);
       const cb=document.getElementById('addForOffers');
       const offBtn=document.getElementById('addForOffersBtn');
       if(cb) cb.checked=fo;
-      if(offBtn){ offBtn.classList.toggle('btn-p',fo); offBtn.textContent=fo?'✓ Taking Offers':'Taking Offers'; }
-      const det=document.getElementById('addOfferDetails'); if(det) det.style.display=fo?'flex':'none';
+      if(offBtn){offBtn.classList.toggle('btn-p',fo);offBtn.textContent=fo?'✓ Taking Offers':'Taking Offers';}
+      const det=document.getElementById('addOfferDetails');if(det)det.style.display=fo?'flex':'none';
       if(fo){
-        const ci=document.getElementById('addCurrentOffer'); if(ci) ci.value=s.current_offer||'';
-        const ign=document.getElementById('addCurrentOfferIgn'); if(ign) ign.value=s.current_offer_ign||'';
-        editParseAmount({value:s.current_offer||''},'editCurrentOfferParsed');
+        const ci=document.getElementById('addCurrentOffer');if(ci)ci.value=s.current_offer||'';
+        const ig=document.getElementById('addCurrentOfferIgn');if(ig)ig.value=s.current_offer_ign||'';
       }
+
       // Bought for
       const hasBF=!!(s.bought_for);
       const bfBtn=document.getElementById('addShowBoughtForBtn');
       const bfRow=document.getElementById('addBoughtForRow');
-      if(bfRow) bfRow.style.display=hasBF?'block':'none';
-      if(bfBtn){ bfBtn.classList.toggle('btn-p',hasBF); bfBtn.textContent=hasBF?'✓ Show what I paid':'Show what I paid'; }
-      const bfIn=document.getElementById('addBoughtFor'); if(bfIn) bfIn.value=s.bought_for||'';
-      updateAddSetPreview();
-    }, 100);
-  }, 30);
-  // Change modal title and button
-  setTimeout(()=>{
-    const title=document.querySelector('#addSetModal .modal-title');
-    if(title) title.textContent='Edit Set';
-    const addBtn=document.getElementById('addSetBtn');
-    if(addBtn){ addBtn.textContent='Save Changes'; addBtn.onclick=()=>saveEditFromAddModal(); }
-  }, 10);
+      if(bfRow)bfRow.style.display=hasBF?'block':'none';
+      if(bfBtn){bfBtn.classList.toggle('btn-p',hasBF);bfBtn.textContent=hasBF?'✓ Show what I paid':'Show what I paid';}
+      const bfIn=document.getElementById('addBoughtFor');if(bfIn)bfIn.value=s.bought_for||'';
+    }, 80);
+  }, 60);
 };
 
 async function saveEditFromAddModal(){
@@ -2642,35 +2648,36 @@ async function saveEditFromAddModal(){
   const sn=(document.getElementById('addSetName')?.value||'').trim();
   const pid=document.getElementById('addPageSelect')?.value||null;
   const fo=!!(document.getElementById('addForOffers')?.checked);
-  const pieces=getPieceData?getPieceData():[];
-  if(!at){ toast('Please enter an armour type.'); return; }
+  const pieces=typeof getPieceData==='function'?getPieceData():[];
+  if(!at){toast('Please enter an armour type.');return;}
   const currentOffer=fo?(document.getElementById('addCurrentOffer')?.value.trim()||''):'';
   const currentOfferIgn=fo?(document.getElementById('addCurrentOfferIgn')?.value.trim()||''):'';
   const bfVisible=(document.getElementById('addBoughtForRow')?.style.display||'none')!=='none';
   const boughtFor=bfVisible?(document.getElementById('addBoughtFor')?.value.trim()||''):'';
-  const scuffness=getScuffness?getScuffness():null;
+  const scuffness=typeof getScuffness==='function'?getScuffness():null;
   const btn=document.getElementById('addSetBtn');
-  if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
   try{
     const r=await fetch(`${API}/listings/${editingSetId}/edit`,{
       method:'PUT',
       headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},
       body:JSON.stringify({set_name:sn,armour_type:at,pieces,for_offers:fo,page_id:pid||null,current_offer:currentOffer,current_offer_ign:currentOfferIgn,bought_for:boughtFor,scuffness})
     });
-    if(!r.ok){ const d=await r.json().catch(()=>{}); toast('Failed: '+(d?.error||r.status)); return; }
+    if(!r.ok){const d=await r.json().catch(()=>{});toast('Failed: '+(d?.error||r.status));return;}
     closeModal('addSetModal');
     toast('Changes saved!');
     await loadMuseumSets(viewingUuid);
     openSetPanel(editingSetId);
-  }catch(e){ toast('Network error'); }
+  }catch(e){toast('Network error: '+e);}
   finally{
-    if(btn){ btn.disabled=false; }
+    if(btn){btn.disabled=false;}
     const title=document.querySelector('#addSetModal .modal-title');
     if(title) title.textContent='Add Armour Set';
-    if(btn){ btn.textContent='Add Set'; btn.onclick=()=>submitAddSet(); }
+    if(btn){btn.textContent='Add Set';btn.onclick=()=>submitAddSet();}
     editingSetId=null;
   }
 }
+
 
 
 

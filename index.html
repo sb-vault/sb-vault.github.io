@@ -348,7 +348,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     </div>
     <!-- Museum sub-tabs -->
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:12px;position:relative;z-index:1">
-      <button id="museumTabExotic" onclick="switchMuseumTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;font-size:13px;transition:all .15s;pointer-events:all;position:relative;z-index:2">Exotic</button>
+      <button id="museumTabExotic" onclick="switchMuseumTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--text);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;font-size:13px;transition:all .15s;pointer-events:all;position:relative;z-index:2">Exotic</button>
       <button id="museumTabSeymour" onclick="switchMuseumTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Seymour</button>
     </div>
     <!-- Exotic sub-view -->
@@ -684,15 +684,15 @@ window.switchMuseumTab=function(tab){
   const seyView=document.getElementById('museumSeymourView');
   if(!exoBtn||!seyBtn) return;
   // Reset both
-  exoBtn.style.borderBottomColor='transparent'; exoBtn.style.color='var(--text3)'; exoBtn.style.fontWeight='600';
-  seyBtn.style.borderBottomColor='transparent'; seyBtn.style.color='var(--text3)'; seyBtn.style.fontWeight='600';
+  exoBtn.style.borderBottom='2px solid transparent'; exoBtn.style.color='var(--text3)'; exoBtn.style.fontWeight='600';
+  seyBtn.style.borderBottom='2px solid transparent'; seyBtn.style.color='var(--text3)'; seyBtn.style.fontWeight='600';
   if(tab==='seymour'){
-    seyBtn.style.borderBottomColor='var(--accent)'; seyBtn.style.color='var(--text)'; seyBtn.style.fontWeight='700';
+    seyBtn.style.borderBottom='2px solid var(--text)'; seyBtn.style.color='var(--text)'; seyBtn.style.fontWeight='700';
     if(exoView) exoView.style.display='none';
     if(seyView) seyView.style.display='block';
     renderSeymourSets();
   } else {
-    exoBtn.style.borderBottomColor='var(--accent)'; exoBtn.style.color='var(--text)'; exoBtn.style.fontWeight='700';
+    exoBtn.style.borderBottom='2px solid var(--text)'; exoBtn.style.color='var(--text)'; exoBtn.style.fontWeight='700';
     if(seyView) seyView.style.display='none';
     if(exoView) exoView.style.display='block';
     renderSets();
@@ -723,17 +723,10 @@ function showView(name){
   ['home','museum','browseall'].forEach(v => {
     document.getElementById('view-'+v).style.display = v===name?'block':'none';
   });
-  ['nav-home','nav-museum','nav-browseall'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.classList.remove('active');
-  });
-  const navMap={'home':'nav-home','museum':'nav-museum','browseall':'nav-browseall'};
-  const activeNav=document.getElementById(navMap[name]);
-  if(activeNav) activeNav.classList.add('active');
+  // Clear all nav active states — callers set their own
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('nav-'+name)?.classList.add('active');
   if(name==='home'){
-    // Clear museum URL param
+    document.getElementById('nav-home')?.classList.add('active');
     const u=new URL(location.href); u.searchParams.delete('museum');
     history.replaceState({},'',(u.search==='?'?location.pathname:u.toString()));
   }
@@ -753,11 +746,11 @@ async function openMuseum(uuid){
   document.querySelectorAll('#catChips .chip').forEach(c=>c.classList.remove('on'));
   document.querySelector('#catChips .chip[data-cat="all"]')?.classList.add('on');
   showView('museum');
-  // Nav: My Museum only if own
-  document.getElementById('nav-home').classList.remove('active');
-  if(document.getElementById('nav-browseall')) document.getElementById('nav-browseall').classList.remove('active');
+  // Nav: My Museum only if own, Browse if viewing someone else's
   if(currentUser&&currentUser.uuid===uuid){
-    document.getElementById('nav-museum').classList.add('active');
+    document.getElementById('nav-museum')?.classList.add('active');
+  } else {
+    document.getElementById('nav-home')?.classList.add('active');
   }
   // Share URL
   try{ const u=new URL(location.href); u.searchParams.set('museum',uuid); history.replaceState({},'',u.toString()); }catch(e){}
@@ -2170,13 +2163,13 @@ window.switchBrowseAllTab=function(tab){
   const sey=document.getElementById('browseAllTabSeymour');
   const exoV=document.getElementById('browseAllExoticView');
   const seyV=document.getElementById('browseAllSeymourView');
-  [exo,sey].forEach(b=>{if(b){b.style.borderBottomColor='transparent';b.style.color='var(--text3)';b.style.fontWeight='600';}});
+  [exo,sey].forEach(b=>{if(b){b.style.borderBottom='2px solid transparent';b.style.color='var(--text3)';b.style.fontWeight='600';}});
   if(tab==='seymour'){
-    if(sey){sey.style.borderBottomColor='var(--accent)';sey.style.color='var(--text)';sey.style.fontWeight='700';}
+    if(sey){sey.style.borderBottom='2px solid var(--text)';sey.style.color='var(--text)';sey.style.fontWeight='700';}
     if(exoV) exoV.style.display='none'; if(seyV) seyV.style.display='block';
     renderBrowseAllSeymour();
   } else {
-    if(exo){exo.style.borderBottomColor='var(--accent)';exo.style.color='var(--text)';exo.style.fontWeight='700';}
+    if(exo){exo.style.borderBottom='2px solid var(--text)';exo.style.color='var(--text)';exo.style.fontWeight='700';}
     if(seyV) seyV.style.display='none'; if(exoV) exoV.style.display='block';
     renderBrowseAll();
   }
@@ -2893,7 +2886,6 @@ window.submitAddSet=async function(){
 };
 
 /* PAGES */
-window.openAddPageModal=function(){ document.getElementById('addPageName').value=''; openModal('addPageModal'); };
 window.submitAddPage=async function(){
   const name=document.getElementById('addPageName').value.trim();
   if(!name){toast('Enter a page name.');return;}
@@ -3278,7 +3270,7 @@ setInterval(loadStats,60000);
     </div>
     <!-- Sub-tabs: Exotic / Seymour -->
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:12px">
-      <button id="browseAllTabExotic" onclick="switchBrowseAllTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Exotic</button>
+      <button id="browseAllTabExotic" onclick="switchBrowseAllTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--text);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Exotic</button>
       <button id="browseAllTabSeymour" onclick="switchBrowseAllTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Seymour</button>
     </div>
     <!-- Exotic sub-view -->
@@ -3303,22 +3295,29 @@ setInterval(loadStats,60000);
     </div>
     <!-- Seymour sub-view -->
     <div id="browseAllSeymourView" style="display:none">
-      <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
-        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
-          <button class="chip on" data-baspiece="all" onclick="toggleBrowseAllPiece(this)">All pieces</button>
-          <button class="chip" data-baspiece="Velvet Top Hat" onclick="toggleBrowseAllPiece(this)">Top Hat</button>
-          <button class="chip" data-baspiece="Cashmere Jacket" onclick="toggleBrowseAllPiece(this)">Jacket</button>
-          <button class="chip" data-baspiece="Satin Trousers" onclick="toggleBrowseAllPiece(this)">Trousers</button>
-          <button class="chip" data-baspiece="Oxford Shoes" onclick="toggleBrowseAllPiece(this)">Shoes</button>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <!-- Sort (compact, left) -->
+        <div style="position:relative;flex-shrink:0">
+          <select id="browseAllSeymourSort" onchange="renderBrowseAllSeymour()" style="height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 28px 0 10px;font-size:12px;appearance:none;-webkit-appearance:none;cursor:pointer;min-width:90px">
+            <option value="newest">Newest</option>
+            <option value="deltaE">By ΔE</option>
+            <option value="abs">By Abs</option>
+            <option value="name">A–Z</option>
+          </select>
+          <span style="pointer-events:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3)">▾</span>
         </div>
-        <select id="browseAllSeymourSort" onchange="renderBrowseAllSeymour()" style="height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 14px 0 10px;font-size:13px">
-          <option value="newest">Newest</option>
-          <option value="deltaE">Sort by ΔE</option>
-          <option value="abs">Sort by Abs</option>
-          <option value="name">Name A–Z</option>
-        </select>
-        <input class="fsearch" id="browseAllSeymourSearch" placeholder="Search sets or #hex…" oninput="renderBrowseAllSeymour()" style="flex:1;min-width:160px">
-        <button class="offers-tog" id="browseAllSeymourOffersToggle" onclick="toggleBrowseAllSeymourOffers()">
+        <!-- Search -->
+        <input class="fsearch" id="browseAllSeymourSearch" placeholder="Search…" oninput="renderBrowseAllSeymour()" style="height:32px;flex:1;min-width:120px;max-width:200px">
+        <!-- Divider -->
+        <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
+        <!-- Piece chips -->
+        <button class="chip on" data-baspiece="all" onclick="toggleBrowseAllPiece(this)">All pieces</button>
+        <button class="chip" data-baspiece="Velvet Top Hat" onclick="toggleBrowseAllPiece(this)">Top Hat</button>
+        <button class="chip" data-baspiece="Cashmere Jacket" onclick="toggleBrowseAllPiece(this)">Jacket</button>
+        <button class="chip" data-baspiece="Satin Trousers" onclick="toggleBrowseAllPiece(this)">Trousers</button>
+        <button class="chip" data-baspiece="Oxford Shoes" onclick="toggleBrowseAllPiece(this)">Shoes</button>
+        <!-- For sale -->
+        <button class="offers-tog" id="browseAllSeymourOffersToggle" onclick="toggleBrowseAllSeymourOffers()" style="margin-left:auto">
           <input type="checkbox" id="browseAllSeymourOffersChk" onchange="toggleBrowseAllSeymourOffers()"> For sale only
         </button>
       </div>

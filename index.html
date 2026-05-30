@@ -744,6 +744,57 @@ function openMyMuseum(){
   openMuseum(currentUser.uuid);
 }
 
+async function openMuseum(uuid){
+  viewingUuid=uuid; currentPageId='all'; currentSeymourPageId='all';
+  activeCatFilter=new Set(['all']); offersFilterOn=false;
+  seymourActivePieces=new Set(['all']);
+  document.getElementById('offersToggle').classList.remove('on');
+  document.getElementById('offersChk').checked=false;
+  document.querySelectorAll('#catChips .chip').forEach(c=>c.classList.remove('on'));
+  document.querySelector('#catChips .chip[data-cat="all"]')?.classList.add('on');
+  showView('museum');
+  // Nav: My Museum only if own
+  document.getElementById('nav-home').classList.remove('active');
+  if(document.getElementById('nav-browseall')) document.getElementById('nav-browseall').classList.remove('active');
+  if(currentUser&&currentUser.uuid===uuid){
+    document.getElementById('nav-museum').classList.add('active');
+  }
+  // Share URL
+  try{ const u=new URL(location.href); u.searchParams.set('museum',uuid); history.replaceState({},'',u.toString()); }catch(e){}
+  await Promise.all([loadMuseumHdr(uuid), loadMuseumPages(uuid)]);
+  renderPageTabs(); renderSeymourPageTabs();
+  await loadMuseumSets(uuid);
+  switchMuseumTab('exotic');
+}
+
+async function loadMuseumHdr(uuid){
+  const hdr=document.getElementById('museumHdr');
+  let ign='', discord='';
+  try{
+    const r=await fetch(`${API}/listings?status=active`);
+    const d=await r.json();
+    const s=(d.listings||[]).find(l=>l.uuid===uuid);
+    if(s) ign=s.ign||'';
+    if(currentUser&&currentUser.uuid===uuid){
+      const p=await fetch(`${API}/users/preferences`,{headers:{Authorization:`Bearer ${getToken()}`}});
+      if(p.ok){ const pd=await p.json(); discord=pd.prefs?.discord||''; }
+    }
+  }catch(e){}
+  const isOwn=currentUser&&currentUser.uuid===uuid;
+  const discHtml=discord?`<div style="font-size:12px;color:var(--text3)">Discord: ${esc(discord)}</div>`:
+    (isOwn?`<button class="btn" style="font-size:11px;height:26px;padding:0 10px" onclick="openModal('discordModal')">+ Discord</button>`:'');
+  const addPageBtn=isOwn?`<button class="btn" style="font-size:11px;height:26px;padding:0 10px" onclick="openAddPageModal(currentMuseumTab)">+ Add Page</button>`:'';
+  const repBtn=!isOwn?`<button class="btn btn-d" onclick="openReport('user','${esc(uuid)}','${esc(ign)}')">Report</button>`:'';
+  hdr.innerHTML=
+    `<img class="museum-av" src="${HEAD(uuid)}" alt="${esc(ign)}">` +
+    `<div class="museum-info">` +
+    `<div class="museum-ign">${esc(ign||uuid.slice(0,8))}</div>` +
+    discHtml +
+    `</div>` +
+    `<div style="display:flex;gap:8px;margin-left:auto;align-items:center">${addPageBtn}${repBtn}</div>`;
+}
+
+
 /* AUTH - MC-ID PKCE */
 function b64url(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function genVerifier(){ const a=new Uint8Array(32);crypto.getRandomValues(a);return b64url(a); }
@@ -2317,7 +2368,8 @@ function renderBrowseAll(){
   let sets=allSetsGlobal.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
   if(browseAllOffersOn) sets=sets.filter(s=>s.for_offers);
   if(!browseAllCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>browseAllCatFilter.has(c.cat));});
-  if(q){if(isHexQ){sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));}else{sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q.toLowerCase())));}}
+  if(q){if(isHexQ){sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));}else{const ql=q.toLowerCase();sets=sets.filter(s=>{if([(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(ql)))return true;return(s.pieces||[]).some(p=>{const cls=classifyHex(p.hex||'',s.armour_type||'',p.piece);return cls&&cls.label&&cls.label.toLowerCase().includes(ql);});});}}
+  if(!sets.length){grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No sets found</div></div>';return;}
   grid.innerHTML=sets.map(s=>setCard(s,true)).join('');
   requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`ba-model-${s.id}`);if(el&&!el.dataset.rendered){el.dataset.rendered='1';renderPlayerInto(el,s.uuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false});}});});
 }
@@ -3231,9 +3283,9 @@ setInterval(loadStats,60000);
     </div>
     <!-- Exotic sub-view -->
     <div id="browseAllExoticView">
-      <div class="filter-bar">
-        <input class="fsearch" id="browseAllSearch" placeholder="Search sets or #hex…" oninput="renderBrowseAll()">
-        <div class="cat-chips" id="browseAllCatChips">
+      <div class="filter-bar" style="align-items:center;gap:6px">
+        <input class="fsearch" id="browseAllSearch" placeholder="Search sets or #hex…" oninput="renderBrowseAll()" style="height:32px">
+        <div class="cat-chips" id="browseAllCatChips" style="flex:1">
           <button class="chip on" data-bcat="all" onclick="toggleBrowseAllCat(this)">All</button>
           <button class="chip" data-bcat="exotic" onclick="toggleBrowseAllCat(this)">Exotic</button>
           <button class="chip" data-bcat="crystal" onclick="toggleBrowseAllCat(this)">Crystal</button>
@@ -3241,7 +3293,7 @@ setInterval(loadStats,60000);
           <button class="chip" data-bcat="pure" onclick="toggleBrowseAllCat(this)">Pure</button>
           <button class="chip" data-bcat="bleached" onclick="toggleBrowseAllCat(this)">Bleached</button>
         </div>
-        <button class="offers-tog" id="browseAllOffersToggle" onclick="toggleBrowseAllOffers()">
+        <button class="offers-tog" id="browseAllOffersToggle" onclick="toggleBrowseAllOffers()" style="margin-left:auto;flex-shrink:0">
           <input type="checkbox" id="browseAllOffersChk" onchange="toggleBrowseAllOffers()"> For sale only
         </button>
       </div>

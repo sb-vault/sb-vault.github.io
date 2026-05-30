@@ -293,7 +293,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     <nav class="header-nav">
       <button class="nav-btn active" id="nav-home" onclick="showView('home')">Browse</button>
       <button class="nav-btn" id="nav-browseall" onclick="openBrowseAll()">Browse All Sets</button>
-      <button class="nav-btn" id="nav-favs" onclick="openFavourites()">★ Favourites</button>
+      <button class="nav-btn" id="nav-favs" onclick="openFavourites()">Favourites</button>
       <button class="nav-btn" id="nav-museum" onclick="openMyMuseum()">My Museum</button>
       <a class="nav-btn" href="https://sb-vault.github.io/tools" target="_blank" rel="noopener" style="text-decoration:none">Skyblock Tools</a>
     </nav>
@@ -355,7 +355,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     <!-- Exotic sub-view -->
     <div id="museumExoticView">
       <div class="page-tabs" id="pageTabs"></div>
-      <div class="filter-bar" style="align-items:center;gap:6px;flex-wrap:wrap">
+      <div class="filter-bar" style="align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px">
         <!-- Sort direction + sort -->
         <button id="exoSortDirBtn" onclick="toggleExoSortDir()" style="height:32px;width:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">↑</button>
         <div style="position:relative;flex-shrink:0">
@@ -371,8 +371,8 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
         <input class="fsearch" id="setSearch" placeholder="Search #hex or name…" oninput="renderSets()" style="height:32px;width:130px;flex-shrink:0">
         <!-- Armour type search -->
         <div style="position:relative;flex-shrink:0">
-          <input class="fsearch" id="exoTypeSearch" placeholder="Armour type…" oninput="renderExoTypeList(this.value)" onfocus="showExoTypeList()" onblur="setTimeout(hideExoTypeList,200)" style="height:32px;width:130px">
-          <div id="exoTypeDropdown" style="display:none;position:absolute;top:100%;left:0;min-width:160px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:180px;overflow-y:auto;margin-top:2px"></div>
+          <input class="fsearch" id="exoTypeSearch" placeholder="Armour type…" oninput="renderExoTypeList(this.value)" onfocus="showExoTypeList()" onblur="setTimeout(hideExoTypeList,200)" style="height:32px;width:180px">
+          <div id="exoTypeDropdown" style="display:none;position:absolute;top:100%;left:0;min-width:180px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:180px;overflow-y:auto;margin-top:2px"></div>
         </div>
         <!-- Category chips -->
         <div class="cat-chips" id="catChips" style="flex:1">
@@ -410,10 +410,10 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
           <span style="pointer-events:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3)">▾</span>
         </div>
         <!-- Hex / name search -->
-        <input class="fsearch" id="seymourSearch" placeholder="Search #hex…" oninput="renderSeymourSets()" style="height:32px;width:110px;flex-shrink:0">
+        <input class="fsearch" id="seymourSearch" placeholder="Search" oninput="renderSeymourSets()" style="height:32px;width:130px;flex-shrink:0">
         <!-- Colour/tag name search -->
         <div style="position:relative;flex-shrink:0">
-          <input class="fsearch" id="seymourTagSearch" placeholder="Colour name…" oninput="renderSeyTagList(this.value)" onfocus="showSeyTagList()" onblur="setTimeout(hideSeyTagList,200)" style="height:32px;width:130px">
+          <input class="fsearch" id="seymourTagSearch" placeholder="Search colour / hex" oninput="onSeyTagInput(this.value)" onfocus="showSeyTagList()" onblur="setTimeout(hideSeyTagList,200)" style="height:32px;width:180px">
           <div id="seyTagDropdown" style="display:none;position:absolute;top:100%;left:0;min-width:180px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:180px;overflow-y:auto;margin-top:2px"></div>
         </div>
         <!-- Divider -->
@@ -2150,8 +2150,7 @@ function setCard(s, _baCtx){
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
           <div style="flex:1;min-width:0"><div class="set-name">${esc(s.set_name||s.armour_type||'Unnamed Set')}</div><div class="set-type">${esc(at)}</div></div>
           ${s.for_offers?'<div class="set-offers">For Sale</div>':''}
-          <button class="fav-star" data-fid="${esc(s.id)}" onclick="toggleFavSet('${esc(s.id)}',event)" style="background:none;border:none;cursor:pointer;font-size:14px;color:${favSets.has(s.id)?'#f5c842':'var(--text3)'};padding:0;flex-shrink:0">${favSets.has(s.id)?'★':'☆'}</button>et-type">${esc(s.armour_type||'')}</div></div>
-          ${s.for_offers?'<div class="set-offers">For Sale</div>':''}
+          <button class="fav-star" data-fid="${esc(s.id)}" onclick="toggleFavSet('${esc(s.id)}',event)" style="background:none;border:none;cursor:pointer;font-size:14px;color:${favSets.has(s.id)?'#f5c842':'var(--text3)'};padding:0;flex-shrink:0">${favSets.has(s.id)?'★':'☆'}</button>
         </div>
         <div class="set-piece-list">${pHtml}</div>
         ${s.for_offers&&s.current_offer?`<div style="font-size:10px;color:var(--text2);margin-top:4px"><span style="color:var(--text3)">Offer:</span> <b>${esc(s.current_offer)}</b>${s.current_offer_ign?' by '+esc(s.current_offer_ign):' (anon)'}</div>`:''}
@@ -2220,7 +2219,7 @@ window.toggleBrowseAllCat=function(el){
   renderBrowseAll();
 };
 window.toggleBrowseAllOffers=function(){browseAllOffersOn=!browseAllOffersOn;document.getElementById('browseAllOffersToggle').classList.toggle('on',browseAllOffersOn);document.getElementById('browseAllOffersChk').checked=browseAllOffersOn;renderBrowseAll();};
-window.toggleBrowseAllSeymourOffers=function(){browseAllSeymourOffersOn=!browseAllSeymourOffersOn;document.getElementById('browseAllSeymourOffersToggle').classList.toggle('on',browseAllSeymourOffersOn);document.getElementById('browseAllSeymourOffersChk').checked=browseAllSeymourOffersOn;renderBrowseAllSeymour();};
+window.toggleBrowseAllSeymourOffers=function(){browseAllSeymourOffersOn=!browseAllSeymourOffersOn;document.getElementById('seymourOffersToggle').classList.toggle('on',browseAllSeymourOffersOn);document.getElementById('seymourOffersChk').checked=browseAllSeymourOffersOn;renderBrowseAllSeymour();};
 window.toggleBrowseAllPiece=function(btn){
   const piece=btn.dataset.baspiece;
   const allBtn=document.querySelector('[data-baspiece="all"]');
@@ -2263,8 +2262,8 @@ function seymourHexMatch(hex, query){
 function renderSeymourSets(){
   const grid=document.getElementById('seymourSetsGrid');
   if(!grid) return;
-  const q=(document.getElementById('seymourSearch')?.value||'').trim();
-  const sort=document.getElementById('seymourSort')?.value||'newest';
+  const q=(document.getElementById('ba2-seymourSearch')?.value||'').trim();
+  const sort=document.getElementById('ba2-seymourSort')?.value||'newest';
   const isHexQ=(q.startsWith('#')||(/^[0-9A-Fa-fXx]{2,6}$/.test(q.replace('#','')))&&/^[#0-9A-Fa-fXx]+$/.test(q));
   const pieceAll=seymourActivePieces.has('all');
   const activePieceArr=pieceAll?[]:Array.from(seymourActivePieces);
@@ -2273,10 +2272,15 @@ function renderSeymourSets(){
   if(currentSeymourPageId!=='all') sets=sets.filter(s=>s.page_id===currentSeymourPageId);
   if(seymourOffersOn) sets=sets.filter(s=>s.for_offers);
   if(!pieceAll) sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourActivePieces.has(p.piece)));
-  // Tag/colour name filter from dropdown
-  if(seySelectedTag){ sets=sets.filter(s=>(s.pieces||[]).some(p=>{if(!p.hex)return false;const c=classifySeymour(p.hex);return c&&c.label.toLowerCase().includes(seySelectedTag.toLowerCase());})); }
+  // Tag/colour name: show ALL sets, sort by ΔE to that colour (like 6-digit hex)
+  // Only filter if seySelectedTag doesn't match any known colour (text search mode)
+  // Tag/hex box: check for direct hex override or colour name selection
+  const _tagInp=document.getElementById('seymourTagSearch');
+  const _hexOverride=_tagInp?.dataset?.hexOverride||'';
+  const _seyTagHex=_hexOverride?_hexOverride.replace('#',''):(seySelectedTag?getSeyTagTargetHex(seySelectedTag):null);
   // Full 6-char hex: show ALL sets sorted by ΔE, don't filter
-  const isFullHex6=/^#?[0-9A-Fa-f]{6}$/.test(q);
+  const isFullHex6=!!(_seyTagHex||/^#?[0-9A-Fa-f]{6}$/.test(q));
+  const _sortHex=_seyTagHex||(/^#?[0-9A-Fa-f]{6}$/.test(q)?q.replace('#',''):null);
   if(q&&!isFullHex6){
     if(isHexQ){
       // Partial hex / wildcard: filter to sets that have a matching piece hex
@@ -2300,9 +2304,9 @@ function renderSeymourSets(){
     sets=sets.slice().sort((a,b)=>{
       const getBest=s=>{
         const pcs=firstPiece?(s.pieces||[]).filter(p=>p.piece===firstPiece):s.pieces||[];
-        if(isFullHex6){
-          // Sort by deltaE to the typed hex specifically
-          const targetLab=hexToLab(q.replace('#',''));
+        if(_sortHex){
+          // Sort by deltaE to the specific target hex
+          const targetLab=hexToLab(_sortHex);
           return Math.min(...pcs.map(p=>{
             if(!p.hex) return 999;
             const pLab=hexToLab(p.hex.replace('#',''));
@@ -2330,7 +2334,8 @@ function renderSeymourSets(){
     return;
   }
   const isOwn=currentUser&&currentUser.uuid===viewingUuid;
-  let html=sets.map(s=>seymourSetCard(s,activePieceArr,isHexQ?q:null)).join('');
+  const _hq=_sortHex?('#'+_sortHex):(isHexQ?q:null);
+  let html=sets.map(s=>seymourSetCard(s,activePieceArr,_hq)).join('');
   if(isOwn) html+=`<div class="set-card set-card-add" onclick="openAddSetModal()"><div style="font-size:24px;opacity:.5">+</div><div>Add Armour Set</div></div>`;
   grid.innerHTML=html;
   requestAnimationFrame(()=>{
@@ -2367,11 +2372,21 @@ function seymourSetCard(s, activePieces, hexQuery, _baCtx){
     })()
     const tagText=cls?esc(cls.label):'N/A';
     const tagTitle=cls?`${cls.label} ΔE:${cls.deltaE.toFixed(2)} Abs:${cls.abs}`:'';
+    const isFullHexQ=hexQuery&&/^#?[0-9A-Fa-f]{6}$/.test(hexQuery);
+    const targetDeltaInfo=(()=>{
+      if(!isFullHexQ||!p.hex) return '';
+      const tLab=hexToLab(hexQuery.replace('#',''));
+      const pLab=hexToLab(p.hex.replace('#',''));
+      const dE=calculateDeltaEWithLab(pLab,tLab);
+      const absV=seymourAbsDist(p.hex.replace('#',''),hexQuery.replace('#',''));
+      return`<span style="font-size:10px;font-weight:700;color:var(--text);white-space:nowrap;flex-shrink:0;margin-left:5px">\u0394E:${dE.toFixed(2)} Abs:${absV}</span>`;
+    })();
     return`<div class="set-piece-row" style="${isHighlight?'border:1.5px solid #4ade80;border-radius:4px;background:#4ade8008;':'border:1.5px solid transparent;'}">
       <div class="set-piece-dot" style="background:${p.hex?'#'+p.hex.replace('#',''):'transparent'};border-color:${col}55"></div>
       <span class="set-piece-name" style="white-space:nowrap;overflow:visible;text-overflow:unset">${esc(p.piece)}</span>
       ${p.hex?`<span style="font-size:8px;color:var(--text3);font-family:monospace;flex-shrink:0">${esc(p.hex.toUpperCase())}</span>`:''}
       ${cls?`<span class="set-piece-tag" title="${tagTitle}" style="color:${col};border-color:${col}55;background:${col}10;white-space:nowrap;flex-shrink:0">${tagText}</span><span style="font-size:9px;color:var(--text3);white-space:nowrap;flex-shrink:0;margin-left:3px">${'\u0394E:'+cls.deltaE.toFixed(2)+' Abs:'+cls.abs}</span>`:'<span class="set-piece-tag" style="color:#888;border-color:#8884;background:#8881;flex-shrink:0">N/A</span>'}
+      ${targetDeltaInfo}
     </div>`;
   }).join('');
   const _hp=activePieces&&activePieces.length>0?activePieces[0]:null;
@@ -2411,24 +2426,67 @@ function renderBrowseAll(){
 
 function renderBrowseAllSeymour(){
   const grid=document.getElementById('browseAllSeymourGrid'); if(!grid) return;
-  const q=(document.getElementById('browseAllSeymourSearch')?.value||'').trim();
-  const sort=document.getElementById('browseAllSeymourSort')?.value||'newest';
+  const q=(document.getElementById('ba2-seymourSearch')?.value||'').trim();
+  const sort=document.getElementById('ba2-seymourSort')?.value||'newest';
   const isHexQ=(q.startsWith('#')||(/^[0-9A-Fa-fXx]{2,6}$/.test(q.replace('#','')))&&/^[#0-9A-Fa-fXx]+$/.test(q));
   const pieceAll=browseAllActivePieces.has('all');
   const activePieceArr=pieceAll?[]:Array.from(browseAllActivePieces);
+
   let sets=allSetsGlobal.filter(s=>(s.armour_type||'').toLowerCase().includes('seymour'));
   if(browseAllSeymourOffersOn) sets=sets.filter(s=>s.for_offers);
   if(!pieceAll) sets=sets.filter(s=>(s.pieces||[]).some(p=>browseAllActivePieces.has(p.piece)));
-  const isFullHex6BA=/^#?[0-9A-Fa-f]{6}$/.test(q);
-  if(q&&!isFullHex6BA){if(isHexQ){sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));}else{const ql=q.toLowerCase();sets=sets.filter(s=>{if([(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(ql)))return true;return(s.pieces||[]).some(p=>{if(!p.hex)return false;const cls=classifySeymour(p.hex);return cls&&cls.label.toLowerCase().includes(ql);});});}}
+
+  // Tag/colour name: show ALL sets sorted by ΔE to that colour
+  const _bas2Inp=document.getElementById('ba2-seymourTagSearch');
+  const _bas2HexOverride=_bas2Inp?.dataset?.hexOverride||'';
+  const _basTagHex=_bas2HexOverride?_bas2HexOverride.replace('#',''):(bas2SelectedTag?getSeyTagTargetHex(bas2SelectedTag):null);
+  const isFullHex6BAS=!!(_basTagHex||/^#?[0-9A-Fa-f]{6}$/.test(q));
+  const _basSortHex=_basTagHex||((/^#?[0-9A-Fa-f]{6}$/.test(q))?q.replace('#',''):null);
+
+  if(q&&!isFullHex6BAS){
+    if(isHexQ){
+      sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));
+    } else {
+      const ql=q.toLowerCase();
+      sets=sets.filter(s=>{
+        if([(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(ql))) return true;
+        return (s.pieces||[]).some(p=>{
+          if(!p.hex) return false;
+          const cls=classifySeymour(p.hex);
+          return cls&&cls.label.toLowerCase().includes(ql);
+        });
+      });
+    }
+  }
+
   const firstPiece=activePieceArr[0]||null;
-  const effectiveSortBA=isFullHex6BA&&sort==='newest'?'deltaE':sort;
-  if(effectiveSortBA==='deltaE') sets=sets.slice().sort((a,b)=>{const getBest=s=>{const pcs=firstPiece?(s.pieces||[]).filter(p=>p.piece===firstPiece):s.pieces||[];return Math.min(...pcs.map(p=>p.hex?classifySeymour(p.hex)?.deltaE??999:999),...[999]);};return getBest(a)-getBest(b);});
-  else if(effectiveSortBA==='abs'&&firstPiece) sets=sets.slice().sort((a,b)=>{const pa=(a.pieces||[]).find(p=>p.piece===firstPiece),pb=(b.pieces||[]).find(p=>p.piece===firstPiece);return(pa&&pa.hex?classifySeymour(pa.hex)?.abs??999:999)-(pb&&pb.hex?classifySeymour(pb.hex)?.abs??999:999);});
-  else if(effectiveSortBA==='name') sets=sets.slice().sort((a,b)=>(a.set_name||'').localeCompare(b.set_name||''));
-  grid.innerHTML=sets.map(s=>seymourSetCard(s,activePieceArr,isHexQ?q:null,true)).join('');
+  const effectiveSort=isFullHex6BAS&&sort==='newest'?'deltaE':sort;
+
+  if(effectiveSort==='deltaE'){
+    sets=sets.slice().sort((a,b)=>{
+      const getBest=s=>{
+        const pcs=firstPiece?(s.pieces||[]).filter(p=>p.piece===firstPiece):s.pieces||[];
+        if(_basSortHex){
+          const targetLab=hexToLab(_basSortHex);
+          return Math.min(...pcs.map(p=>{if(!p.hex)return 999;return calculateDeltaEWithLab(hexToLab(p.hex.replace('#','')),targetLab);}),...[999]);
+        }
+        return Math.min(...pcs.map(p=>p.hex?classifySeymour(p.hex)?.deltaE??999:999),...[999]);
+      };
+      return getBest(a)-getBest(b);
+    });
+  } else if(effectiveSort==='abs'&&firstPiece){
+    sets=sets.slice().sort((a,b)=>{const pa=(a.pieces||[]).find(p=>p.piece===firstPiece),pb=(b.pieces||[]).find(p=>p.piece===firstPiece);return(pa&&pa.hex?classifySeymour(pa.hex)?.abs??999:999)-(pb&&pb.hex?classifySeymour(pb.hex)?.abs??999:999);});
+  } else if(effectiveSort==='name'){
+    sets=sets.slice().sort((a,b)=>(a.set_name||'').localeCompare(b.set_name||''));
+  }
+
+  if(bas2SortDir===-1) sets=sets.slice().reverse();
+
+  const _basHq=_basSortHex?('#'+_basSortHex):(isHexQ?q:null);
+  grid.innerHTML=sets.map(s=>seymourSetCard(s,activePieceArr,_basHq,true)).join('');
   requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`ba-model-${s.id}`);if(el){el.dataset.rendered='1';renderPlayerInto(el,s.uuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false});}});});
 }
+
 
 
 /* SET DETAIL PANEL */
@@ -3246,6 +3304,7 @@ let exoSortDir=1; // 1=asc(↑), -1=desc(↓)
 let seySortDir=1;
 let exoSelectedType='';
 let seySelectedTag='';
+let seySelectedHex='';
 
 const ARMOUR_TYPES=["seymour", "young dragon", "protector dragon", "mushroom", "emerald", "farm suit", "cheap tuxedo", "lapis", "speedster", "miner outfit", "leaflet", "shark scale", "tarantula", "farm armour", "squid boots", "bat person", "cactus", "guardian", "stereo pants", "elegant tuxedo", "angler", "obsidian", "pumpkin", "farmer boots", "creeper pants", "farm armor", "old dragon", "strong dragon", "fancy tuxedo", "superior dragon", "unstable dragon", "wise dragon"];
 
@@ -3283,15 +3342,70 @@ function showSeyTagList(){renderSeyTagList(document.getElementById('seymourTagSe
 function hideSeyTagList(){document.getElementById('seyTagDropdown').style.display='none';}
 function renderSeyTagList(q){
   const dd=document.getElementById('seyTagDropdown');if(!dd)return;
+  if(!q){dd.style.display='none';seySelectedTag='';seySelectedHex='';renderSeymourSets();return;}
   const ql=q.toLowerCase();
+  const isHexInput=/^#?[0-9A-Fa-f]{6}$/.test(q.replace('#','').trim());
   const hits=SEYMOUR_TAG_NAMES.filter(t=>t.toLowerCase().includes(ql)).slice(0,12);
-  dd.innerHTML=hits.map(t=>`<div style="padding:5px 10px;cursor:pointer;font-size:12px;${t===seySelectedTag?'background:var(--bg3);font-weight:600':''}" onmousedown="selectSeyTag('${t}')">${t}</div>`).join('');
+  function mkSeyItem(t,isHex){
+    const bg=isHex?'font-weight:700;color:var(--text)':(t===seySelectedTag?'background:var(--bg3);font-weight:600':'');
+    const h=isHex?'selectSeyHex(\''+t+'\')':'selectSeyTag(\''+t+'\')';
+    return '<div style="padding:5px 10px;cursor:pointer;font-size:12px;'+bg+'" onmousedown="'+h+'">'+(isHex?'Search hex #'+t:t)+'</div>';
+  }
+  let items=hits.map(t=>mkSeyItem(t,false));
+  if(isHexInput) items=[mkSeyItem(q.replace('#','').toUpperCase(),true),...items];
+  dd.innerHTML=items.join('');dd.style.display=items.length?'block':'none';
+}
+
+function selectSeyHex(hex){
+  seySelectedTag='';seySelectedHex=hex;
+  const inp=document.getElementById('seymourTagSearch');if(inp)inp.value='#'+hex;
+  hideSeyTagList();renderSeymourSets();
 }
 function selectSeyTag(t){
-  seySelectedTag=seySelectedTag===t?'':t;
+  seySelectedTag=seySelectedTag===t?'':t;seySelectedHex='';
+  const inp=document.getElementById('seymourTagSearch');if(inp)inp.value=seySelectedTag;
+  hideSeyTagList();renderSeymourSets();
+}
+
+function onSeyTagInput(v){
+  // If 6-digit hex, set as selected tag hex directly (no dropdown needed)
+  if(/^#?[0-9A-Fa-f]{6}$/.test(v.trim())){
+    seySelectedTag=''; // clear name selection
+    // Use the hex directly via the same render path
+    document.getElementById('seymourTagSearch').dataset.hexOverride=v.trim();
+    hideSeyTagList();
+    renderSeymourSets();
+    return;
+  }
+  // Clear hex override
   const inp=document.getElementById('seymourTagSearch');
-  if(inp) inp.value=seySelectedTag;
-  hideSeyTagList(); renderSeymourSets();
+  if(inp) delete inp.dataset.hexOverride;
+  // If empty, clear selection and re-render normally
+  if(!v.trim()){ seySelectedTag=''; hideSeyTagList(); renderSeymourSets(); return; }
+  // Otherwise show dropdown
+  renderSeyTagList(v);
+  document.getElementById('seyTagDropdown').style.display='block';
+}
+function onBAS2SeyTagInput(v){
+  if(/^#?[0-9A-Fa-f]{6}$/.test(v.trim())){
+    bas2SelectedTag='';
+    const inp=document.getElementById('ba2-seymourTagSearch');
+    if(inp) inp.dataset.hexOverride=v.trim();
+    hideBAS2TagList();
+    renderBrowseAllSeymour();
+    return;
+  }
+  const inp=document.getElementById('ba2-seymourTagSearch');
+  if(inp) delete inp.dataset.hexOverride;
+  if(!v.trim()){ bas2SelectedTag=''; hideBAS2TagList(); renderBrowseAllSeymour(); return; }
+  renderBAS2TagList(v);
+  document.getElementById('ba2-seyTagDropdown').style.display='block';
+}
+
+function getSeyTagTargetHex(tagName){
+  // Get the hex of the colour that matches this tag name
+  const k=Object.keys(SEYMOUR_COLORS).find(n=>n.toLowerCase()===tagName.toLowerCase());
+  return k?SEYMOUR_COLORS[k]:null;
 }
 
 
@@ -3376,6 +3490,60 @@ function renderFavSets(){
 
 // Add showView to handle favs
 const _origShowView=showView;
+
+/* BROWSE ALL SEYMOUR SEARCH */
+let basSeySortDir=1;
+let basSeySelectedTag='';
+let bas2SortDir=1;
+let bas2SelectedTag='';
+let bas2SelectedHex='';
+
+window.toggleBASSeySortDir=function(){
+  basSeySortDir*=-1;
+  const btn=document.getElementById('basSeySortDirBtn');
+  if(btn) btn.textContent=basSeySortDir===1?'↑':'↓';
+  renderBrowseAllSeymour();
+};
+
+window.renderBAS=function(action){
+  if(action==='sortdir'){
+    bas2SortDir*=-1;
+    const btn=document.getElementById('ba2-seySortDirBtn');
+    if(btn) btn.textContent=bas2SortDir===1?'↑':'↓';
+  }
+  renderBrowseAllSeymour();
+};
+
+function showBAS2TagList(){ renderBAS2TagList(document.getElementById('ba2-seymourTagSearch')?.value||''); const dd=document.getElementById('ba2-seyTagDropdown'); if(dd) dd.style.display='block'; }
+function hideBAS2TagList(){ const dd=document.getElementById('ba2-seyTagDropdown'); if(dd) dd.style.display='none'; }
+function renderBAS2TagList(q){
+  const dd=document.getElementById('ba2-seyTagDropdown'); if(!dd) return;
+  if(!q){ dd.style.display='none'; bas2SelectedTag=''; bas2SelectedHex=''; renderBrowseAllSeymour(); return; }
+  const ql=q.toLowerCase();
+  const isHexInput=/^#?[0-9A-Fa-f]{6}$/.test(q.replace('#','').trim());
+  const hits=SEYMOUR_TAG_NAMES.filter(t=>t.toLowerCase().includes(ql)).slice(0,12);
+  function mkBAS2Item(t,isHex){
+    const bg=isHex?'font-weight:700;color:var(--text)':(t===bas2SelectedTag?'background:var(--bg3);font-weight:600':'');
+    const h=isHex?'selectBAS2Hex(\''+t+'\')':'selectBAS2Tag(\''+t+'\')';
+    return '<div style="padding:5px 10px;cursor:pointer;font-size:12px;'+bg+'" onmousedown="'+h+'">'+(isHex?'Search hex #'+t:t)+'</div>';
+  }
+  let items=hits.map(t=>mkBAS2Item(t,false));
+  if(isHexInput) items=[mkBAS2Item(q.replace('#','').toUpperCase(),true),...items];
+  dd.innerHTML=items.join(''); dd.style.display=items.length?'block':'none';
+}
+function selectBAS2Hex(hex){
+  bas2SelectedTag=''; bas2SelectedHex=hex;
+  const inp=document.getElementById('ba2-seymourTagSearch');
+  if(inp) inp.value='#'+hex;
+  hideBAS2TagList(); renderBrowseAllSeymour();
+}
+function selectBAS2Tag(t){
+  bas2SelectedTag=bas2SelectedTag===t?'':t; bas2SelectedHex='';
+  const inp=document.getElementById('ba2-seymourTagSearch');
+  if(inp) inp.value=bas2SelectedTag;
+  hideBAS2TagList(); renderBrowseAllSeymour();
+}
+
 /* INIT */
 loadTheme();
 loadStoredUser();
@@ -3453,8 +3621,22 @@ setInterval(loadStats,60000);
     </div>
     <!-- Exotic sub-view -->
     <div id="browseAllExoticView">
-      <div class="filter-bar" style="align-items:center;gap:6px">
-        <input class="fsearch" id="browseAllSearch" placeholder="Search sets or #hex…" oninput="renderBrowseAll()" style="height:32px">
+      <div class="filter-bar" style="align-items:center;gap:6px;flex-wrap:wrap">
+        <button id="baExoSortDirBtn" onclick="toggleBAExoSortDir()" style="height:32px;width:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">↑</button>
+        <div style="position:relative;flex-shrink:0">
+          <select id="baExoSort" onchange="renderBrowseAll()" style="height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 28px 0 10px;font-size:12px;appearance:none;-webkit-appearance:none;cursor:pointer;min-width:110px">
+            <option value="newest">Newest</option>
+            <option value="offer">By Offer</option>
+            <option value="bought">Bought For</option>
+            <option value="name">A–Z</option>
+          </select>
+          <span style="pointer-events:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3)">▾</span>
+        </div>
+        <input class="fsearch" id="browseAllSearch" placeholder="Search #hex or name…" oninput="renderBrowseAll()" style="height:32px;width:130px;flex-shrink:0">
+        <div style="position:relative;flex-shrink:0">
+          <input class="fsearch" id="baExoTypeSearch" placeholder="Armour type…" oninput="renderBAExoTypeList(this.value)" onfocus="showBAExoTypeList()" onblur="setTimeout(hideBAExoTypeList,200)" style="height:32px;width:130px">
+          <div id="baExoTypeDropdown" style="display:none;position:absolute;top:100%;left:0;min-width:160px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:180px;overflow-y:auto;margin-top:2px"></div>
+        </div>
         <div class="cat-chips" id="browseAllCatChips" style="flex:1">
           <button class="chip on" data-bcat="all" onclick="toggleBrowseAllCat(this)">All</button>
           <button class="chip" data-bcat="exotic" onclick="toggleBrowseAllCat(this)">Exotic</button>
@@ -3474,9 +3656,11 @@ setInterval(loadStats,60000);
     <!-- Seymour sub-view -->
     <div id="browseAllSeymourView" style="display:none">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <!-- Sort direction -->
+        <button id="ba2-seySortDirBtn" onclick="renderBAS('sortdir')" style="height:32px;width:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">↑</button>
         <!-- Sort (compact, left) -->
         <div style="position:relative;flex-shrink:0">
-          <select id="browseAllSeymourSort" onchange="renderBrowseAllSeymour()" style="height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 28px 0 10px;font-size:12px;appearance:none;-webkit-appearance:none;cursor:pointer;min-width:90px">
+          <select id="ba2-seymourSort" onchange="renderBrowseAllSeymour()" style="height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 28px 0 10px;font-size:12px;appearance:none;-webkit-appearance:none;cursor:pointer;min-width:90px">
             <option value="newest">Newest</option>
             <option value="deltaE">By ΔE</option>
             <option value="abs">By Abs</option>
@@ -3484,8 +3668,13 @@ setInterval(loadStats,60000);
           </select>
           <span style="pointer-events:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3)">▾</span>
         </div>
-        <!-- Search -->
-        <input class="fsearch" id="browseAllSeymourSearch" placeholder="Search…" oninput="renderBrowseAllSeymour()" style="height:32px;flex:1;min-width:120px;max-width:200px">
+        <!-- Hex / name search -->
+        <input class="fsearch" id="ba2-seymourSearch" placeholder="Search" oninput="renderBrowseAllSeymour()" style="height:32px;width:110px;flex-shrink:0">
+        <!-- Colour/tag name search -->
+        <div style="position:relative;flex-shrink:0">
+          <input class="fsearch" id="ba2-seymourTagSearch" placeholder="Search colour / hex" oninput="onBAS2SeyTagInput(this.value)" onfocus="showBAS2TagList()" onblur="setTimeout(hideBAS2TagList,200)" style="height:32px;width:180px">
+          <div id="ba2-seyTagDropdown" style="display:none;position:absolute;top:100%;left:0;min-width:180px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:180px;overflow-y:auto;margin-top:2px"></div>
+        </div>
         <!-- Divider -->
         <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
         <!-- Piece chips -->
@@ -3495,8 +3684,8 @@ setInterval(loadStats,60000);
         <button class="chip" data-baspiece="Satin Trousers" onclick="toggleBrowseAllPiece(this)">Trousers</button>
         <button class="chip" data-baspiece="Oxford Shoes" onclick="toggleBrowseAllPiece(this)">Shoes</button>
         <!-- For sale -->
-        <button class="offers-tog" id="browseAllSeymourOffersToggle" onclick="toggleBrowseAllSeymourOffers()" style="margin-left:auto">
-          <input type="checkbox" id="browseAllSeymourOffersChk" onchange="toggleBrowseAllSeymourOffers()"> For sale only
+        <button class="offers-tog" id="ba2-seymourOffersToggle" onclick="toggleBrowseAllSeymourOffers()" style="margin-left:auto">
+          <input type="checkbox" id="ba2-seymourOffersChk" onchange="toggleBrowseAllSeymourOffers()"> For sale only
         </button>
       </div>
       <div class="sets-grid" id="browseAllSeymourGrid">
@@ -3560,7 +3749,7 @@ setInterval(loadStats,60000);
 <!-- FAVOURITES VIEW -->
 <div id="view-favs" style="display:none">
   <div class="page">
-    <div style="font-size:22px;font-weight:700;margin-bottom:16px">★ Favourites</div>
+    <div style="font-size:22px;font-weight:700;margin-bottom:16px">Favourites</div>
     <!-- Museums -->
     <div style="margin-bottom:20px">
       <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text2)">Favourite Museums</div>

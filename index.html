@@ -2419,6 +2419,7 @@ function renderBrowseAll(){
   if(browseAllOffersOn) sets=sets.filter(s=>s.for_offers);
   if(!browseAllCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>browseAllCatFilter.has(c.cat));});
   if(q){if(isHexQ){sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));}else{const ql=q.toLowerCase();sets=sets.filter(s=>{if([(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(ql)))return true;return(s.pieces||[]).some(p=>{const cls=classifyHex(p.hex||'',s.armour_type||'',p.piece);return cls&&cls.label&&cls.label.toLowerCase().includes(ql);});});}}
+  if(baExoSortDir===-1) sets=sets.slice().reverse();
   if(!sets.length){grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No sets found</div></div>';return;}
   grid.innerHTML=sets.map(s=>setCard(s,true)).join('');
   requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`ba-model-${s.id}`);if(el&&!el.dataset.rendered){el.dataset.rendered='1';renderPlayerInto(el,s.uuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false});}});});
@@ -2575,107 +2576,102 @@ async function deleteSet(id){
 }
 
 window.openEditModal=function(id){
-  const s=allSets.find(x=>x.id===id);
+  const s=allSets.find(x=>x.id===id)||allSetsGlobal.find(x=>x.id===id);
   if(!s) return;
   editingSetId=id;
-  // Populate the add set modal with existing data
-  document.getElementById('addArmourType').value=s.armour_type||'';
-  document.getElementById('addSetName').value=s.set_name||'';
-  // Page
-  const ps=document.getElementById('addPageSelect');
-  if(ps){ for(let i=0;i<ps.options.length;i++) if(ps.options[i].value===s.page_id) ps.selectedIndex=i; }
-  // Pieces - trigger armour type change to build slots then fill hexes
-  onArmourTypeChange();
+  // Reset modal to clean Add Set state first
+  openAddSetModal();
+  // Then populate everything from the existing set after a tick
   setTimeout(()=>{
-    (s.pieces||[]).forEach(p=>{
-      const tb=document.querySelector(`.piece-toggle[data-piece="${p.piece}"]`);
-      if(tb&&!tb.classList.contains('on')) tb.click();
-      const hi=document.querySelector(`input.hex-input[data-piece="${p.piece}"]`);
-      if(hi){ hi.value=(p.hex||'').replace('#',''); hi.dispatchEvent(new Event('input')); }
-    });
-    updateAddSetPreview();
-    loadScuffness(s.scuffness||null);
-    // Populate for_offers
-    const fo=!!(s.for_offers);
-    const cb=document.getElementById('addForOffers');
-    const offBtn=document.getElementById('addForOffersBtn');
-    if(cb) cb.checked=fo;
-    if(offBtn){offBtn.classList.toggle('btn-p',fo);offBtn.textContent=fo?'\u2713 Taking Offers':'Taking Offers';}
-    const det=document.getElementById('addOfferDetails'); if(det) det.style.display=fo?'flex':'none';
-    if(fo){
-      const ci=document.getElementById('addCurrentOffer'); if(ci) ci.value=s.current_offer||'';
-      const ign=document.getElementById('addCurrentOfferIgn'); if(ign) ign.value=s.current_offer_ign||'';
-    }
-    // Bought for
-    const hasBF=!!(s.bought_for);
-    const bfBtn=document.getElementById('addShowBoughtForBtn');
-    const bfRow=document.getElementById('addBoughtForRow');
-    if(bfRow) bfRow.style.display=hasBF?'block':'none';
-    if(bfBtn){bfBtn.classList.toggle('btn-p',hasBF);bfBtn.textContent=hasBF?'\u2713 Show what I paid':'Show what I paid';}
-    const bfIn=document.getElementById('addBoughtFor'); if(bfIn) bfIn.value=s.bought_for||'';
-    // Page
-    const ps=document.getElementById('addPageSelect');
-    if(ps){for(let i=0;i<ps.options.length;i++) ps.options[i].selected=(ps.options[i].value===s.page_id);}
-  }, 80);
-  // For offers
-  const fo=!!(s.for_offers);
-  const cb=document.getElementById('addForOffers');
-  const btn=document.getElementById('addForOffersBtn');
-  cb.checked=fo;
-  btn.classList.toggle('btn-p',fo);
-  btn.textContent=fo?'\u2713 Taking Offers':'Taking Offers';
-  const det=document.getElementById('addOfferDetails');
-  if(det) det.style.display=fo?'flex':'none';
-  if(fo){
-    const ci=document.getElementById('addCurrentOffer'); if(ci) ci.value=s.current_offer||'';
-    const ign=document.getElementById('addCurrentOfferIgn'); if(ign) ign.value=s.current_offer_ign||'';
-  }
-  // Bought for
-  const hasBF=!!(s.bought_for);
-  const bfBtn=document.getElementById('addShowBoughtForBtn');
-  const bfRow=document.getElementById('addBoughtForRow');
-  if(bfRow) bfRow.style.display=hasBF?'block':'none';
-  if(bfBtn){ bfBtn.classList.toggle('btn-p',hasBF); bfBtn.textContent=hasBF?'\u2713 Show what I paid':'Show what I paid'; }
-  const bfIn=document.getElementById('addBoughtFor'); if(bfIn) bfIn.value=s.bought_for||'';
-  // Change modal title and submit to save edit
-  document.querySelector('#addSetModal .modal-title').textContent='Edit Set';
-  const addBtn=document.getElementById('addSetBtn');
-  addBtn.textContent='Save Changes';
-  addBtn.onclick=()=>saveEditFromAddModal();
-  openModal('addSetModal');
+    // Armour type + name
+    const atInp=document.getElementById('addArmourType');
+    if(atInp){ atInp.value=s.armour_type||''; atInp.dispatchEvent(new Event('input')); }
+    const snInp=document.getElementById('addSetName');
+    if(snInp) snInp.value=s.set_name||'';
+    // Trigger armour type change to load piece slots
+    onArmourTypeChange&&onArmourTypeChange();
+    setTimeout(()=>{
+      // Pieces + hexes
+      (s.pieces||[]).forEach(p=>{
+        const tb=document.querySelector(`.piece-toggle[data-piece="${p.piece}"]`);
+        if(tb&&!tb.classList.contains('on')) tb.click();
+        setTimeout(()=>{
+          const hi=document.querySelector(`input.hex-input[data-piece="${p.piece}"]`);
+          if(hi){ hi.value=(p.hex||'').replace('#',''); hi.dispatchEvent(new Event('input')); }
+        },30);
+      });
+      // Page
+      const ps=document.getElementById('addPageSelect');
+      if(ps){ for(let i=0;i<ps.options.length;i++) ps.options[i].selected=(ps.options[i].value===(s.page_id||'')); }
+      // Scuffness
+      loadScuffness(s.scuffness||null);
+      // For offers
+      const fo=!!(s.for_offers);
+      const cb=document.getElementById('addForOffers');
+      const offBtn=document.getElementById('addForOffersBtn');
+      if(cb) cb.checked=fo;
+      if(offBtn){ offBtn.classList.toggle('btn-p',fo); offBtn.textContent=fo?'✓ Taking Offers':'Taking Offers'; }
+      const det=document.getElementById('addOfferDetails'); if(det) det.style.display=fo?'flex':'none';
+      if(fo){
+        const ci=document.getElementById('addCurrentOffer'); if(ci) ci.value=s.current_offer||'';
+        const ign=document.getElementById('addCurrentOfferIgn'); if(ign) ign.value=s.current_offer_ign||'';
+        editParseAmount({value:s.current_offer||''},'editCurrentOfferParsed');
+      }
+      // Bought for
+      const hasBF=!!(s.bought_for);
+      const bfBtn=document.getElementById('addShowBoughtForBtn');
+      const bfRow=document.getElementById('addBoughtForRow');
+      if(bfRow) bfRow.style.display=hasBF?'block':'none';
+      if(bfBtn){ bfBtn.classList.toggle('btn-p',hasBF); bfBtn.textContent=hasBF?'✓ Show what I paid':'Show what I paid'; }
+      const bfIn=document.getElementById('addBoughtFor'); if(bfIn) bfIn.value=s.bought_for||'';
+      updateAddSetPreview();
+    }, 100);
+  }, 30);
+  // Change modal title and button
+  setTimeout(()=>{
+    const title=document.querySelector('#addSetModal .modal-title');
+    if(title) title.textContent='Edit Set';
+    const addBtn=document.getElementById('addSetBtn');
+    if(addBtn){ addBtn.textContent='Save Changes'; addBtn.onclick=()=>saveEditFromAddModal(); }
+  }, 10);
 };
 
 async function saveEditFromAddModal(){
   if(!editingSetId) return;
-  const at=document.getElementById('addArmourType').value.trim();
-  const sn=document.getElementById('addSetName').value.trim();
-  const pid=document.getElementById('addPageSelect').value;
-  const fo=document.getElementById('addForOffers').checked;
-  const pieces=getPieceData();
-  if(!at){toast('Please enter an armour type.');return;}
+  const at=(document.getElementById('addArmourType')?.value||'').trim();
+  const sn=(document.getElementById('addSetName')?.value||'').trim();
+  const pid=document.getElementById('addPageSelect')?.value||null;
+  const fo=!!(document.getElementById('addForOffers')?.checked);
+  const pieces=getPieceData?getPieceData():[];
+  if(!at){ toast('Please enter an armour type.'); return; }
   const currentOffer=fo?(document.getElementById('addCurrentOffer')?.value.trim()||''):'';
   const currentOfferIgn=fo?(document.getElementById('addCurrentOfferIgn')?.value.trim()||''):'';
-  const bfVisible=document.getElementById('addBoughtForRow')?.style.display!=='none';
+  const bfVisible=(document.getElementById('addBoughtForRow')?.style.display||'none')!=='none';
   const boughtFor=bfVisible?(document.getElementById('addBoughtFor')?.value.trim()||''):'';
+  const scuffness=getScuffness?getScuffness():null;
   const btn=document.getElementById('addSetBtn');
-  btn.disabled=true; btn.textContent='Saving…';
+  if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
   try{
-    const r=await fetch(`${API}/listings/${editingSetId}/edit`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({set_name:sn,pieces,for_offers:fo,page_id:pid||null,current_offer:currentOffer,current_offer_ign:currentOfferIgn,bought_for:boughtFor,scuffness:getScuffness()})});
-    if(!r.ok){const d=await r.json().catch(()=>{});toast('Failed: '+(d?.error||r.status));return;}
+    const r=await fetch(`${API}/listings/${editingSetId}/edit`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},
+      body:JSON.stringify({set_name:sn,armour_type:at,pieces,for_offers:fo,page_id:pid||null,current_offer:currentOffer,current_offer_ign:currentOfferIgn,bought_for:boughtFor,scuffness})
+    });
+    if(!r.ok){ const d=await r.json().catch(()=>{}); toast('Failed: '+(d?.error||r.status)); return; }
     closeModal('addSetModal');
     toast('Changes saved!');
     await loadMuseumSets(viewingUuid);
     openSetPanel(editingSetId);
-  }catch(e){toast('Network error');}
+  }catch(e){ toast('Network error'); }
   finally{
-    btn.disabled=false;
-    // Reset modal title/button for next add
-    document.querySelector('#addSetModal .modal-title').textContent='Add Armour Set';
-    btn.textContent='Add Set';
-    btn.onclick=()=>submitAddSet();
+    if(btn){ btn.disabled=false; }
+    const title=document.querySelector('#addSetModal .modal-title');
+    if(title) title.textContent='Add Armour Set';
+    if(btn){ btn.textContent='Add Set'; btn.onclick=()=>submitAddSet(); }
     editingSetId=null;
   }
 }
+
 
 
 window.toggleEditOffers=function(){
@@ -3612,6 +3608,14 @@ async function deletePage(id,tab){
     } else toast('Failed to delete.');
   }catch(e){ toast('Network error'); }
 }
+
+let baExoSortDir=1;
+window.toggleBAExoSortDir=function(){
+  baExoSortDir*=-1;
+  const btn=document.getElementById('baExoSortDirBtn');
+  if(btn) btn.textContent=baExoSortDir===1?'↑':'↓';
+  renderBrowseAll();
+};
 /* INIT */
 loadTheme();
 loadStoredUser();
@@ -3689,7 +3693,7 @@ setInterval(loadStats,60000);
     </div>
     <!-- Exotic sub-view -->
     <div id="browseAllExoticView">
-      <div class="filter-bar" style="align-items:center;gap:6px;flex-wrap:wrap">
+      <div class="filter-bar" style="align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px">
         <button id="baExoSortDirBtn" onclick="toggleBAExoSortDir()" style="height:32px;width:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">↑</button>
         <div style="position:relative;flex-shrink:0">
           <select id="baExoSort" onchange="renderBrowseAll()" style="height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 28px 0 10px;font-size:12px;appearance:none;-webkit-appearance:none;cursor:pointer;min-width:110px">

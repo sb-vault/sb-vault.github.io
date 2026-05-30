@@ -504,27 +504,6 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
           </div>
           <div id="addPieceInputs"></div>
         </div>
-        <div class="field">
-          <label>Category (auto-detected)</label>
-          <div class="auto-cat" id="addAutoCat"><span style="color:var(--text3);font-size:12px">Select pieces and enter hex codes</span></div>
-        </div>
-        <div class="field" style="margin-bottom:0">
-<button id="addForOffersBtn" onclick="toggleForOffers()" class="btn" style="width:100%">Taking Offers</button>
-          <input type="checkbox" id="addForOffers" style="display:none">
-          <!-- Current offer fields (shown when Taking Offers is on) -->
-          <div id="addOfferDetails" style="display:none;flex-direction:column;gap:8px;margin-top:8px">
-            <div style="display:flex;gap:8px">
-              <div style="flex:1">
-                <label class="modal-label">Current Offer</label>
-                <input id="addCurrentOffer" type="text" class="modal-input" placeholder="e.g. 500m" maxlength="30" oninput="editParseAmount(this,'addCurrentOfferParsed')">
-                <div id="addCurrentOfferParsed" style="font-size:10px;color:var(--text3);margin-top:2px"></div>
-              </div>
-              <div style="flex:1">
-                <label class="modal-label">Offer by (IGN)</label>
-                <input id="addCurrentOfferIgn" type="text" class="modal-input" placeholder="Leave blank = anonymous" maxlength="30" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_\-]/g,'')">
-              </div>
-            </div>
-          </div>
           <!-- Scuffness -->
           <div style="margin-top:8px;border:1px solid var(--border);border-radius:10px;padding:10px 12px">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px">Scuffness</div>
@@ -584,6 +563,27 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
               </div>
             </div>
           </div>
+          <div class="auto-cat" id="addAutoCat"><span style="color:var(--text3);font-size:12px">Select pieces and enter hex codes</span></div>
+        </div>
+        <div class="field" style="margin-bottom:0">
+<button id="addForOffersBtn" onclick="toggleForOffers()" class="btn" style="width:100%">Taking Offers</button>
+          <input type="checkbox" id="addForOffers" style="display:none">
+          <!-- Current offer fields (shown when Taking Offers is on) -->
+          <div id="addOfferDetails" style="display:none;flex-direction:column;gap:8px;margin-top:8px">
+            <div style="display:flex;gap:8px">
+              <div style="flex:1">
+                <label class="modal-label">Current Offer</label>
+                <input id="addCurrentOffer" type="text" class="modal-input" placeholder="e.g. 500m" maxlength="30" oninput="editParseAmount(this,'addCurrentOfferParsed')">
+                <div id="addCurrentOfferParsed" style="font-size:10px;color:var(--text3);margin-top:2px"></div>
+              </div>
+              <div style="flex:1">
+                <label class="modal-label">Offer by (IGN)</label>
+                <input id="addCurrentOfferIgn" type="text" class="modal-input" placeholder="Leave blank = anonymous" maxlength="30" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_\-]/g,'')">
+              </div>
+            </div>
+          </div>
+        <div class="field">
+          <label>Category (auto-detected)</label>
           <!-- Bought for (optional) -->
           <div style="margin-top:6px">
             <button id="addShowBoughtForBtn" onclick="toggleAddBoughtFor()" class="btn" style="width:100%">Show what I paid</button>
@@ -2025,7 +2025,7 @@ function renderPageTabs(){
   const tabs=document.getElementById('pageTabs');
   if(!tabs) return;
   const all=`<button class="ptab${currentPageId==='all'?' active':''}" onclick="selectPage('all')">All Sets</button>`;
-  const pages=museumPages.map(p=>`<button class="ptab${currentPageId===p.id?' active':''}" onclick="selectPage('${esc(p.id)}')">${esc(p.name)}</button>`).join('');
+  const pages=museumPages.map(p=>`<button class="ptab${currentPageId===p.id?' active':''}" onclick="selectPage('${esc(p.id)}')" oncontextmenu="openPageCtxMenu(event,'${esc(p.id)}','${esc(p.name)}','exotic')">${esc(p.name)}</button>`).join('');
   const add=isOwn?`<button class="ptab-add" onclick="openAddPageModal('exotic')">+</button>`:'';
   tabs.innerHTML=all+pages+add;
 }
@@ -2035,7 +2035,7 @@ function renderSeymourPageTabs(){
   const tabs=document.getElementById('seymourPageTabs');
   if(!tabs) return;
   const all=`<button class="ptab${currentSeymourPageId==='all'?' active':''}" onclick="selectSeymourPage('all')">All Sets</button>`;
-  const pages=seymourMuseumPages.map(p=>`<button class="ptab${currentSeymourPageId===p.id?' active':''}" onclick="selectSeymourPage('${esc(p.id)}')">${esc(p.name)}</button>`).join('');
+  const pages=seymourMuseumPages.map(p=>`<button class="ptab${currentSeymourPageId===p.id?' active':''}" onclick="selectSeymourPage('${esc(p.id)}')" oncontextmenu="openPageCtxMenu(event,'${esc(p.id)}','${esc(p.name)}','seymour')">${esc(p.name)}</button>`).join('');
   const add=isOwn?`<button class="ptab-add" onclick="openAddPageModal('seymour')">+</button>`:'';
   tabs.innerHTML=all+pages+add;
 }
@@ -2588,15 +2588,34 @@ window.openEditModal=function(id){
   onArmourTypeChange();
   setTimeout(()=>{
     (s.pieces||[]).forEach(p=>{
-      // Select piece toggle
       const tb=document.querySelector(`.piece-toggle[data-piece="${p.piece}"]`);
       if(tb&&!tb.classList.contains('on')) tb.click();
-      // Fill hex
       const hi=document.querySelector(`input.hex-input[data-piece="${p.piece}"]`);
       if(hi){ hi.value=(p.hex||'').replace('#',''); hi.dispatchEvent(new Event('input')); }
     });
     updateAddSetPreview();
     loadScuffness(s.scuffness||null);
+    // Populate for_offers
+    const fo=!!(s.for_offers);
+    const cb=document.getElementById('addForOffers');
+    const offBtn=document.getElementById('addForOffersBtn');
+    if(cb) cb.checked=fo;
+    if(offBtn){offBtn.classList.toggle('btn-p',fo);offBtn.textContent=fo?'\u2713 Taking Offers':'Taking Offers';}
+    const det=document.getElementById('addOfferDetails'); if(det) det.style.display=fo?'flex':'none';
+    if(fo){
+      const ci=document.getElementById('addCurrentOffer'); if(ci) ci.value=s.current_offer||'';
+      const ign=document.getElementById('addCurrentOfferIgn'); if(ign) ign.value=s.current_offer_ign||'';
+    }
+    // Bought for
+    const hasBF=!!(s.bought_for);
+    const bfBtn=document.getElementById('addShowBoughtForBtn');
+    const bfRow=document.getElementById('addBoughtForRow');
+    if(bfRow) bfRow.style.display=hasBF?'block':'none';
+    if(bfBtn){bfBtn.classList.toggle('btn-p',hasBF);bfBtn.textContent=hasBF?'\u2713 Show what I paid':'Show what I paid';}
+    const bfIn=document.getElementById('addBoughtFor'); if(bfIn) bfIn.value=s.bought_for||'';
+    // Page
+    const ps=document.getElementById('addPageSelect');
+    if(ps){for(let i=0;i<ps.options.length;i++) ps.options[i].selected=(ps.options[i].value===s.page_id);}
   }, 80);
   // For offers
   const fo=!!(s.for_offers);
@@ -3229,7 +3248,7 @@ function fmtN(n){n=Number(n);if(n>=1e6)return(n/1e6).toFixed(1).replace(/\.0$/,'
 
 
 /* SCUFFNESS */
-const REFORGES=['clean','fierce','heavy','light','mythic','pure','smart','titanic','wise','perfect','necrotic','ancient','spiked','renowned','cubic','hyper','reinforced','empowered','giant','submerged','jaded','bustling','mossy','mantid','festive','groovy'];
+const REFORGES=['Clean','Fierce','Heavy','Light','Mythic','Pure','Smart','Titanic','Wise','Perfect','Necrotic','Ancient','Spiked','Renowned','Cubic','Hyper','Reinforced','Empowered','Giant','Submerged','Jaded','Bustling','Mossy','Mantid','Festive','Groovy'];
 let _ogReforge=false, _potato='none', _recomb='none', _aop='none', _dungeon='no', _dungeonStars=10;
 
 function showReforgeList(){
@@ -3246,7 +3265,11 @@ function filterReforgeList(q){
 }
 window.toggleOgReforge=function(){
   _ogReforge=!_ogReforge;
-  document.getElementById('addOgReforgeBtn').classList.toggle('on',_ogReforge);
+  const btn=document.getElementById('addOgReforgeBtn');
+  const inp=document.getElementById('addReforge');
+  btn.classList.toggle('on',_ogReforge);
+  if(_ogReforge&&inp){inp.value='OG Reforge';inp.disabled=true;}
+  else if(inp){inp.value='';inp.disabled=false;}
 };
 window.selectPotato=function(btn){
   _potato=btn.dataset.potato;
@@ -3479,11 +3502,16 @@ function renderFavSets(){
   let sets=deduped.filter(s=>favSets.has(s.id)&&(favTab==='seymour'?isSeymour(s):!isSeymour(s)));
   if(q) sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q)));
   if(!sets.length){ grid.innerHTML='<div class="empty"><div class="empty-icon">★</div><div class="empty-title">No favourites here yet</div></div>'; return; }
-  grid.innerHTML=sets.map(s=>favTab==='seymour'?seymourSetCard(s,[],null,false):setCard(s)).join('');
+  // Use fav- prefixed model IDs to avoid conflicts with museum/browseall
+  function favCard(s){ return favTab==='seymour'?seymourSetCard(s,[],null,false).replace('id="model-','id="fav-model-'):setCard(s).replace('id="${_baCtx?\'ba-model-\':\'model-\'}${esc(s.id)}"','id="fav-model-'+esc(s.id)+'"'  ); }
+  grid.innerHTML=sets.map(s=>{
+    const card=favTab==='seymour'?seymourSetCard(s,[],null,false):setCard(s);
+    return card.replace(/id="(ba-)?model-([^"]+)"/,'id="fav-model-$2"');
+  }).join('');
   requestAnimationFrame(()=>{
     sets.forEach(s=>{
-      const el=document.getElementById(`model-${s.id}`);
-      if(el&&!el.dataset.rendered){el.dataset.rendered='1';renderPlayerInto(el,s.uuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false});}
+      const el=document.getElementById(`fav-model-${s.id}`);
+      if(el){el.dataset.rendered='1';renderPlayerInto(el,s.uuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false});}
     });
   });
 }
@@ -3544,6 +3572,46 @@ function selectBAS2Tag(t){
   hideBAS2TagList(); renderBrowseAllSeymour();
 }
 
+
+/* PAGE CONTEXT MENU */
+let _pageCtxId=null, _pageCtxName='', _pageCtxTab='exotic';
+window.openPageCtxMenu=function(ev,id,name,tab){
+  ev.preventDefault(); ev.stopPropagation();
+  if(!currentUser||currentUser.uuid!==viewingUuid) return;
+  _pageCtxId=id; _pageCtxName=name; _pageCtxTab=tab;
+  const menu=document.getElementById('pageCtxMenu');
+  menu.style.display='block';
+  menu.style.left=Math.min(ev.clientX, window.innerWidth-180)+'px';
+  menu.style.top=Math.min(ev.clientY, window.innerHeight-100)+'px';
+  document.getElementById('pageCtxRename').onclick=()=>{ hidePageCtxMenu(); renamePage(_pageCtxId,_pageCtxName,_pageCtxTab); };
+  document.getElementById('pageCtxDelete').onclick=()=>{ hidePageCtxMenu(); deletePage(_pageCtxId,_pageCtxTab); };
+};
+function hidePageCtxMenu(){ document.getElementById('pageCtxMenu').style.display='none'; }
+document.addEventListener('click',hidePageCtxMenu);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') hidePageCtxMenu(); });
+
+async function renamePage(id,name,tab){
+  const newName=prompt('Rename page:',name);
+  if(!newName||newName===name) return;
+  try{
+    const r=await fetch(API+'/pages/'+id+'/rename',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+getToken()},body:JSON.stringify({name:newName.trim()})});
+    if(r.ok){ toast('Page renamed!'); await loadMuseumPages(viewingUuid); renderPageTabs(); renderSeymourPageTabs(); }
+    else toast('Failed to rename.');
+  }catch(e){ toast('Network error'); }
+}
+async function deletePage(id,tab){
+  if(!confirm('Delete this page? Sets on it will move to All Sets.')) return;
+  try{
+    const r=await fetch(API+'/pages/'+id,{method:'DELETE',headers:{Authorization:'Bearer '+getToken()}});
+    if(r.ok){
+      toast('Page deleted!');
+      await loadMuseumPages(viewingUuid);
+      renderPageTabs(); renderSeymourPageTabs();
+      if(currentPageId===id){currentPageId='all';renderSets();}
+      if(currentSeymourPageId===id){currentSeymourPageId='all';renderSeymourSets();}
+    } else toast('Failed to delete.');
+  }catch(e){ toast('Network error'); }
+}
 /* INIT */
 loadTheme();
 loadStoredUser();
@@ -3766,6 +3834,12 @@ setInterval(loadStats,60000);
       <div class="sets-grid" id="favSetsGrid"><div class="empty"><div class="empty-icon">★</div><div class="empty-title">No favourite sets yet</div></div></div>
     </div>
   </div>
+</div>
+
+<!-- PAGE CONTEXT MENU -->
+<div id="pageCtxMenu" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:9999;min-width:160px;padding:4px 0;font-size:13px">
+  <div style="padding:8px 14px;cursor:pointer;border-radius:6px" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''" id="pageCtxRename">✏️ Rename</div>
+  <div style="padding:8px 14px;cursor:pointer;border-radius:6px;color:var(--danger)" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''" id="pageCtxDelete">🗑 Delete</div>
 </div>
 </body>
 </html>

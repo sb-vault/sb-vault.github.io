@@ -292,6 +292,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     </div>
     <nav class="header-nav">
       <button class="nav-btn active" id="nav-home" onclick="showView('home')">Browse</button>
+      <button class="nav-btn" id="nav-browseall" onclick="openBrowseAll()">Browse All Sets</button>
       <button class="nav-btn" id="nav-museum" onclick="openMyMuseum()">My Museum</button>
       <a class="nav-btn" href="https://sb-vault.github.io/tools" target="_blank" rel="noopener" style="text-decoration:none">Skyblock Tools</a>
     </nav>
@@ -316,7 +317,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
   <div class="page">
     <div class="hero">
       <div class="hero-title">The Vault</div>
-      <p class="hero-sub">Showcase your dyed leather collection. Browse and discover rare armour from the SkyBlock community.</p>
+      <p class="hero-sub">Showcase your collection. Browse and discover rare armour from the SkyBlock community.</p>
       <div class="hero-btns">
         <button class="btn btn-p" onclick="openMyMuseum()">Open My Museum</button>
         <button class="btn" onclick="openBrowseAll()">Browse All Sets</button>
@@ -348,14 +349,14 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     <!-- Museum sub-tabs -->
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:12px;position:relative;z-index:1">
       <button id="museumTabExotic" onclick="switchMuseumTab('exotic')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text);font-weight:700;cursor:pointer;font-size:13px;transition:all .15s;pointer-events:all;position:relative;z-index:2">Exotic</button>
-      <button id="museumTabSeymour" onclick="switchMuseumTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Seymour</button>;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Seymour</button>
+      <button id="museumTabSeymour" onclick="switchMuseumTab('seymour')" style="padding:8px 20px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text3);font-weight:600;cursor:pointer;pointer-events:all;position:relative;z-index:2;font-size:13px">Seymour</button>
     </div>
     <!-- Exotic sub-view -->
     <div id="museumExoticView">
       <div class="page-tabs" id="pageTabs"></div>
-      <div class="filter-bar">
-        <input class="fsearch" id="setSearch" placeholder="Search sets or #hex…" oninput="renderSets()">
-        <div class="cat-chips" id="catChips">
+      <div class="filter-bar" style="align-items:center;gap:6px">
+        <input class="fsearch" id="setSearch" placeholder="Search sets or #hex…" oninput="renderSets()" style="height:32px">
+        <div class="cat-chips" id="catChips" style="flex:1">
           <button class="chip on" data-cat="all" onclick="toggleCat(this)">All</button>
           <button class="chip" data-cat="exotic" onclick="toggleCat(this)">Exotic</button>
           <button class="chip" data-cat="crystal" onclick="toggleCat(this)">Crystal</button>
@@ -364,7 +365,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
           <button class="chip" data-cat="bleached" onclick="toggleCat(this)">Bleached</button>
           <button class="chip" data-cat="default" onclick="toggleCat(this)">Default</button>
         </div>
-        <button class="offers-tog" id="offersToggle" onclick="toggleOffersFilter()">
+        <button class="offers-tog" id="offersToggle" onclick="toggleOffersFilter()" style="margin-left:auto;flex-shrink:0">
           <input type="checkbox" id="offersChk" onchange="toggleOffersFilter()"> For sale only
         </button>
       </div>
@@ -495,6 +496,65 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
               <div style="flex:1">
                 <label class="modal-label">Offer by (IGN)</label>
                 <input id="addCurrentOfferIgn" type="text" class="modal-input" placeholder="Leave blank = anonymous" maxlength="30" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_\-]/g,'')">
+              </div>
+            </div>
+          </div>
+          <!-- Scuffness -->
+          <div style="margin-top:8px;border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px">Scuffness</div>
+            <!-- Reforge -->
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span style="font-size:12px;color:var(--text2);width:90px;flex-shrink:0">Reforge</span>
+              <div style="flex:1;position:relative">
+                <input id="addReforge" type="text" class="modal-input" placeholder="None" style="height:28px;font-size:12px" oninput="filterReforgeList(this.value)" onfocus="showReforgeList()" onblur="setTimeout(hideReforgeList,200)">
+                <div id="reforgeDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:140px;overflow-y:auto"></div>
+              </div>
+              <button class="chip" id="addOgReforgeBtn" onclick="toggleOgReforge()" style="flex-shrink:0;height:28px;padding:0 10px;font-size:11px">OG</button>
+            </div>
+            <!-- Potato Books -->
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span style="font-size:12px;color:var(--text2);width:90px;flex-shrink:0">Potato Books</span>
+              <div style="display:flex;gap:4px">
+                <button class="chip on" data-potato="none" onclick="selectPotato(this)">None</button>
+                <button class="chip" data-potato="hot" onclick="selectPotato(this)">Hot</button>
+                <button class="chip" data-potato="fuming" onclick="selectPotato(this)">Fuming</button>
+              </div>
+            </div>
+            <!-- Recombobulator -->
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span style="font-size:12px;color:var(--text2);width:90px;flex-shrink:0">Recombobulator</span>
+              <div style="display:flex;gap:4px">
+                <button class="chip on" data-recomb="none" onclick="selectRecomb(this)">None</button>
+                <button class="chip" data-recomb="applied" onclick="selectRecomb(this)">Applied</button>
+              </div>
+            </div>
+            <!-- Art of Peace -->
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span style="font-size:12px;color:var(--text2);width:90px;flex-shrink:0">Art of Peace</span>
+              <div style="display:flex;gap:4px">
+                <button class="chip on" data-aop="none" onclick="selectAop(this)">None</button>
+                <button class="chip" data-aop="applied" onclick="selectAop(this)">Applied</button>
+              </div>
+            </div>
+            <!-- Dungeonised -->
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:12px;color:var(--text2);width:90px;flex-shrink:0">Dungeonised</span>
+              <div style="display:flex;gap:4px;align-items:center">
+                <button class="chip on" data-dungeon="no" onclick="selectDungeon(this,'no')">No</button>
+                <button class="chip" data-dungeon="yes" onclick="selectDungeon(this,'yes')" id="dungeonYesBtn">Yes</button>
+                <select id="dungeonStars" style="display:none;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 6px;font-size:11px">
+                  <option value="10">✪✪✪✪✪</option>
+                  <option value="9">9 Stars</option>
+                  <option value="8">8 Stars</option>
+                  <option value="7">7 Stars</option>
+                  <option value="6">6 Stars</option>
+                  <option value="5">5 Stars</option>
+                  <option value="4">4 Stars</option>
+                  <option value="3">3 Stars</option>
+                  <option value="2">2 Stars</option>
+                  <option value="1">1 Star</option>
+                  <option value="0">0 Stars</option>
+                </select>
               </div>
             </div>
           </div>
@@ -663,6 +723,13 @@ function showView(name){
   ['home','museum','browseall'].forEach(v => {
     document.getElementById('view-'+v).style.display = v===name?'block':'none';
   });
+  ['nav-home','nav-museum','nav-browseall'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.remove('active');
+  });
+  const navMap={'home':'nav-home','museum':'nav-museum','browseall':'nav-browseall'};
+  const activeNav=document.getElementById(navMap[name]);
+  if(activeNav) activeNav.classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
   if(name==='home'){
@@ -1068,6 +1135,10 @@ if(at&&(at.toLowerCase().includes('seymour'))){
   const sr=classifySeymour(h.replace('#',''));
   if(sr) return sr;
 }
+const EXO_PURE={'#993333':'Exo Pure Red','#d87f33':'Exo Pure Orange','#e5e533':'Exo Pure Yellow','#7fcc19':'Exo Pure Green','#667f33':'Exo Pure Dark Green','#6699d8':'Exo Pure Light Blue','#4c7f99':'Exo Pure Cyan','#334cb2':'Exo Pure Blue','#f27fa5':'Exo Pure Pink','#7f3fb2':'Exo Pure Purple','#b24cd8':'Exo Pure Magenta','#664c33':'Exo Pure Brown','#999999':'Exo Pure Light Grey','#4c4c4c':'Exo Pure Grey','#191919':'Exo Pure Black'};
+if(EXO_PURE[h]) return{cat:'pure',label:EXO_PURE[h],colour:'#a3e635'};
+const PURE_TRUE={'#00ff00':'Pure Green','#ffff00':'Pure Yellow','#ff0000':'Pure Red','#0000ff':'Pure Blue','#ffffff':'Pure White','#000000':'Pure Black','#00ffff':'Pure Cyan','#ff00ff':'Pure Pink'};
+if(PURE_TRUE[h]) return{cat:'pure',label:PURE_TRUE[h],colour:'#a3e635'};
 return{cat:'exotic',label:'Exotic',colour:'#ff6b35'};}
 function classifyPieces(pieces,at){const seen=new Map();pieces.forEach(p=>{if(p.dyeable===false)return;const c=classifyHex(p.hex,at,p.piece);if(c&&!seen.has(c.cat))seen.set(c.cat,c);});return[...seen.values()];}
 
@@ -1861,80 +1932,21 @@ function browseCard(m){
   allCats.forEach(c=>{catCounts[c.cat]=(catCounts[c.cat]||0)+1;});
   const uniqCols=[...new Set(allCats.map(c=>c.colour))].slice(0,4);
   const stripe=uniqCols.length>1?'linear-gradient(90deg,'+uniqCols.map((c,i)=>c+' '+Math.round(i/uniqCols.length*100)+'%,'+c+' '+Math.round((i+1)/uniqCols.length*100)+'%').join(',')+')':uniqCols[0]||'var(--border)';
-  const forOffers=m.sets.some(s=>s.for_offers);
-  // Category pills
-  const catDefs=[['exotic','#e8a030'],['crystal','#88ccff'],['fairy','#f9a8d4'],['pure','#a3e635'],['bleached','#d4d4d4']];
+  const catDefs=[['exotic','#e8a030'],['crystal','#44ffee'],['fairy','#ff66b2'],['pure','#a3e635'],['bleached','#a07850']];
   const pills=catDefs.filter(([k])=>catCounts[k]).map(([k,col])=>`<span style="font-size:9px;padding:1px 6px;border-radius:4px;border:1px solid ${col}44;color:${col};font-weight:600;background:${col}12;white-space:nowrap">${catCounts[k]} ${k}</span>`).join('');
-  const seyPill=seySets.length?`<span style="font-size:9px;padding:1px 6px;border-radius:4px;border:1px solid #7ecef444;color:#7ecef4;font-weight:600;background:#7ecef412;white-space:nowrap">${seySets.length} seymour</span>`:'';
+  const seyPill=seySets.length?`<span style="font-size:9px;padding:1px 6px;border-radius:4px;border:1px solid #7ecef444;color:#7ecef4;font-weight:600;background:#7ecef412;white-space:nowrap">${seySets.reduce((n,s)=>(s.pieces||[]).length+n,0)} seymour</span>`:'';
   return`<div class="mc" onclick="openMuseum('${esc(m.uuid)}')">
     <div class="mc-stripe" style="background:${stripe}"></div>
     <div class="mc-body">
       <div class="mc-owner">
         <img class="mc-av" src="${HEAD(m.uuid)}" alt="${esc(m.ign)}">
         <div><div class="mc-name">${esc(m.ign)}</div><div style="font-size:10px;color:var(--text3)">${m.sets.length} set${m.sets.length!==1?'s':''}</div></div>
-        ${forOffers?'<span class="mc-offers-pill" style="margin-left:auto">For sale</span>':''}
       </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px">${pills}${seyPill}</div>
     </div>
   </div>`;
 }
 
-/* MUSEUM VIEW */
-async function openMuseum(uuid){
-  viewingUuid=uuid; currentPageId='all';
-  activeCatFilter=new Set(['all']); offersFilterOn=false;
-  document.getElementById('offersToggle').classList.remove('on');
-  document.getElementById('offersChk').checked=false;
-  document.querySelectorAll('#catChips .chip').forEach(c=>c.classList.remove('on'));
-  document.querySelector('#catChips .chip[data-cat="all"]')?.classList.add('on');
-  showView('museum');
-  document.getElementById('nav-museum').classList.add('active');
-  document.getElementById('nav-home').classList.remove('active');
-  // Share URL
-  const u=new URL(location.href); u.searchParams.set('museum',uuid);
-  history.replaceState({},'',(u.toString()));
-  await Promise.all([loadMuseumHdr(uuid), loadMuseumPages(uuid)]);
-  renderPageTabs(); renderSeymourPageTabs();
-  await loadMuseumSets(uuid);
-  switchMuseumTab('exotic');
-}
-
-async function loadMuseumHdr(uuid){
-  const hdr=document.getElementById('museumHdr');
-  let ign='', discord='';
-  try{
-    const r=await fetch(`${API}/listings?status=active`);
-    const d=await r.json();
-    const s=(d.listings||[]).find(l=>l.uuid===uuid);
-    if(s) ign=s.ign||'';
-    if(currentUser&&currentUser.uuid===uuid){
-      const pr=await fetch(`${API}/users/preferences`,{headers:{Authorization:`Bearer ${getToken()}`}});
-      if(pr.ok){ const pd=await pr.json(); discord=pd.prefs?.discord||''; }
-    }
-  }catch(e){}
-  const isOwn=currentUser&&currentUser.uuid===uuid;
-  const shareUrl=`${location.origin}${location.pathname}?museum=${uuid}`;
-  const discHtml = discord ? '<div class="museum-disc">Discord: '+esc(discord)+'</div>' : '';
-  const ownBtns = isOwn ? '<button class="btn" onclick="openAddSetModal()">+ Add Set</button><button class="btn" onclick="openAddPageModal()">+ Add Page</button>' : '';
-  const repBtn = !isOwn ? '<button class="btn btn-d" onclick="openReport(\'user\',\''+esc(uuid)+'\',\''+esc(ign)+'\')">Report</button>' : '';
-  hdr.innerHTML =
-    '<img class="museum-av" src="'+HEAD(uuid)+'" alt="'+esc(ign)+'">' +
-    '<div class="museum-info">' +
-    '<div class="museum-ign">'+esc(ign||uuid.slice(0,8))+'</div>' +
-    discHtml +
-    '<div class="museum-btns">' +
-    ownBtns +
-    '<button class="btn" onclick="copyShare(\''+esc(shareUrl)+'\')">🔗 Share</button>' +
-    repBtn +
-    '</div></div>';
-}
-
-async function loadMuseumPages(uuid){
-  try{ const r=await fetch(`${API}/pages?uuid=${uuid}`); if(r.ok){ const d=await r.json(); museumPages=d.pages||[]; } else museumPages=[]; }catch(e){ museumPages=[]; }
-}
-
-let seymourMuseumPages=[];
-let currentSeymourPageId='all';
 
 function renderPageTabs(){
   const isOwn=currentUser&&currentUser.uuid===viewingUuid;
@@ -2088,6 +2100,9 @@ let allSetsGlobal=[];
 
 window.openBrowseAll=async function(){
   showView('browseall');
+  document.getElementById('nav-home').classList.remove('active');
+  document.getElementById('nav-museum').classList.remove('active');
+  document.getElementById('nav-browseall').classList.add('active');
   if(!allSetsGlobal.length){
     try{
       const r=await fetch(`${API}/listings?status=active`);
@@ -2245,21 +2260,33 @@ function renderSeymourSets(){
   });
 }
 
-function seymourSetCard(s, activePieces, hexQuery){
+function seymourSetCard(s, activePieces, hexQuery, _baCtx){
   const pieces=s.pieces||[], at=s.armour_type||'';
   const pCols=pieces.map(p=>{const c=p.hex?classifySeymour(p.hex):null;return c?c.colour:'#888';});
   const stripe=pCols.length>1?'linear-gradient(90deg,'+pCols.map((c,i)=>c+' '+Math.round(i/pCols.length*100)+'%,'+c+' '+Math.round((i+1)/pCols.length*100)+'%').join(',')+')':pCols[0]||'var(--border)';
   const pHtml=pieces.map(p=>{
     const cls=p.hex?classifySeymour(p.hex):null;
     const col=cls?.colour||'#888';
-    const isHighlight=!!(hexQuery&&seymourHexMatch(p.hex||'',hexQuery));
+    const isHighlight=(()=>{
+      if(!hexQuery) return false;
+      const isFullH=/^#?[0-9A-Fa-f]{6}$/.test(hexQuery);
+      if(isFullH&&p.hex){
+        // Highlight the piece with the lowest ΔE to the typed hex
+        const targetLab=hexToLab(hexQuery.replace('#',''));
+        const pLab=hexToLab(p.hex.replace('#',''));
+        const myDE=calculateDeltaEWithLab(pLab,targetLab);
+        const allDE=(pieces||[]).filter(x=>x.hex).map(x=>{const xl=hexToLab(x.hex.replace('#',''));return calculateDeltaEWithLab(xl,targetLab);});
+        return myDE===Math.min(...allDE);
+      }
+      return seymourHexMatch(p.hex||'',hexQuery);
+    })()
     const tagText=cls?esc(cls.label):'N/A';
     const tagTitle=cls?`${cls.label} ΔE:${cls.deltaE.toFixed(2)} Abs:${cls.abs}`:'';
     return`<div class="set-piece-row" style="${isHighlight?'border:1.5px solid #4ade80;border-radius:4px;background:#4ade8008;':'border:1.5px solid transparent;'}">
       <div class="set-piece-dot" style="background:${p.hex?'#'+p.hex.replace('#',''):'transparent'};border-color:${col}55"></div>
       <span class="set-piece-name" style="white-space:nowrap;overflow:visible;text-overflow:unset">${esc(p.piece)}</span>
       ${p.hex?`<span style="font-size:8px;color:var(--text3);font-family:monospace;flex-shrink:0">${esc(p.hex.toUpperCase())}</span>`:''}
-      ${cls?`<span class="set-piece-tag" title="${tagTitle}" style="color:${col};border-color:${col}55;background:${col}10;white-space:nowrap;flex-shrink:0">${tagText}</span>`:'<span class="set-piece-tag" style="color:#888;border-color:#8884;background:#8881;flex-shrink:0">N/A</span>'}
+      ${cls?`<span class="set-piece-tag" title="${tagTitle}" style="color:${col};border-color:${col}55;background:${col}10;white-space:nowrap;flex-shrink:0">${tagText}</span><span style="font-size:9px;color:var(--text3);white-space:nowrap;flex-shrink:0;margin-left:3px">${'\u0394E:'+cls.deltaE.toFixed(2)+' Abs:'+cls.abs}</span>`:'<span class="set-piece-tag" style="color:#888;border-color:#8884;background:#8881;flex-shrink:0">N/A</span>'}
     </div>`;
   }).join('');
   const _hp=activePieces&&activePieces.length>0?activePieces[0]:null;
@@ -2267,7 +2294,7 @@ function seymourSetCard(s, activePieces, hexQuery){
   return`<div class="set-card" onclick="openSetPanel('${esc(s.id)}')">
     <div style="height:3px;background:${stripe}"></div>
     <div class="set-card-inner">
-      <div class="set-card-model" id="model-${esc(s.id)}">
+      <div class="set-card-model" id="${_baCtx?'ba-model-':'model-'}${esc(s.id)}">
         <div class="spinner" style="opacity:.3"></div>
       </div>
       <div class="set-card-right">
@@ -2305,20 +2332,22 @@ function renderBrowseAllSeymour(){
   let sets=allSetsGlobal.filter(s=>(s.armour_type||'').toLowerCase().includes('seymour'));
   if(browseAllSeymourOffersOn) sets=sets.filter(s=>s.for_offers);
   if(!pieceAll) sets=sets.filter(s=>(s.pieces||[]).some(p=>browseAllActivePieces.has(p.piece)));
-  if(q){if(isHexQ){sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));}else{sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q.toLowerCase())));}}
+  const isFullHex6BA=/^#?[0-9A-Fa-f]{6}$/.test(q);
+  if(q&&!isFullHex6BA){if(isHexQ){sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));}else{const ql=q.toLowerCase();sets=sets.filter(s=>{if([(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(ql)))return true;return(s.pieces||[]).some(p=>{if(!p.hex)return false;const cls=classifySeymour(p.hex);return cls&&cls.label.toLowerCase().includes(ql);});});}}
   const firstPiece=activePieceArr[0]||null;
-  if(sort==='deltaE'&&firstPiece) sets=sets.slice().sort((a,b)=>{const pa=(a.pieces||[]).find(p=>p.piece===firstPiece),pb=(b.pieces||[]).find(p=>p.piece===firstPiece);return(pa&&pa.hex?classifySeymour(pa.hex)?.deltaE??999:999)-(pb&&pb.hex?classifySeymour(pb.hex)?.deltaE??999:999);});
-  else if(sort==='abs'&&firstPiece) sets=sets.slice().sort((a,b)=>{const pa=(a.pieces||[]).find(p=>p.piece===firstPiece),pb=(b.pieces||[]).find(p=>p.piece===firstPiece);return(pa&&pa.hex?classifySeymour(pa.hex)?.abs??999:999)-(pb&&pb.hex?classifySeymour(pb.hex)?.abs??999:999);});
-  else if(sort==='name') sets=sets.slice().sort((a,b)=>(a.set_name||'').localeCompare(b.set_name||''));
-  grid.innerHTML=sets.map(s=>seymourSetCard(s,activePieceArr,isHexQ?q:null)).join('');
-  requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`model-${s.id}`);if(el){el.dataset.rendered='1';renderPlayerInto(el,s.uuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false});}});});
+  const effectiveSortBA=isFullHex6BA&&sort==='newest'?'deltaE':sort;
+  if(effectiveSortBA==='deltaE') sets=sets.slice().sort((a,b)=>{const getBest=s=>{const pcs=firstPiece?(s.pieces||[]).filter(p=>p.piece===firstPiece):s.pieces||[];return Math.min(...pcs.map(p=>p.hex?classifySeymour(p.hex)?.deltaE??999:999),...[999]);};return getBest(a)-getBest(b);});
+  else if(effectiveSortBA==='abs'&&firstPiece) sets=sets.slice().sort((a,b)=>{const pa=(a.pieces||[]).find(p=>p.piece===firstPiece),pb=(b.pieces||[]).find(p=>p.piece===firstPiece);return(pa&&pa.hex?classifySeymour(pa.hex)?.abs??999:999)-(pb&&pb.hex?classifySeymour(pb.hex)?.abs??999:999);});
+  else if(effectiveSortBA==='name') sets=sets.slice().sort((a,b)=>(a.set_name||'').localeCompare(b.set_name||''));
+  grid.innerHTML=sets.map(s=>seymourSetCard(s,activePieceArr,isHexQ?q:null,true)).join('');
+  requestAnimationFrame(()=>{sets.forEach(s=>{const el=document.getElementById(`ba-model-${s.id}`);if(el){el.dataset.rendered='1';renderPlayerInto(el,s.uuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false});}});});
 }
 
 
 /* SET DETAIL PANEL */
 let activePanelSet=null;
 window.openSetPanel=function(id){
-  const s=allSets.find(x=>x.id===id); if(!s) return;
+  const s=allSets.find(x=>x.id===id)||allSetsGlobal.find(x=>x.id===id); if(!s) return;
   activePanelSet=s;
   document.getElementById('panelOv').classList.add('open');
   document.getElementById('setPanel').classList.add('open');
@@ -2380,6 +2409,12 @@ window.openSetPanel=function(id){
       ${s.current_offer_ign?`<div style="font-size:11px;color:var(--text3);margin-top:2px">from ${esc(s.current_offer_ign)}</div>`:'<div style="font-size:11px;color:var(--text3);margin-top:2px">Anonymous</div>'}
     </div>`:''}
     ${s.bought_for?`<div style="font-size:11px;color:var(--text3);margin-top:6px">Bought for: <span style="color:var(--text);font-weight:600">${esc(s.bought_for)}</span></div>`:''}
+    ${(()=>{if(!s.scuffness) return '';const sc=s.scuffness;const rows=[];if(sc.reforge&&sc.reforge!=='none')rows.push(['Reforge',sc.reforge+(sc.reforge==='OG Reforge'?'':sc.reforge?'':'')]);
+if(sc.potato&&sc.potato!=='none')rows.push(['Potato Books',sc.potato.charAt(0).toUpperCase()+sc.potato.slice(1)]);
+if(sc.recomb&&sc.recomb!=='none')rows.push(['Recombobulator','Applied']);
+if(sc.aop&&sc.aop!=='none')rows.push(['Art of Peace','Applied']);
+if(sc.dungeon&&sc.dungeon!=='no')rows.push(['Dungeonised',sc.dungeonStars+' Stars']);
+if(!rows.length)return '';return`<div style="margin-top:8px;border:1px solid var(--border);border-radius:8px;padding:8px 12px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:6px">Scuffness</div>${rows.map(([k,v])=>`<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--text3)">${k}</span><span style="color:var(--text);font-weight:600">${esc(v)}</span></div>`).join('')}</div>`;})()}
     ${ownerActions?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${ownerActions}</div>`:''}`;
   // Render player
   const el=document.getElementById('spPlayer');
@@ -2416,6 +2451,7 @@ window.openEditModal=function(id){
       if(hi){ hi.value=(p.hex||'').replace('#',''); hi.dispatchEvent(new Event('input')); }
     });
     updateAddSetPreview();
+    loadScuffness(s.scuffness||null);
   }, 80);
   // For offers
   const fo=!!(s.for_offers);
@@ -2460,7 +2496,7 @@ async function saveEditFromAddModal(){
   const btn=document.getElementById('addSetBtn');
   btn.disabled=true; btn.textContent='Saving…';
   try{
-    const r=await fetch(`${API}/listings/${editingSetId}/edit`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({set_name:sn,pieces,for_offers:fo,page_id:pid||null,current_offer:currentOffer,current_offer_ign:currentOfferIgn,bought_for:boughtFor})});
+    const r=await fetch(`${API}/listings/${editingSetId}/edit`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({set_name:sn,pieces,for_offers:fo,page_id:pid||null,current_offer:currentOffer,current_offer_ign:currentOfferIgn,bought_for:boughtFor,scuffness:getScuffness()})});
     if(!r.ok){const d=await r.json().catch(()=>{});toast('Failed: '+(d?.error||r.status));return;}
     closeModal('addSetModal');
     toast('Changes saved!');
@@ -2558,6 +2594,7 @@ let addPieces=new Set();
 window.openAddSetModal=function(){
   if(!currentUser){ startLogin(); return; }
   editingSetId=null;
+  resetScuffness();
   addPieces.clear();
   document.querySelectorAll('.piece-toggle').forEach(t=>t.classList.remove('on'));
   document.getElementById('addPieceInputs').innerHTML='';
@@ -2794,7 +2831,7 @@ window.submitAddSet=async function(){
     const currentOffer=fo?(document.getElementById('addCurrentOffer')?.value.trim()||''):'';
     const currentOfferIgn=fo?(document.getElementById('addCurrentOfferIgn')?.value.trim()||''):'';
     const boughtFor=document.getElementById('addShowBoughtFor')?.checked?(document.getElementById('addBoughtFor')?.value.trim()||''):'';
-    const res=await fetch(`${API}/listings`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({armourType:at,setName:sn,pieces,cat:pCat.cat,catLabel:cats.map(r=>r.label).join(' + '),price:0,proof:'',notes:'',ign:currentUser.username,forOffers:fo,pageId:pid||null,currentOffer,currentOfferIgn,boughtFor})});
+    const res=await fetch(`${API}/listings`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},body:JSON.stringify({armourType:at,setName:sn,pieces,cat:pCat.cat,catLabel:cats.map(r=>r.label).join(' + '),price:0,proof:'',notes:'',ign:currentUser.username,forOffers:fo,pageId:pid||null,currentOffer,currentOfferIgn,boughtFor,scuffness:getScuffness()})});
     const data=await res.json();
     if(!res.ok){toast(data.error||'Failed.');return;}
     closeModal('addSetModal'); toast('Set added!');
@@ -3045,6 +3082,77 @@ function toast(msg){
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function ago(ts){const d=Date.now()-ts,m=Math.floor(d/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return new Intl.DateTimeFormat('en-GB',{month:'short',day:'numeric'}).format(new Date(ts));}
 function fmtN(n){n=Number(n);if(n>=1e6)return(n/1e6).toFixed(1).replace(/\.0$/,'')+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n.toLocaleString('en-GB');}
+
+
+/* SCUFFNESS */
+const REFORGES=['clean','fierce','heavy','light','mythic','pure','smart','titanic','wise','perfect','necrotic','ancient','spiked','renowned','cubic','hyper','reinforced','empowered','giant','submerged','jaded','bustling','mossy','mantid','festive','groovy'];
+let _ogReforge=false, _potato='none', _recomb='none', _aop='none', _dungeon='no', _dungeonStars=10;
+
+function showReforgeList(){
+  const dd=document.getElementById('reforgeDropdown'); if(!dd) return;
+  filterReforgeList(document.getElementById('addReforge')?.value||'');
+  dd.style.display='block';
+}
+function hideReforgeList(){ const dd=document.getElementById('reforgeDropdown'); if(dd) dd.style.display='none'; }
+function filterReforgeList(q){
+  const dd=document.getElementById('reforgeDropdown'); if(!dd) return;
+  const matches=REFORGES.filter(r=>r.toLowerCase().startsWith(q.toLowerCase()));
+  dd.innerHTML=matches.map(r=>`<div style="padding:6px 10px;cursor:pointer;font-size:12px" onmousedown="document.getElementById('addReforge').value='${r}';hideReforgeList()">${r}</div>`).join('');
+  dd.style.display=matches.length?'block':'none';
+}
+window.toggleOgReforge=function(){
+  _ogReforge=!_ogReforge;
+  document.getElementById('addOgReforgeBtn').classList.toggle('on',_ogReforge);
+};
+window.selectPotato=function(btn){
+  _potato=btn.dataset.potato;
+  document.querySelectorAll('[data-potato]').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+};
+window.selectRecomb=function(btn){
+  _recomb=btn.dataset.recomb;
+  document.querySelectorAll('[data-recomb]').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+};
+window.selectAop=function(btn){
+  _aop=btn.dataset.aop;
+  document.querySelectorAll('[data-aop]').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+};
+window.selectDungeon=function(btn,val){
+  _dungeon=val;
+  document.querySelectorAll('[data-dungeon]').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const stars=document.getElementById('dungeonStars');
+  if(stars) stars.style.display=val==='yes'?'block':'none';
+};
+function getScuffness(){
+  const reforge=document.getElementById('addReforge')?.value.trim()||'';
+  const stars=_dungeon==='yes'?(document.getElementById('dungeonStars')?.value||'10'):'';
+  return{reforge:_ogReforge?'OG Reforge':reforge,potato:_potato,recomb:_recomb,aop:_aop,dungeon:_dungeon,dungeonStars:stars};
+}
+function resetScuffness(){
+  _ogReforge=false; _potato='none'; _recomb='none'; _aop='none'; _dungeon='no'; _dungeonStars=10;
+  const rf=document.getElementById('addReforge'); if(rf) rf.value='';
+  const ogBtn=document.getElementById('addOgReforgeBtn'); if(ogBtn) ogBtn.classList.remove('on');
+  document.querySelectorAll('[data-potato],[data-recomb],[data-aop],[data-dungeon]').forEach(b=>{
+    const isDefault=b.dataset.potato==='none'||b.dataset.recomb==='none'||b.dataset.aop==='none'||b.dataset.dungeon==='no';
+    b.classList.toggle('on',isDefault);
+  });
+  const stars=document.getElementById('dungeonStars'); if(stars) stars.style.display='none';
+}
+function loadScuffness(s){
+  if(!s) return resetScuffness();
+  _ogReforge=s.reforge==='OG Reforge'; _potato=s.potato||'none'; _recomb=s.recomb||'none'; _aop=s.aop||'none'; _dungeon=s.dungeon||'no';
+  const rf=document.getElementById('addReforge'); if(rf) rf.value=_ogReforge?'':s.reforge||'';
+  const ogBtn=document.getElementById('addOgReforgeBtn'); if(ogBtn) ogBtn.classList.toggle('on',_ogReforge);
+  document.querySelectorAll('[data-potato]').forEach(b=>b.classList.toggle('on',b.dataset.potato===_potato));
+  document.querySelectorAll('[data-recomb]').forEach(b=>b.classList.toggle('on',b.dataset.recomb===_recomb));
+  document.querySelectorAll('[data-aop]').forEach(b=>b.classList.toggle('on',b.dataset.aop===_aop));
+  document.querySelectorAll('[data-dungeon]').forEach(b=>b.classList.toggle('on',b.dataset.dungeon===_dungeon));
+  const stars=document.getElementById('dungeonStars');
+  if(stars){stars.style.display=_dungeon==='yes'?'block':'none';stars.value=s.dungeonStars||'10';}
+}
 
 /* INIT */
 loadTheme();

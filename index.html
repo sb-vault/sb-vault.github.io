@@ -564,9 +564,8 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
             </div>
           </div>
           <div class="auto-cat" id="addAutoCat"><span style="color:var(--text3);font-size:12px">Select pieces and enter hex codes</span></div>
-        </div>
-        <div class="field" style="margin-bottom:0">
-<button id="addForOffersBtn" onclick="toggleForOffers()" class="btn" style="width:100%">Taking Offers</button>
+        <div class="field" style="margin-bottom:6px">
+            <button id="addForOffersBtn" onclick="toggleForOffers()" class="btn" style="width:100%">Taking Offers</button>
           <input type="checkbox" id="addForOffers" style="display:none">
           <!-- Current offer fields (shown when Taking Offers is on) -->
           <div id="addOfferDetails" style="display:none;flex-direction:column;gap:8px;margin-top:8px">
@@ -595,6 +594,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
         </div>
       </div>
     </div>
+          </div>
     <div class="modal-foot">
       <button class="btn btn-g" onclick="closeModal('addSetModal')">Cancel</button>
       <button class="btn btn-p" id="addSetBtn" onclick="submitAddSet()">Add Set</button>
@@ -2764,9 +2764,12 @@ window.openAddSetModal=function(){
   const offBtn=document.getElementById('addForOffersBtn');
   offBtn.classList.remove('btn-p'); offBtn.textContent='Taking Offers';
   const det=document.getElementById('addOfferDetails'); if(det) det.style.display='none';
+  const ci=document.getElementById('addCurrentOffer'); if(ci) ci.value='';
+  const ign=document.getElementById('addCurrentOfferIgn'); if(ign) ign.value='';
   const bfBtn=document.getElementById('addShowBoughtForBtn');
   if(bfBtn){bfBtn.classList.remove('btn-p');bfBtn.textContent='Show what I paid';}
   const bfRow=document.getElementById('addBoughtForRow'); if(bfRow) bfRow.style.display='none';
+  const bfIn=document.getElementById('addBoughtFor'); if(bfIn) bfIn.value='';
   document.getElementById('addAutoCat').innerHTML='<span style="color:var(--text3);font-size:12px">Select pieces and enter hex codes</span>';
   document.querySelector('#addSetModal .modal-title').textContent='Add Armour Set';
   const addBtn=document.getElementById('addSetBtn');

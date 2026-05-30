@@ -293,6 +293,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     <nav class="header-nav">
       <button class="nav-btn active" id="nav-home" onclick="showView('home')">Browse</button>
       <button class="nav-btn" id="nav-browseall" onclick="openBrowseAll()">Browse All Sets</button>
+      <button class="nav-btn" id="nav-favs" onclick="openFavourites()">★ Favourites</button>
       <button class="nav-btn" id="nav-museum" onclick="openMyMuseum()">My Museum</button>
       <a class="nav-btn" href="https://sb-vault.github.io/tools" target="_blank" rel="noopener" style="text-decoration:none">Skyblock Tools</a>
     </nav>
@@ -354,8 +355,26 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
     <!-- Exotic sub-view -->
     <div id="museumExoticView">
       <div class="page-tabs" id="pageTabs"></div>
-      <div class="filter-bar" style="align-items:center;gap:6px">
-        <input class="fsearch" id="setSearch" placeholder="Search sets or #hex…" oninput="renderSets()" style="height:32px">
+      <div class="filter-bar" style="align-items:center;gap:6px;flex-wrap:wrap">
+        <!-- Sort direction + sort -->
+        <button id="exoSortDirBtn" onclick="toggleExoSortDir()" style="height:32px;width:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">↑</button>
+        <div style="position:relative;flex-shrink:0">
+          <select id="exoSort" onchange="renderSets()" style="height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 28px 0 10px;font-size:12px;appearance:none;-webkit-appearance:none;cursor:pointer;min-width:110px">
+            <option value="newest">Newest</option>
+            <option value="offer">By Offer</option>
+            <option value="bought">Bought For</option>
+            <option value="name">A–Z</option>
+          </select>
+          <span style="pointer-events:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3)">▾</span>
+        </div>
+        <!-- Hex search -->
+        <input class="fsearch" id="setSearch" placeholder="Search #hex or name…" oninput="renderSets()" style="height:32px;width:130px;flex-shrink:0">
+        <!-- Armour type search -->
+        <div style="position:relative;flex-shrink:0">
+          <input class="fsearch" id="exoTypeSearch" placeholder="Armour type…" oninput="renderExoTypeList(this.value)" onfocus="showExoTypeList()" onblur="setTimeout(hideExoTypeList,200)" style="height:32px;width:130px">
+          <div id="exoTypeDropdown" style="display:none;position:absolute;top:100%;left:0;min-width:160px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:180px;overflow-y:auto;margin-top:2px"></div>
+        </div>
+        <!-- Category chips -->
         <div class="cat-chips" id="catChips" style="flex:1">
           <button class="chip on" data-cat="all" onclick="toggleCat(this)">All</button>
           <button class="chip" data-cat="exotic" onclick="toggleCat(this)">Exotic</button>
@@ -378,6 +397,8 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
       <!-- Seymour pages (separate from exotic) -->
       <div class="page-tabs" id="seymourPageTabs"></div>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <!-- Sort direction -->
+        <button id="seySortDirBtn" onclick="toggleSeySortDir()" style="height:32px;width:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">↑</button>
         <!-- Sort (compact, left) -->
         <div style="position:relative;flex-shrink:0">
           <select id="seymourSort" onchange="renderSeymourSets()" style="height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 28px 0 10px;font-size:12px;appearance:none;-webkit-appearance:none;cursor:pointer;min-width:90px">
@@ -388,8 +409,13 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
           </select>
           <span style="pointer-events:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3)">▾</span>
         </div>
-        <!-- Search -->
-        <input class="fsearch" id="seymourSearch" placeholder="Search…" oninput="renderSeymourSets()" style="height:32px;flex:1;min-width:120px;max-width:200px">
+        <!-- Hex / name search -->
+        <input class="fsearch" id="seymourSearch" placeholder="Search #hex…" oninput="renderSeymourSets()" style="height:32px;width:110px;flex-shrink:0">
+        <!-- Colour/tag name search -->
+        <div style="position:relative;flex-shrink:0">
+          <input class="fsearch" id="seymourTagSearch" placeholder="Colour name…" oninput="renderSeyTagList(this.value)" onfocus="showSeyTagList()" onblur="setTimeout(hideSeyTagList,200)" style="height:32px;width:130px">
+          <div id="seyTagDropdown" style="display:none;position:absolute;top:100%;left:0;min-width:180px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:180px;overflow-y:auto;margin-top:2px"></div>
+        </div>
         <!-- Divider -->
         <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
         <!-- Piece chips -->
@@ -543,7 +569,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
                 <button class="chip on" data-dungeon="no" onclick="selectDungeon(this,'no')">No</button>
                 <button class="chip" data-dungeon="yes" onclick="selectDungeon(this,'yes')" id="dungeonYesBtn">Yes</button>
                 <select id="dungeonStars" style="display:none;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 6px;font-size:11px">
-                  <option value="10">✪✪✪✪✪</option>
+                  <option value="10">10 Stars</option>
                   <option value="9">9 Stars</option>
                   <option value="8">8 Stars</option>
                   <option value="7">7 Stars</option>
@@ -720,8 +746,8 @@ function loadTheme(){
 
 /* VIEW ROUTING */
 function showView(name){
-  ['home','museum','browseall'].forEach(v => {
-    document.getElementById('view-'+v).style.display = v===name?'block':'none';
+  ['home','museum','browseall','favs'].forEach(v => {
+    const el=document.getElementById('view-'+v); if(el) el.style.display = v===name?'block':'none';
   });
   // Clear all nav active states — callers set their own
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -777,6 +803,7 @@ async function loadMuseumHdr(uuid){
   const discHtml=discord?`<div style="font-size:12px;color:var(--text3)">Discord: ${esc(discord)}</div>`:
     (isOwn?`<button class="btn" style="font-size:11px;height:26px;padding:0 10px" onclick="openModal('discordModal')">+ Discord</button>`:'');
   const addPageBtn=isOwn?`<button class="btn" style="font-size:11px;height:26px;padding:0 10px" onclick="openAddPageModal(currentMuseumTab)">+ Add Page</button>`:'';
+  const addSetBtn=isOwn?`<button class="btn btn-p" style="font-size:11px;height:26px;padding:0 10px" onclick="openAddSetModal()">+ Add Set</button>`:'';
   const repBtn=!isOwn?`<button class="btn btn-d" onclick="openReport('user','${esc(uuid)}','${esc(ign)}')">Report</button>`:'';
   hdr.innerHTML=
     `<img class="museum-av" src="${HEAD(uuid)}" alt="${esc(ign)}">` +
@@ -784,7 +811,7 @@ async function loadMuseumHdr(uuid){
     `<div class="museum-ign">${esc(ign||uuid.slice(0,8))}</div>` +
     discHtml +
     `</div>` +
-    `<div style="display:flex;gap:8px;margin-left:auto;align-items:center">${addPageBtn}${repBtn}</div>`;
+    `<div style="display:flex;gap:8px;margin-left:auto;align-items:center">${addSetBtn}${addPageBtn}${repBtn}</div>`;
 }
 
 
@@ -1984,7 +2011,8 @@ function browseCard(m){
     <div class="mc-body">
       <div class="mc-owner">
         <img class="mc-av" src="${HEAD(m.uuid)}" alt="${esc(m.ign)}">
-        <div><div class="mc-name">${esc(m.ign)}</div><div style="font-size:10px;color:var(--text3)">${m.sets.length} set${m.sets.length!==1?'s':''}</div></div>
+        <div style="flex:1;min-width:0"><div class="mc-name">${esc(m.ign)}</div><div style="font-size:10px;color:var(--text3)">${m.sets.length} set${m.sets.length!==1?'s':''}</div></div>
+        <button class="fav-star-m" data-mid="${esc(m.uuid)}" onclick="toggleFavMuseum('${esc(m.uuid)}',event)" style="background:none;border:none;cursor:pointer;font-size:16px;color:${favMuseums.has(m.uuid)?'#f5c842':'var(--text3)'};padding:0;flex-shrink:0">${favMuseums.has(m.uuid)?'★':'☆'}</button>
       </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px">${pills}${seyPill}</div>
     </div>
@@ -2052,6 +2080,8 @@ function renderSets(){
   const isHex=(q.startsWith('#')||(/^[0-9A-Fa-fXx]{2,6}$/.test(q.replace('#','')))&&/^[#0-9A-Fa-fXx]+$/.test(q));
   let sets=allSets.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
   if(currentPageId!=='all') sets=sets.filter(s=>s.page_id===currentPageId);
+  // Type filter from dropdown
+  if(exoSelectedType) sets=sets.filter(s=>(s.armour_type||'').toLowerCase().includes(exoSelectedType));
   if(!activeCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>activeCatFilter.has(c.cat));});
   if(offersFilterOn) sets=sets.filter(s=>s.for_offers);
   if(q){
@@ -2068,6 +2098,12 @@ function renderSets(){
       });
     }
   }
+  // Apply sort
+  const _exoSort=document.getElementById('exoSort')?.value||'newest';
+  if(_exoSort==='name') sets=sets.slice().sort((a,b)=>(a.set_name||'').localeCompare(b.set_name||''));
+  else if(_exoSort==='offer') sets=sets.slice().sort((a,b)=>{const pa=parseFloat(a.current_offer)||0,pb=parseFloat(b.current_offer)||0;return pb-pa;});
+  else if(_exoSort==='bought') sets=sets.slice().sort((a,b)=>{const pa=parseFloat(a.bought_for)||0,pb=parseFloat(b.bought_for)||0;return pb-pa;});
+  if(exoSortDir===-1) sets=sets.slice().reverse();
   const grid=document.getElementById('setsGrid');
   let html=sets.map(s=>setCard(s)).join('');
   if(isOwn) html+=`<div class="set-card set-card-add" onclick="openAddSetModal()"><div style="font-size:24px;opacity:.5">+</div><div>Add Armour Set</div></div>`;
@@ -2112,7 +2148,9 @@ function setCard(s, _baCtx){
       </div>
       <div class="set-card-right">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
-          <div><div class="set-name">${esc(s.set_name||s.armour_type||'Unnamed Set')}</div><div class="set-type">${esc(s.armour_type||'')}</div></div>
+          <div style="flex:1;min-width:0"><div class="set-name">${esc(s.set_name||s.armour_type||'Unnamed Set')}</div><div class="set-type">${esc(at)}</div></div>
+          ${s.for_offers?'<div class="set-offers">For Sale</div>':''}
+          <button class="fav-star" data-fid="${esc(s.id)}" onclick="toggleFavSet('${esc(s.id)}',event)" style="background:none;border:none;cursor:pointer;font-size:14px;color:${favSets.has(s.id)?'#f5c842':'var(--text3)'};padding:0;flex-shrink:0">${favSets.has(s.id)?'★':'☆'}</button>et-type">${esc(s.armour_type||'')}</div></div>
           ${s.for_offers?'<div class="set-offers">For Sale</div>':''}
         </div>
         <div class="set-piece-list">${pHtml}</div>
@@ -2235,6 +2273,8 @@ function renderSeymourSets(){
   if(currentSeymourPageId!=='all') sets=sets.filter(s=>s.page_id===currentSeymourPageId);
   if(seymourOffersOn) sets=sets.filter(s=>s.for_offers);
   if(!pieceAll) sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourActivePieces.has(p.piece)));
+  // Tag/colour name filter from dropdown
+  if(seySelectedTag){ sets=sets.filter(s=>(s.pieces||[]).some(p=>{if(!p.hex)return false;const c=classifySeymour(p.hex);return c&&c.label.toLowerCase().includes(seySelectedTag.toLowerCase());})); }
   // Full 6-char hex: show ALL sets sorted by ΔE, don't filter
   const isFullHex6=/^#?[0-9A-Fa-f]{6}$/.test(q);
   if(q&&!isFullHex6){
@@ -2284,6 +2324,7 @@ function renderSeymourSets(){
   } else if(effectiveSort==='name'){
     sets=sets.slice().sort((a,b)=>(a.set_name||'').localeCompare(b.set_name||''));
   }
+  if(seySortDir===-1) sets=sets.slice().reverse();
   if(!sets.length){
     grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No Seymour sets found</div></div>';
     return;
@@ -2343,12 +2384,13 @@ function seymourSetCard(s, activePieces, hexQuery, _baCtx){
       </div>
       <div class="set-card-right">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
-          <div><div class="set-name">${esc(s.set_name||s.armour_type||'Unnamed Set')}</div><div class="set-type">${esc(at)}</div></div>
+          <div style="flex:1;min-width:0"><div class="set-name">${esc(s.set_name||s.armour_type||'Unnamed Set')}</div><div class="set-type">${esc(at)}</div></div>
           ${s.for_offers?'<div class="set-offers">For Sale</div>':''}
+          <button class="fav-star" data-fid="${esc(s.id)}" onclick="toggleFavSet('${esc(s.id)}',event)" style="background:none;border:none;cursor:pointer;font-size:14px;color:${favSets.has(s.id)?'#f5c842':'var(--text3)'};padding:0;flex-shrink:0">${favSets.has(s.id)?'★':'☆'}</button>
         </div>
         <div class="set-piece-list">${pHtml}</div>
         ${highlightDelta}
-        <div class="set-foot"><div class="set-cats"></div><div class="set-ts">${ago(s.ts||Date.now())}</div></div>
+        <div class="set-foot"><div class="set-ts">${ago(s.ts||Date.now())}</div></div>
       </div>
     </div>
   </div>`;
@@ -3198,6 +3240,142 @@ function loadScuffness(s){
   if(stars){stars.style.display=_dungeon==='yes'?'block':'none';stars.value=s.dungeonStars||'10';}
 }
 
+
+/* SORT + SEARCH ENHANCEMENTS */
+let exoSortDir=1; // 1=asc(↑), -1=desc(↓)
+let seySortDir=1;
+let exoSelectedType='';
+let seySelectedTag='';
+
+const ARMOUR_TYPES=["seymour", "young dragon", "protector dragon", "mushroom", "emerald", "farm suit", "cheap tuxedo", "lapis", "speedster", "miner outfit", "leaflet", "shark scale", "tarantula", "farm armour", "squid boots", "bat person", "cactus", "guardian", "stereo pants", "elegant tuxedo", "angler", "obsidian", "pumpkin", "farmer boots", "creeper pants", "farm armor", "old dragon", "strong dragon", "fancy tuxedo", "superior dragon", "unstable dragon", "wise dragon"];
+
+const SEYMOUR_TAG_NAMES=["Pure Green", "Pure Yellow", "Pure Red", "Pure Blue", "Pure White", "Pure Black", "Pure Cyan", "Pure Pink/Og Fairy Dyed (FF00FF)", "Exo pure red", "Exo pure orange", "Exo pure yellow", "Exo pure green", "Exo pure dark green", "Exo pure light blue", "Exo pure cyan", "Exo pure blue", "Exo pure pink", "Exo pure purple", "Exo pure magenta", "Exo pure brown", "Exo pure light grey", "Exo pure grey", "Exo pure black", "Pure Blue Dye", "Pure Yellow Dye", "Aquamarine Dye", "Archfiend Dye", "Bingo Blue Dye", "Bone Dye", "Brick Red Dye", "Byzantium Dye", "Carmine Dye", "Celadon Dye", "Celeste Dye", "Chocolate Dye", "Copper Dye", "Cyclamen Dye", "Dark Purple Dye", "Dung Dye", "Emerald Dye", "Flame Dye", "Fossil Dye", "Frostbitten Dye", "Holly Dye", "Iceberg Dye", "Jade Dye", "Livid Dye", "Mango Dye", "Matcha Dye", "Midnight Dye", "Mocha Dye", "Nadeshiko Dye", "Nyanza Dye", "Pearlescent Dye", "Pelt Dye", "Periwinkle Dye", "Sangria Dye", "Secret Dye", "Tentacle Dye", "Strawberry Dye", "Treasure Dye", "Bleached", "Mythological Dye", "Necron Dye", "Fairy - 660066", "Fairy - 660033", "Fairy - 99004C", "Fairy - CC0066", "Fairy - FF007F", "Fairy - FF3399", "Fairy - FF66B2", "Fairy - FF99CC", "Fairy - FFCCE5", "Fairy - 990099", "Fairy - CC00CC", "Fairy - FF33FF", "Fairy - FF66FF", "Fairy - FF99FF", "Fairy - FFCCFF", "Fairy - E5CCFF", "Fairy - CC99FF", "Fairy - B266FF", "Fairy - 9933FF", "Fairy - 7F00FF", "Fairy - 6600CC", "Fairy - 4C0099", "Fairy - 330066", "Crystal - FCF3FF", "Crystal - EFE1F5", "Crystal - E5D1ED", "Crystal - D9C1E3", "Crystal - C6A3D4", "Crystal - B88BC9", "Crystal - A875BD", "Crystal - 9C64B3", "Crystal - 8E51A6", "Crystal - 7E4196", "Crystal - 6A2C82", "Crystal - 63237D", "Crystal - 5D1C78", "Crystal - 54146E", "Crystal - 46085E", "Crystal - 1F0030", "Great Spook - 9E00B2", "Great Spook", "Great Spook - 9700AA", "Great Spook - 9000A3", "Great Spook - 89009B", "Great Spook - 830093", "Great Spook - 7C008B", "Great Spook - 750084", "Great Spook - 6E007C", "Great Spook - 670074", "Great Spook - 60006C", "Great Spook - 590065", "Great Spook - 52005D", "Great Spook - 4C0055", "Great Spook - 45004D", "Great Spook - 3E0046", "Great Spook - 37003E", "Great Spook - 300036", "Great Spook - 29002E", "Great Spook - 220027", "Great Spook - 1B001F", "Great Spook - 150017", "Great Spook - 0E000F", "Great Spook - 070008", "Ghostly Boots - FCFCFC", "Ghostly Boots - F5F5F5", "Ghostly Boots - E9E9E9", "Ghostly Boots - D9D9D9", "Ghostly Boots - C6C6C6", "Ghostly Boots - B0B0B0", "Ghostly Boots - 989898", "Ghostly", "Ghostly Boots - 686868", "Ghostly Boots - 505050", "Ghostly Boots - 3A3A3A", "Ghostly Boots - 272727", "Ghostly Boots - 171717", "Ghostly Boots - 0B0B0B", "Ghostly Boots - 040404", "Ghostly Boots - 010101", "Strong Dragon", "Superior Dragon Chestplate+Leggings", "Superior Dragon", "Holy Dragon 3p", "Old Dragon 3p", "Protector Dragon 3p", "Unstable Dragon 3p", "Wise Dragon 3p", "Young Dragon 3p", "Rotten Helm+Boots", "Rotten Chestplate+Leggings / Backwater 3p", "Bouncy Armour", "Heavy Chestplate+Leggings", "Skeleton Grunt", "Skeleton Master", "Skeleton Soldier", "Skeleton Lord Armor 3p", "Zombie Commander", "Zombie Soldier", "Zombie Lord Armour 3p", "Super Heavy Helm+Boots", "Super Heavy Chestplate+Leggings", "Adaptive Armour (Outside Dungeon) 3p", "Adaptive Armour (Archer Chestplate)", "Adaptive Armour (Archer Leggings+Boots)", "Adaptive Armour (Tank Chestplate)", "Adaptive Armour (Tank Leggings+Boots)", "Adaptive Armour (Mage Chestplate)", "Adaptive Armour (Mage Leggings+Boots)", "Adaptive Armour (Berserker Chestplate)", "Adaptive Armour (Berserker Leggings+Boots)", "Adaptive Armour (Healer Chestplate)", "Adaptive Armour (Healer Leggings+Boots)", "Necromancer Lord", "Goldor", "Storm", "Necron", "Maxor", "Helianthus", "Challenger's Leggings+Boots", "Melody Shoes", "Fallen Star 3p", "Charlie's Trousers", "Speedster Set/Mercenary", "Celeste Helm", "Celeste", "Starlight Chestplate+Boots", "Aurora", "Crimson", "Fervor", "Hollow", "Terror", "Cropie", "Squash", "Fermento", "Nutcracker", "Salmon Helm+Boots"];
+
+window.toggleExoSortDir=function(){
+  exoSortDir*=-1;
+  document.getElementById('exoSortDirBtn').textContent=exoSortDir===1?'↑':'↓';
+  renderSets();
+};
+window.toggleSeySortDir=function(){
+  seySortDir*=-1;
+  document.getElementById('seySortDirBtn').textContent=seySortDir===1?'↑':'↓';
+  renderSeymourSets();
+};
+
+// Armour type dropdown
+function showExoTypeList(){renderExoTypeList(document.getElementById('exoTypeSearch')?.value||'');document.getElementById('exoTypeDropdown').style.display='block';}
+function hideExoTypeList(){document.getElementById('exoTypeDropdown').style.display='none';}
+function renderExoTypeList(q){
+  const dd=document.getElementById('exoTypeDropdown');if(!dd)return;
+  const ql=q.toLowerCase();
+  const hits=ARMOUR_TYPES.filter(t=>t.includes(ql)).slice(0,12);
+  dd.innerHTML=hits.map(t=>`<div style="padding:5px 10px;cursor:pointer;font-size:12px;${t===exoSelectedType?'background:var(--bg3);font-weight:600':''}" onmousedown="selectExoType('${t}')">${t}</div>`).join('');
+}
+function selectExoType(t){
+  exoSelectedType=exoSelectedType===t?'':t;
+  const inp=document.getElementById('exoTypeSearch');
+  if(inp) inp.value=exoSelectedType;
+  hideExoTypeList(); renderSets();
+}
+
+// Seymour tag dropdown
+function showSeyTagList(){renderSeyTagList(document.getElementById('seymourTagSearch')?.value||'');document.getElementById('seyTagDropdown').style.display='block';}
+function hideSeyTagList(){document.getElementById('seyTagDropdown').style.display='none';}
+function renderSeyTagList(q){
+  const dd=document.getElementById('seyTagDropdown');if(!dd)return;
+  const ql=q.toLowerCase();
+  const hits=SEYMOUR_TAG_NAMES.filter(t=>t.toLowerCase().includes(ql)).slice(0,12);
+  dd.innerHTML=hits.map(t=>`<div style="padding:5px 10px;cursor:pointer;font-size:12px;${t===seySelectedTag?'background:var(--bg3);font-weight:600':''}" onmousedown="selectSeyTag('${t}')">${t}</div>`).join('');
+}
+function selectSeyTag(t){
+  seySelectedTag=seySelectedTag===t?'':t;
+  const inp=document.getElementById('seymourTagSearch');
+  if(inp) inp.value=seySelectedTag;
+  hideSeyTagList(); renderSeymourSets();
+}
+
+
+/* FAVOURITES */
+let favSets=new Set(), favMuseums=new Set();
+let favTab='exotic';
+try{ favSets=new Set(JSON.parse(localStorage.getItem('vault_favSets')||'[]')); }catch(e){}
+try{ favMuseums=new Set(JSON.parse(localStorage.getItem('vault_favMuseums')||'[]')); }catch(e){}
+
+function saveFavs(){
+  try{localStorage.setItem('vault_favSets',JSON.stringify([...favSets]));}catch(e){}
+  try{localStorage.setItem('vault_favMuseums',JSON.stringify([...favMuseums]));}catch(e){}
+}
+
+window.toggleFavSet=function(id, ev){
+  ev&&ev.stopPropagation();
+  if(favSets.has(id)) favSets.delete(id); else favSets.add(id);
+  saveFavs();
+  // Update all star buttons for this id
+  document.querySelectorAll(`.fav-star[data-fid="${id}"]`).forEach(b=>{
+    b.style.color=favSets.has(id)?'#f5c842':'var(--text3)';
+    b.textContent=favSets.has(id)?'★':'☆';
+  });
+};
+
+window.toggleFavMuseum=function(uuid, ev){
+  ev&&ev.stopPropagation();
+  if(favMuseums.has(uuid)) favMuseums.delete(uuid); else favMuseums.add(uuid);
+  saveFavs();
+  document.querySelectorAll(`.fav-star-m[data-mid="${uuid}"]`).forEach(b=>{
+    b.style.color=favMuseums.has(uuid)?'#f5c842':'var(--text3)';
+    b.textContent=favMuseums.has(uuid)?'★':'☆';
+  });
+};
+
+window.openFavourites=function(){
+  showView('favs');
+  document.getElementById('nav-favs')?.classList.add('active');
+  renderFavMuseums();
+  renderFavSets();
+};
+
+function renderFavMuseums(){
+  const grid=document.getElementById('favMuseumsGrid'); if(!grid) return;
+  const favM=[...favMuseums];
+  if(!favM.length){ grid.innerHTML='<div style="color:var(--text3);font-size:13px">No favourite museums yet</div>'; return; }
+  const sets=allSetsGlobal.length?allSetsGlobal:allSets;
+  const musByUuid={};
+  sets.forEach(s=>{if(!musByUuid[s.uuid])musByUuid[s.uuid]={uuid:s.uuid,ign:s.ign||'',sets:[]};musByUuid[s.uuid].sets.push(s);});
+  grid.innerHTML=favM.map(uuid=>{
+    const m=musByUuid[uuid]||{uuid,ign:uuid.slice(0,8),sets:[]};
+    return browseCard(m);
+  }).join('');
+}
+
+let favSetsCache=[];
+window.switchFavTab=function(tab){
+  favTab=tab;
+  document.getElementById('favTabExo')?.classList.toggle('on',tab==='exotic');
+  document.getElementById('favTabSey')?.classList.toggle('on',tab==='seymour');
+  renderFavSets();
+};
+
+function renderFavSets(){
+  const grid=document.getElementById('favSetsGrid'); if(!grid) return;
+  const q=(document.getElementById('favSearch')?.value||'').toLowerCase();
+  const all=[...allSets,...allSetsGlobal];
+  const seen=new Set(); const deduped=[];
+  all.forEach(s=>{if(!seen.has(s.id)){seen.add(s.id);deduped.push(s);}});
+  const isSeymour=s=>(s.armour_type||'').toLowerCase().includes('seymour');
+  let sets=deduped.filter(s=>favSets.has(s.id)&&(favTab==='seymour'?isSeymour(s):!isSeymour(s)));
+  if(q) sets=sets.filter(s=>[(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(q)));
+  if(!sets.length){ grid.innerHTML='<div class="empty"><div class="empty-icon">★</div><div class="empty-title">No favourites here yet</div></div>'; return; }
+  grid.innerHTML=sets.map(s=>favTab==='seymour'?seymourSetCard(s,[],null,false):setCard(s)).join('');
+  requestAnimationFrame(()=>{
+    sets.forEach(s=>{
+      const el=document.getElementById(`model-${s.id}`);
+      if(el&&!el.dataset.rendered){el.dataset.rendered='1';renderPlayerInto(el,s.uuid,s.pieces||[],s.armour_type||'',{width:150,height:230,interactive:false});}
+    });
+  });
+}
+
+// Add showView to handle favs
+const _origShowView=showView;
 /* INIT */
 loadTheme();
 loadStoredUser();
@@ -3375,6 +3553,28 @@ setInterval(loadStats,60000);
         <button class="btn" onclick="closeModal('editModalOv')">Cancel</button>
         <button class="btn btn-p" onclick="saveEditListing()">Save Changes</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAVOURITES VIEW -->
+<div id="view-favs" style="display:none">
+  <div class="page">
+    <div style="font-size:22px;font-weight:700;margin-bottom:16px">★ Favourites</div>
+    <!-- Museums -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text2)">Favourite Museums</div>
+      <div id="favMuseumsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div>
+    </div>
+    <!-- Sets -->
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="font-size:14px;font-weight:700;color:var(--text2)">Favourite Sets</div>
+        <button class="chip on" id="favTabExo" onclick="switchFavTab('exotic')">Exotic</button>
+        <button class="chip" id="favTabSey" onclick="switchFavTab('seymour')">Seymour</button>
+        <input class="fsearch" id="favSearch" placeholder="Search…" oninput="renderFavSets()" style="height:28px;max-width:160px;margin-left:auto">
+      </div>
+      <div class="sets-grid" id="favSetsGrid"><div class="empty"><div class="empty-icon">★</div><div class="empty-title">No favourite sets yet</div></div></div>
     </div>
   </div>
 </div>

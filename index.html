@@ -2549,7 +2549,7 @@ window.openSetPanel=function(id){
       <div class="sp-section-title">Owner</div>
       <div class="sp-owner-row">
         <img src="${HEAD(s.uuid||'steve')}" style="width:36px;height:36px;border-radius:7px;image-rendering:pixelated">
-        <div><div style="font-weight:600;font-size:14px">${esc(s.ign||'')}</div><div style="font-size:11px;color:var(--text3)">${ago(s.ts||Date.now())}</div></div>
+        <div><div style="font-weight:600;font-size:14px">${esc(s.ign||'')}</div><div style="font-size:11px;color:var(--text3)">${ago(s.ts||Date.now())}</div>${s.updated_at?`<div style="font-size:10px;color:var(--text3)">Edited ${ago(s.updated_at)}</div>`:''}</div>
         ${!isOwn?`<button class="btn btn-d" style="margin-left:auto;font-size:12px;height:30px" onclick="openReport('listing','${esc(s.id)}','${esc(s.ign||'')}')">Report</button>`:''}
       </div>
     </div>
@@ -2584,7 +2584,7 @@ window.openEditModal=function(id){
   if(!s) return;
   editingSetId=id;
 
-  // Reset scuffness state + piece state (but NOT via openAddSetModal which wipes everything)
+  // Reset state
   resetScuffness();
   addPieces.clear();
   document.querySelectorAll('.piece-toggle').forEach(t=>t.classList.remove('on'));
@@ -2596,11 +2596,9 @@ window.openEditModal=function(id){
   const addBtn=document.getElementById('addSetBtn');
   addBtn.textContent='Save Changes'; addBtn.onclick=()=>saveEditFromAddModal();
 
-  // Fill armour type (do NOT dispatch input yet - we want to set it silently)
+  // Fill basic fields
   const atEl=document.getElementById('addArmourType');
   if(atEl) atEl.value=(s.armour_type||'').replace(/\b\w/g,c=>c.toUpperCase());
-
-  // Fill set name
   const snEl=document.getElementById('addSetName'); if(snEl) snEl.value=s.set_name||'';
 
   // Fill page select
@@ -2608,48 +2606,53 @@ window.openEditModal=function(id){
   const ps=document.getElementById('addPageSelect');
   if(ps) ps.innerHTML='<option value="">No specific page</option>'+allPages.map(p=>`<option value="${esc(p.id)}"${p.id===s.page_id?' selected':''}>${esc(p.name)}</option>`).join('');
 
-  // NOW click piece toggles (renderPieceInputs fires on each click)
-  (s.pieces||[]).forEach(p=>{
-    const tb=document.querySelector(`.piece-toggle[data-piece="${p.piece}"]`);
-    if(tb&&!tb.classList.contains('on')) tb.click();
-  });
+  // Open modal FIRST so elements are visible and interactive
+  openModal('addSetModal');
 
-  // After DOM updates from toggle clicks, fill hexes + everything else
+  // Now fill pieces - directly add to addPieces Set and toggle UI, then render
   requestAnimationFrame(()=>{
     (s.pieces||[]).forEach(p=>{
-      const hi=document.querySelector(`input.hex-in[data-piece="${p.piece}"]`);
-      if(hi&&p.hex){hi.value=p.hex.replace('#','');hi.dispatchEvent(new Event('input'));}
+      addPieces.add(p.piece);
+      const tb=document.querySelector(`.piece-toggle[data-piece="${p.piece}"]`);
+      if(tb) tb.classList.add('on');
     });
+    renderPieceInputs();
 
-    // Scuffness
-    loadScuffness(s.scuffness||null);
+    // Fill hexes after renderPieceInputs creates the inputs
+    requestAnimationFrame(()=>{
+      (s.pieces||[]).forEach(p=>{
+        if(!p.hex) return;
+        const hi=document.querySelector(`input.hex-in[data-piece="${p.piece}"]`);
+        if(hi){hi.value=p.hex.replace('#','');hi.dispatchEvent(new Event('input'));}
+      });
 
-    // For offers
-    const fo=!!(s.for_offers);
-    const cb=document.getElementById('addForOffers');
-    const offBtn=document.getElementById('addForOffersBtn');
-    if(cb) cb.checked=fo;
-    if(offBtn){offBtn.classList.toggle('btn-p',fo);offBtn.textContent=fo?'\u2713 Taking Offers':'Taking Offers';}
-    const det=document.getElementById('addOfferDetails');
-    if(det) det.style.display=fo?'flex':'none';
-    if(fo){
-      const ci=document.getElementById('addCurrentOffer');if(ci)ci.value=s.current_offer||'';
-      const ig=document.getElementById('addCurrentOfferIgn');if(ig)ig.value=s.current_offer_ign||'';
-    }
+      // Scuffness
+      loadScuffness(s.scuffness||null);
 
-    // Bought for
-    const hasBF=!!(s.bought_for);
-    const bfBtn=document.getElementById('addShowBoughtForBtn');
-    const bfRow=document.getElementById('addBoughtForRow');
-    if(bfRow) bfRow.style.display=hasBF?'block':'none';
-    if(bfBtn){bfBtn.classList.toggle('btn-p',hasBF);bfBtn.textContent=hasBF?'\u2713 Show what I paid':'Show what I paid';}
-    const bfIn=document.getElementById('addBoughtFor');if(bfIn)bfIn.value=s.bought_for||'';
+      // For offers
+      const fo=!!(s.for_offers);
+      const cb=document.getElementById('addForOffers');
+      const offBtn=document.getElementById('addForOffersBtn');
+      if(cb) cb.checked=fo;
+      if(offBtn){offBtn.classList.toggle('btn-p',fo);offBtn.textContent=fo?'\u2713 Taking Offers':'Taking Offers';}
+      const det=document.getElementById('addOfferDetails');
+      if(det) det.style.display=fo?'flex':'none';
+      if(fo){
+        const ci=document.getElementById('addCurrentOffer');if(ci)ci.value=s.current_offer||'';
+        const ig=document.getElementById('addCurrentOfferIgn');if(ig)ig.value=s.current_offer_ign||'';
+      }
 
-    updateAddSetPreview&&updateAddSetPreview();
+      // Bought for
+      const hasBF=!!(s.bought_for);
+      const bfBtn=document.getElementById('addShowBoughtForBtn');
+      const bfRow=document.getElementById('addBoughtForRow');
+      if(bfRow) bfRow.style.display=hasBF?'block':'none';
+      if(bfBtn){bfBtn.classList.toggle('btn-p',hasBF);bfBtn.textContent=hasBF?'\u2713 Show what I paid':'Show what I paid';}
+      const bfIn=document.getElementById('addBoughtFor');if(bfIn)bfIn.value=s.bought_for||'';
+
+      updateAddSetPreview&&updateAddSetPreview();
+    });
   });
-
-  // Open the modal
-  openModal('addSetModal');
 };
 
 

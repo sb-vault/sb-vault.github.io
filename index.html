@@ -2901,6 +2901,9 @@ function renderPieceInputs(){
   // For Seymour, map to custom piece names; store the canonical name in dataset.slot
   const pieces=rawPieces.map(p=>isSeymourSet?SEYMOUR_PIECE_MAP[p]:p);
   const container=document.getElementById('addPieceInputs');
+  // Save existing hex values before clearing so toggling a new piece doesn't wipe others
+  const savedHex={};
+  container.querySelectorAll('input.hex-in[data-piece]').forEach(inp=>{if(inp.value)savedHex[inp.dataset.piece]=inp.value;});
   container.innerHTML='';
   container.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px';
   pieces.forEach((piece,pieceIdx)=>{
@@ -2987,6 +2990,11 @@ function renderPieceInputs(){
       dot.style.background=dh;
     }
     drawPiecePreview(canvas,piece,hi.value?'#'+hi.value:BLEACHED,at);
+  });
+  // Restore previously entered hex values
+  Object.entries(savedHex).forEach(([piece,val])=>{
+    const inp=container.querySelector(`input.hex-in[data-piece="${piece}"]`);
+    if(inp){inp.value=val;inp.dispatchEvent(new Event('input'));}
   });
   updateAutoCat();
   updateAddSetPreview();

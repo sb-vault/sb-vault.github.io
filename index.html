@@ -371,7 +371,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
         <input class="fsearch" id="setSearch" placeholder="Search #hex or name…" oninput="renderSets()" style="height:32px;width:130px;flex-shrink:0">
         <!-- Armour type search -->
         <div style="position:relative;flex-shrink:0">
-          <input class="fsearch" id="exoTypeSearch" placeholder="Armour type…" oninput="renderExoTypeList(this.value)" onfocus="showExoTypeList()" onblur="setTimeout(hideExoTypeList,200)" style="height:32px;width:180px">
+          <input class="fsearch" id="exoTypeSearch" placeholder="Armour type…" oninput="renderExoTypeList(this.value,false)" onfocus="showExoTypeList()" onblur="setTimeout(hideExoTypeList,200)" style="height:32px;width:180px">
           <div id="exoTypeDropdown" style="display:none;position:absolute;top:100%;left:0;min-width:180px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:180px;overflow-y:auto;margin-top:2px"></div>
         </div>
         <!-- Category chips -->
@@ -512,10 +512,8 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
               <span style="font-size:12px;color:var(--text2);width:90px;flex-shrink:0">Reforge</span>
               <div style="flex:1;position:relative">
                 <div style="position:relative">
-                  <select id="addReforge" class="modal-input" style="height:32px;font-size:13px;appearance:none;-webkit-appearance:none;padding-right:28px;cursor:pointer;width:100%" onchange="onReforgeChange(this.value)">
-                    <option value="">None</option>
-                  </select>
-                  <span style="pointer-events:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3)">▾</span>
+                  <input type="text" id="addReforge" placeholder="None" autocomplete="off" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-size:13px;height:32px;box-sizing:border-box;outline:none" oninput="filterReforgeList(this.value)" onfocus="showReforgeList()" onblur="setTimeout(hideReforgeList,200)">
+                  <div id="reforgeDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:var(--shadow)"></div>
                 </div>
               </div>
               <button class="chip" id="addOgReforgeBtn" onclick="toggleOgReforge()" style="flex-shrink:0;height:28px;padding:0 10px;font-size:11px">OG</button>
@@ -2085,7 +2083,7 @@ function renderSets(){
   let sets=allSets.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
   if(currentPageId!=='all') sets=sets.filter(s=>s.page_id===currentPageId);
   // Type filter from dropdown
-  if(exoSelectedType) sets=sets.filter(s=>(s.armour_type||'').toLowerCase().includes(exoSelectedType));
+  if(baExoSelectedType) sets=sets.filter(s=>(s.armour_type||'').toLowerCase().includes(exoSelectedType));
   if(!activeCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>activeCatFilter.has(c.cat));});
   if(offersFilterOn) sets=sets.filter(s=>s.for_offers);
   if(q){
@@ -2421,6 +2419,7 @@ function renderBrowseAll(){
   const isHexQ=(q.startsWith('#')||(/^[0-9A-Fa-fXx]{2,6}$/.test(q.replace('#','')))&&/^[#0-9A-Fa-fXx]+$/.test(q));
   let sets=allSetsGlobal.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
   if(browseAllOffersOn) sets=sets.filter(s=>s.for_offers);
+  if(baExoSelectedType) sets=sets.filter(s=>(s.armour_type||'').replace(/\b\w/g,c=>c.toUpperCase()).includes(baExoSelectedType));
   if(!browseAllCatFilter.has('all')) sets=sets.filter(s=>{const cats=classifyPieces(s.pieces||[],s.armour_type||'');return cats.some(c=>browseAllCatFilter.has(c.cat));});
   if(q){if(isHexQ){sets=sets.filter(s=>(s.pieces||[]).some(p=>seymourHexMatch(p.hex||'',q)));}else{const ql=q.toLowerCase();sets=sets.filter(s=>{if([(s.set_name||''),(s.armour_type||'')].some(f=>f.toLowerCase().includes(ql)))return true;return(s.pieces||[]).some(p=>{const cls=classifyHex(p.hex||'',s.armour_type||'',p.piece);return cls&&cls.label&&cls.label.toLowerCase().includes(ql);});});}}
   if(baExoSortDir===-1) sets=sets.slice().reverse();
@@ -3289,22 +3288,47 @@ function fmtN(n){n=Number(n);if(n>=1e6)return(n/1e6).toFixed(1).replace(/\.0$/,'
 const REFORGES=['Clean','Fierce','Heavy','Light','Mythic','Pure','Smart','Titanic','Wise','Perfect','Necrotic','Ancient','Spiked','Renowned','Cubic','Hyper','Reinforced','Empowered','Giant','Submerged','Jaded','Bustling','Mossy','Mantid','Festive','Groovy'];
 let _ogReforge=false, _potato='none', _recomb='none', _aop='none', _dungeon='no', _dungeonStars=10;
 
-function initReforgeSelect(){
-  const sel=document.getElementById('addReforge'); if(!sel) return;
-  sel.innerHTML='<option value="">None</option>'+REFORGES.map(r=>`<option value="${r}">${r}</option>`).join('');
+function initReforgeSelect(){}  // no-op now, dropdown is dynamic
+window.onReforgeChange=function(val){ _ogReforge=(val==='OG Reforge'); };
+function showReforgeList(){
+  filterReforgeList(document.getElementById('addReforge')?.value||'');
+  const dd=document.getElementById('reforgeDropdown'); if(dd) dd.style.display='block';
 }
-window.onReforgeChange=function(val){
-  if(val==='OG Reforge'){ _ogReforge=true; } else { _ogReforge=false; }
-};
-function showReforgeList(){}
-function hideReforgeList(){}
-function filterReforgeList(){}
+function hideReforgeList(){
+  const dd=document.getElementById('reforgeDropdown'); if(dd) dd.style.display='none';
+}
+function filterReforgeList(q){
+  const dd=document.getElementById('reforgeDropdown'); if(!dd) return;
+  const ql=(q||'').trim().toLowerCase();
+  const all=['OG Reforge',...REFORGES];
+  const matches=ql?all.filter(r=>r.toLowerCase().includes(ql)):all;
+  if(!matches.length){ dd.style.display='none'; return; }
+  dd.innerHTML='';
+  matches.forEach(r=>{
+    const div=document.createElement('div');
+    div.textContent=r;
+    div.style.cssText='padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text);border-bottom:1px solid var(--border)';
+    div.onmouseenter=()=>div.style.background='var(--bg3)';
+    div.onmouseleave=()=>div.style.background='';
+    div.onmousedown=()=>{
+      const inp=document.getElementById('addReforge');
+      if(inp) inp.value=r;
+      _ogReforge=(r==='OG Reforge');
+      const btn=document.getElementById('addOgReforgeBtn');
+      if(btn) btn.classList.toggle('on',_ogReforge);
+      hideReforgeList();
+    };
+    dd.appendChild(div);
+  });
+  dd.style.display='block';
+}
 window.toggleOgReforge=function(){
   _ogReforge=!_ogReforge;
   const btn=document.getElementById('addOgReforgeBtn');
-  const sel=document.getElementById('addReforge');
+  const inp=document.getElementById('addReforge');
   btn.classList.toggle('on',_ogReforge);
-  if(sel){sel.value=_ogReforge?'OG Reforge':'';}
+  if(inp){inp.value=_ogReforge?'OG Reforge':'';}
+  if(_ogReforge) hideReforgeList();
 };
 window.selectPotato=function(btn){
   _potato=btn.dataset.potato;
@@ -3329,8 +3353,8 @@ window.selectDungeon=function(btn,val){
   if(stars) stars.style.display=val==='yes'?'block':'none';
 };
 function getScuffness(){
-  const sel=document.getElementById('addReforge');
-  const reforgeVal=_ogReforge?'OG Reforge':(sel?.value||'');
+  const inp=document.getElementById('addReforge');
+  const reforgeVal=_ogReforge?'OG Reforge':(inp?.value.trim()||'');
   const stars=_dungeon==='yes'?(document.getElementById('dungeonStars')?.value||'10'):'';
   return{reforge:reforgeVal,potato:_potato,recomb:_recomb,aop:_aop,dungeon:_dungeon,dungeonStars:stars};
 }
@@ -3348,10 +3372,7 @@ function loadScuffness(s){
   if(!s) return resetScuffness();
   _ogReforge=s.reforge==='OG Reforge'; _potato=s.potato||'none'; _recomb=s.recomb||'none'; _aop=s.aop||'none'; _dungeon=s.dungeon||'no';
   const rf=document.getElementById('addReforge');
-  if(rf){
-    if(_ogReforge){rf.value='OG Reforge';}
-    else{rf.value=s.reforge||'';}
-  }
+  if(rf) rf.value=_ogReforge?'OG Reforge':(s.reforge||'');
   const ogBtn=document.getElementById('addOgReforgeBtn'); if(ogBtn) ogBtn.classList.toggle('on',_ogReforge);
   document.querySelectorAll('[data-potato]').forEach(b=>b.classList.toggle('on',b.dataset.potato===_potato));
   document.querySelectorAll('[data-recomb]').forEach(b=>b.classList.toggle('on',b.dataset.recomb===_recomb));
@@ -3366,6 +3387,7 @@ function loadScuffness(s){
 let exoSortDir=1; // 1=asc(↑), -1=desc(↓)
 let seySortDir=1;
 let exoSelectedType='';
+let baExoSelectedType='';
 let seySelectedTag='';
 let seySelectedHex='';
 
@@ -3385,19 +3407,47 @@ window.toggleSeySortDir=function(){
 };
 
 // Armour type dropdown
-function showExoTypeList(){renderExoTypeList(document.getElementById('exoTypeSearch')?.value||'');document.getElementById('exoTypeDropdown').style.display='block';}
+function showExoTypeList(){renderExoTypeList(document.getElementById('exoTypeSearch')?.value||'',false);document.getElementById('exoTypeDropdown').style.display='block';}
+function showBAExoTypeList(){renderExoTypeList(document.getElementById('baExoTypeSearch')?.value||'',true);document.getElementById('baExoTypeDropdown').style.display='block';}
+function hideBAExoTypeList(){const dd=document.getElementById('baExoTypeDropdown');if(dd)dd.style.display='none';}
 function hideExoTypeList(){document.getElementById('exoTypeDropdown').style.display='none';}
-function renderExoTypeList(q){
-  const dd=document.getElementById('exoTypeDropdown');if(!dd)return;
-  const ql=q.toLowerCase();
-  const hits=ARMOUR_TYPES.filter(t=>t.includes(ql)).slice(0,12);
-  dd.innerHTML=hits.map(t=>`<div style="padding:5px 10px;cursor:pointer;font-size:12px;${t===exoSelectedType?'background:var(--bg3);font-weight:600':''}" onmousedown="selectExoType('${t}')">${t}</div>`).join('');
+function getContextTypes(forBrowseAll){
+  const sets=forBrowseAll?allSetsGlobal:allSets;
+  return sets.map(s=>(s.armour_type||'').trim()).filter(t=>t&&!t.toLowerCase().includes('seymour')).map(t=>t.replace(/\b\w/g,c=>c.toUpperCase())).filter((v,i,a)=>a.indexOf(v)===i).sort();
 }
-function selectExoType(t){
-  exoSelectedType=exoSelectedType===t?'':t;
-  const inp=document.getElementById('exoTypeSearch');
-  if(inp) inp.value=exoSelectedType;
-  hideExoTypeList(); renderSets();
+function renderExoTypeList(q, forBrowseAll){
+  const ddId=forBrowseAll?'baExoTypeDropdown':'exoTypeDropdown';
+  const selId=forBrowseAll?'baExoTypeSearch':'exoTypeSearch';
+  const dd=document.getElementById(ddId);if(!dd)return;
+  const types=getContextTypes(forBrowseAll);
+  const ql=(q||'').toLowerCase().trim();
+  if(!ql){
+    dd.style.display='none';
+    if(forBrowseAll){baExoSelectedType='';renderBrowseAll();}
+    else{exoSelectedType='';renderSets();}
+    return;
+  }
+  const hits=types.filter(t=>t.toLowerCase().includes(ql)).slice(0,14);
+  const selVal=forBrowseAll?baExoSelectedType:exoSelectedType;
+    function mkItem(t){
+    const bg=t===selVal?'background:var(--bg3);font-weight:600':'';
+    const fa=forBrowseAll?'true':'false';
+    const ts=t.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div style="padding:5px 10px;cursor:pointer;font-size:12px;'+bg+'" onmousedown="selectExoType(\''+ts+'\','+fa+')">'+t+'</div>';
+  }
+  dd.innerHTML=hits.map(mkItem).join('');
+  dd.style.display=hits.length?'block':'none';
+}
+function selectExoType(t, forBrowseAll){
+  if(forBrowseAll){
+    baExoSelectedType=baExoSelectedType===t?'':t;
+    const inp=document.getElementById('baExoTypeSearch'); if(inp) inp.value=baExoSelectedType;
+    hideBAExoTypeList(); renderBrowseAll();
+  } else {
+    exoSelectedType=exoSelectedType===t?'':t;
+    const inp=document.getElementById('exoTypeSearch'); if(inp) inp.value=exoSelectedType;
+    hideExoTypeList(); renderSets();
+  }
 }
 
 // Seymour tag dropdown
@@ -3751,7 +3801,7 @@ setInterval(loadStats,60000);
         </div>
         <input class="fsearch" id="browseAllSearch" placeholder="Search #hex or name…" oninput="renderBrowseAll()" style="height:32px;width:130px;flex-shrink:0">
         <div style="position:relative;flex-shrink:0">
-          <input class="fsearch" id="baExoTypeSearch" placeholder="Armour type…" oninput="renderBAExoTypeList(this.value)" onfocus="showBAExoTypeList()" onblur="setTimeout(hideBAExoTypeList,200)" style="height:32px;width:130px">
+          <input class="fsearch" id="baExoTypeSearch" placeholder="Armour type…" oninput="renderExoTypeList(this.value,true)" onfocus="showBAExoTypeList()" onblur="setTimeout(hideBAExoTypeList,200)" style="height:32px;width:130px">
           <div id="baExoTypeDropdown" style="display:none;position:absolute;top:100%;left:0;min-width:160px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:180px;overflow-y:auto;margin-top:2px"></div>
         </div>
         <div class="cat-chips" id="browseAllCatChips" style="flex:1">

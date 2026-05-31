@@ -2609,20 +2609,29 @@ window.openEditModal=function(id){
   // Open modal FIRST so elements are visible and interactive
   openModal('addSetModal');
 
-  // Now fill pieces - directly add to addPieces Set and toggle UI, then render
+  // requestAnimationFrame so modal is painted before we fill
   requestAnimationFrame(()=>{
+    const isSeymour=(s.armour_type||'').toLowerCase().includes('seymour');
+    // Seymour pieces are stored as "Velvet Top Hat" etc but toggles use "Helmet" etc
+    const SEY_REVERSE={'Velvet Top Hat':'Helmet','Cashmere Jacket':'Chestplate','Satin Trousers':'Leggings','Oxford Shoes':'Boots'};
+    const SEY_FORWARD={'Helmet':'Velvet Top Hat','Chestplate':'Cashmere Jacket','Leggings':'Satin Trousers','Boots':'Oxford Shoes'};
+
+    // Add pieces to addPieces (using toggle names) and highlight toggles
     (s.pieces||[]).forEach(p=>{
-      addPieces.add(p.piece);
-      const tb=document.querySelector(`.piece-toggle[data-piece="${p.piece}"]`);
+      const toggleName=isSeymour?(SEY_REVERSE[p.piece]||p.piece):p.piece;
+      addPieces.add(toggleName);
+      const tb=document.querySelector(`.piece-toggle[data-piece="${toggleName}"]`);
       if(tb) tb.classList.add('on');
     });
     renderPieceInputs();
 
-    // Fill hexes after renderPieceInputs creates the inputs
+    // Fill hexes — input data-piece is the display name (Seymour or standard)
     requestAnimationFrame(()=>{
       (s.pieces||[]).forEach(p=>{
         if(!p.hex) return;
-        const hi=document.querySelector(`input.hex-in[data-piece="${p.piece}"]`);
+        // For Seymour, data-piece is the Seymour name; for exotic, it's the standard name
+        const inputPiece=isSeymour?(SEY_FORWARD[SEY_REVERSE[p.piece]||p.piece]||p.piece):p.piece;
+        const hi=document.querySelector(`input.hex-in[data-piece="${inputPiece}"]`);
         if(hi){hi.value=p.hex.replace('#','');hi.dispatchEvent(new Event('input'));}
       });
 

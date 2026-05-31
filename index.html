@@ -511,8 +511,12 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
               <span style="font-size:12px;color:var(--text2);width:90px;flex-shrink:0">Reforge</span>
               <div style="flex:1;position:relative">
-                <input id="addReforge" type="text" class="modal-input" placeholder="None" style="height:32px;font-size:13px" oninput="filterReforgeList(this.value)" onfocus="showReforgeList()" onblur="setTimeout(hideReforgeList,200)">
-                <div id="reforgeDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:140px;overflow-y:auto"></div>
+                <div style="position:relative">
+                  <select id="addReforge" class="modal-input" style="height:32px;font-size:13px;appearance:none;-webkit-appearance:none;padding-right:28px;cursor:pointer;width:100%" onchange="onReforgeChange(this.value)">
+                    <option value="">None</option>
+                  </select>
+                  <span style="pointer-events:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3)">▾</span>
+                </div>
               </div>
               <button class="chip" id="addOgReforgeBtn" onclick="toggleOgReforge()" style="flex-shrink:0;height:28px;padding:0 10px;font-size:11px">OG</button>
             </div>
@@ -1998,7 +2002,7 @@ function filterBrowse(q){ renderBrowse(); }
 function browseCard(m){
   const exoSets=m.sets.filter(s=>!(s.armour_type||'').toLowerCase().includes('seymour'));
   const seySets=m.sets.filter(s=>(s.armour_type||'').toLowerCase().includes('seymour'));
-  const allCats=exoSets.flatMap(s=>classifyPieces(s.pieces||[],s.armour_type||''));
+  const allCats=exoSets.flatMap(s=>(s.pieces||[]).filter(p=>p.dyeable!==false).map(p=>classifyHex(p.hex,s.armour_type||'',p.piece)).filter(Boolean));
   const catCounts={};
   allCats.forEach(c=>{catCounts[c.cat]=(catCounts[c.cat]||0)+1;});
   const uniqCols=[...new Set(allCats.map(c=>c.colour))].slice(0,4);
@@ -3265,25 +3269,22 @@ function fmtN(n){n=Number(n);if(n>=1e6)return(n/1e6).toFixed(1).replace(/\.0$/,'
 const REFORGES=['Clean','Fierce','Heavy','Light','Mythic','Pure','Smart','Titanic','Wise','Perfect','Necrotic','Ancient','Spiked','Renowned','Cubic','Hyper','Reinforced','Empowered','Giant','Submerged','Jaded','Bustling','Mossy','Mantid','Festive','Groovy'];
 let _ogReforge=false, _potato='none', _recomb='none', _aop='none', _dungeon='no', _dungeonStars=10;
 
-function showReforgeList(){
-  const dd=document.getElementById('reforgeDropdown'); if(!dd) return;
-  filterReforgeList(document.getElementById('addReforge')?.value||'');
-  dd.style.display='block';
+function initReforgeSelect(){
+  const sel=document.getElementById('addReforge'); if(!sel) return;
+  sel.innerHTML='<option value="">None</option>'+REFORGES.map(r=>`<option value="${r}">${r}</option>`).join('');
 }
-function hideReforgeList(){ const dd=document.getElementById('reforgeDropdown'); if(dd) dd.style.display='none'; }
-function filterReforgeList(q){
-  const dd=document.getElementById('reforgeDropdown'); if(!dd) return;
-  const matches=REFORGES.filter(r=>r.toLowerCase().startsWith(q.toLowerCase()));
-  dd.innerHTML=matches.map(r=>`<div style="padding:6px 10px;cursor:pointer;font-size:12px" onmousedown="document.getElementById('addReforge').value='${r}';hideReforgeList()">${r}</div>`).join('');
-  dd.style.display=matches.length?'block':'none';
-}
+window.onReforgeChange=function(val){
+  if(val==='OG Reforge'){ _ogReforge=true; } else { _ogReforge=false; }
+};
+function showReforgeList(){}
+function hideReforgeList(){}
+function filterReforgeList(){}
 window.toggleOgReforge=function(){
   _ogReforge=!_ogReforge;
   const btn=document.getElementById('addOgReforgeBtn');
-  const inp=document.getElementById('addReforge');
+  const sel=document.getElementById('addReforge');
   btn.classList.toggle('on',_ogReforge);
-  if(_ogReforge&&inp){inp.value='OG Reforge';inp.disabled=true;}
-  else if(inp){inp.value='';inp.disabled=false;}
+  if(sel){sel.value=_ogReforge?'OG Reforge':'';}
 };
 window.selectPotato=function(btn){
   _potato=btn.dataset.potato;
@@ -3308,9 +3309,10 @@ window.selectDungeon=function(btn,val){
   if(stars) stars.style.display=val==='yes'?'block':'none';
 };
 function getScuffness(){
-  const reforge=document.getElementById('addReforge')?.value.trim()||'';
+  const sel=document.getElementById('addReforge');
+  const reforgeVal=_ogReforge?'OG Reforge':(sel?.value||'');
   const stars=_dungeon==='yes'?(document.getElementById('dungeonStars')?.value||'10'):'';
-  return{reforge:_ogReforge?'OG Reforge':reforge,potato:_potato,recomb:_recomb,aop:_aop,dungeon:_dungeon,dungeonStars:stars};
+  return{reforge:reforgeVal,potato:_potato,recomb:_recomb,aop:_aop,dungeon:_dungeon,dungeonStars:stars};
 }
 function resetScuffness(){
   _ogReforge=false; _potato='none'; _recomb='none'; _aop='none'; _dungeon='no'; _dungeonStars=10;
@@ -3325,8 +3327,11 @@ function resetScuffness(){
 function loadScuffness(s){
   if(!s) return resetScuffness();
   _ogReforge=s.reforge==='OG Reforge'; _potato=s.potato||'none'; _recomb=s.recomb||'none'; _aop=s.aop||'none'; _dungeon=s.dungeon||'no';
-  const rf=document.getElementById('addReforge'); 
-  if(rf){rf.value=_ogReforge?'OG Reforge':s.reforge||'';rf.disabled=_ogReforge;}
+  const rf=document.getElementById('addReforge');
+  if(rf){
+    if(_ogReforge){rf.value='OG Reforge';}
+    else{rf.value=s.reforge||'';}
+  }
   const ogBtn=document.getElementById('addOgReforgeBtn'); if(ogBtn) ogBtn.classList.toggle('on',_ogReforge);
   document.querySelectorAll('[data-potato]').forEach(b=>b.classList.toggle('on',b.dataset.potato===_potato));
   document.querySelectorAll('[data-recomb]').forEach(b=>b.classList.toggle('on',b.dataset.recomb===_recomb));
@@ -3638,6 +3643,7 @@ window.toggleBAExoSortDir=function(){
 /* INIT */
 loadTheme();
 loadStoredUser();
+initReforgeSelect();
 handleCallback();
 loadStats();
 loadBrowse();

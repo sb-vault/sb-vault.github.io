@@ -1966,7 +1966,7 @@ function mountModel(key,pieces){
 /* ===== AUTH CONFIG ===== */
 const MCID_CLIENT_ID = 'XIyZSAUOMSHFMdidQPdwGKKgvwisYGiE';
 const MCID_AUTH_URL  = 'https://mc-id.com/api/auth/oauth2/authorize';
-const REDIRECT_URI   = 'https://seyvault.github.io/';
+const REDIRECT_URI   = (location.origin + location.pathname).replace(/index\.html$/,'');
 const SCOPE          = 'openid profile';
 const HEAD = uuid => `https://mc-heads.net/avatar/${uuid}/48`;
 
@@ -1994,21 +1994,37 @@ async function startLogin(){
 
 async function handleCallback(){
   const p=new URLSearchParams(location.search);
+  const oauthErr=p.get('error');
+  if(oauthErr){
+    history.replaceState({},'',location.pathname);
+    toast('Login rejected: '+oauthErr+(p.get('error_description')?' \u2014 '+p.get('error_description'):''));
+    return;
+  }
   const code=p.get('code'); if(!code) return;
   const verifier=sessionStorage.getItem('pkce_verifier');
   history.replaceState({},'',location.pathname);
-  if(!verifier) return;
+  if(!verifier){ toast('Login failed: PKCE verifier missing (cookies/storage blocked?)'); return; }
   try{
     const r=await fetch(`${API}/auth/token`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({code,code_verifier:verifier,redirect_uri:REDIRECT_URI})});
-    if(!r.ok){ toast('Login failed'); return; }
-    const d=await r.json();
+    let d={}; try{ d=await r.json(); }catch(e){}
+    if(!r.ok){
+      const msg=d.error||d.message||('HTTP '+r.status);
+      console.error('login failed',r.status,d,'redirect_uri sent:',REDIRECT_URI);
+      if(/redirect/i.test(msg))      toast('Login failed: redirect_uri mismatch \u2014 see console');
+      else if(r.status===404)        toast('Login failed: worker not deployed (404)');
+      else                           toast('Login failed: '+msg.slice(0,120));
+      return;
+    }
     if(d.token) localStorage.setItem('vault_token',d.token);
     if(d.user){ localStorage.setItem('vault_user',JSON.stringify(d.user)); setUser(d.user); }
     sessionStorage.removeItem('pkce_verifier');
     toast('Signed in as '+(d.user?d.user.username:'player'));
     if(PIECES.length) publishCollection(true);
-  }catch(e){ toast('Login failed'); }
+  }catch(e){
+    console.error(e);
+    toast('Login failed: network/CORS reaching the worker');
+  }
 }
 
 function loadStoredUser(){

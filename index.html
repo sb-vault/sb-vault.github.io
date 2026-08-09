@@ -502,7 +502,7 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
   </div>
 </div>
 
-<footer>Seymour Vault &middot; Not affiliated with Hypixel &middot; <a href="https://sb-vault.github.io/tools/" style="color:var(--text3);text-decoration:none">Skyblock Tools</a></footer>
+<footer>Seymour Vault &middot; Not affiliated with Hypixel &middot; <a href="https://seyvault.github.io/tools/" style="color:var(--text3);text-decoration:none">Skyblock Tools</a></footer>
 
 <!-- SET BUILDER -->
 <div class="modal-ov" id="fbModal" onclick="if(event.target===this)closeBuilder()">
@@ -815,6 +815,18 @@ const SLOTS=['Helmet','Chestplate','Leggings','Boots'];
 function tierOf(dE){ if(dE<=0.0005) return -1; return dE<1?0 : dE<2?1 : dE<5?2 : 3; }
 function tierLabel(t){ return t===-1?'Exact Match':(t===3?'Tier 3+':'Tier '+t); }
 function tierClass(t){ return t===-1?'tx':'t'+t; }
+function isFadeName(n){ return /\bstage\b/i.test(n||''); }
+function hexRgba(hex,a){
+  const s=hex.replace('#','');
+  return `rgba(${parseInt(s.slice(0,2),16)},${parseInt(s.slice(2,4),16)},${parseInt(s.slice(4,6),16)},${a})`;
+}
+function tierPill(dE,colorName){
+  const t=tierOf(dE);
+  const col=seymourTierColour(isFadeName(colorName),dE);
+  const exact=t===-1;
+  return `<span class="tierpill" style="background:${hexRgba(col,exact?.34:.16)};color:${col};`+
+         `border:1px solid ${hexRgba(col,exact?.75:.34)};${exact?'font-weight:800;':''}">${tierLabel(t)}</span>`;
+}
 
 
 function hashHex(x){const s=(x||"").replace("#","").trim().toUpperCase();return /^[0-9A-F]{6}$/.test(s)?"#"+s:null;}
@@ -1500,7 +1512,7 @@ function pieceCard(p,opts={}){
       <div class="phex">#${p.hex}</div>
       ${b?`<div class="pmatch">${esc(b.name)}</div>`:''}
       <div class="pstat">
-        ${b?`<span class="tierpill ${tierClass(t)}">${tierLabel(t)}</span>`:''}
+        ${b?tierPill(b.dE,b.name):''}
         ${b?`<span>&Delta;E ${b.dE.toFixed(2)}</span><span>Abs ${b.abs}</span>`:''}
         ${extra}
         <span style="margin-left:auto;opacity:.7">${esc(p.cat)}</span>
@@ -1622,7 +1634,7 @@ function openPiece(id){
        ${ms.map(m=>{const t=tierOf(m.dE);return `<div class="dd-item" style="cursor:default">
          <span class="sw" style="background:#${m.hex}"></span>
          <span style="flex:1;min-width:0;font-size:12.5px">${esc(m.name)}</span>
-         <span class="tierpill ${tierClass(t)}">${tierLabel(t)}</span>
+         ${tierPill(m.dE,m.name)}
          <span style="font-size:11px;color:var(--text2);font-variant-numeric:tabular-nums;min-width:66px;text-align:right">&Delta;E ${m.dE.toFixed(3)}</span>
          <span style="font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums;min-width:52px;text-align:right">Abs ${m.abs}</span>
        </div>`;}).join('')}
@@ -1761,11 +1773,10 @@ function saveBuilder(){
 }
 
 /* ===== BEST SETS ===== */
-function bestSubset(hexes,k){
+function bestSubset(hexes,k,slots){
   if(hexes.length<k) return null;
   const labs=hexes.map(hexToLab);
-  let best=null;
-  const idx=[];
+  let best=null; const idx=[];
   (function pick(start){
     if(idx.length===k){
       let mE=0,mA=0;
@@ -1773,13 +1784,15 @@ function bestSubset(hexes,k){
         mE=Math.max(mE,calculateDeltaEWithLab(labs[idx[a]],labs[idx[b]]));
         mA=Math.max(mA,absDist(hexes[idx[a]],hexes[idx[b]]));
       }
-      if(!best||mE<best.dE) best={dE:mE,abs:mA,hexes:idx.map(i=>hexes[i])};
+      if(!best||mE<best.dE) best={dE:mE,abs:mA,hexes:idx.map(i=>hexes[i]),
+                                  slots:idx.map(i=>(slots&&slots[i])||'')};
       return;
     }
     for(let i=start;i<hexes.length;i++){ idx.push(i); pick(i+1); idx.pop(); }
   })(0);
   return best;
 }
+const SHORT={Helmet:'Hat',Chestplate:'Jacket',Leggings:'Trousers',Boots:'Shoes'};
 function bestSets(){
   const slots=SLOTS.filter(s=>bSlots.has(s));
   if(slots.length<2) return [];
@@ -1844,14 +1857,19 @@ function renderBest(){
 function bestCardHTML(r,i){
   const pcs={}; r.slots.forEach((s,j)=>pcs[s]=r.pieces[j]);
   const t=tierOf(r.dE);
-  const b3=r.pieces.length>3?bestSubset(r.pieces,3):null;
-  const b2=r.pieces.length>2?bestSubset(r.pieces,2):null;
-  const sub=(lbl,v)=>v?`<span style="white-space:nowrap"><b style="color:var(--text2)">${lbl}</b> &Delta;E ${v.dE.toFixed(2)} &middot; Abs ${v.abs}</span>`:'';
+  const b3=r.pieces.length>3?bestSubset(r.pieces,3,r.slots):null;
+  const b2=r.pieces.length>2?bestSubset(r.pieces,2,r.slots):null;
+  const sub=(lbl,v)=>v?`<div style="display:flex;align-items:center;gap:5px;white-space:nowrap">
+      <b style="color:var(--text2);min-width:36px">${lbl}</b>
+      ${v.hexes.map(x=>`<span class="sw" style="width:10px;height:10px;background:#${x}"></span>`).join('')}
+      <span style="color:var(--text2)">${v.slots.map(s=>SHORT[s]||s).join(' + ')}</span>
+      <span style="margin-left:auto">&Delta;E ${v.dE.toFixed(2)} &middot; Abs ${v.abs}</span>
+    </div>`:'';
   return `<div class="scard" style="cursor:pointer" onclick="openSetDetail(${i})">
     <div class="smodel" id="model-best-${i}"></div>
     <div class="sbody">
       <div style="display:flex;align-items:center;gap:7px">
-        <span class="tierpill ${tierClass(t)}">${tierLabel(t)}</span>
+        ${tierPill(r.dE,null)}
         <span class="spread">&Delta;E ${r.dE.toFixed(2)}</span>
         <span style="font-size:11px;color:var(--text3)">Abs ${r.abs}</span>
       </div>
@@ -1874,11 +1892,12 @@ function openSetDetail(i){
   const r=LAST_BEST[i]; if(!r) return;
   const pcs={}; r.slots.forEach((s,j)=>pcs[s]=r.pieces[j]);
   const t=tierOf(r.dE);
-  const b3=r.pieces.length>3?bestSubset(r.pieces,3):null;
-  const b2=r.pieces.length>2?bestSubset(r.pieces,2):null;
-  const statLine=(lbl,v,hexes)=>v?`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
+  const b3=r.pieces.length>3?bestSubset(r.pieces,3,r.slots):null;
+  const b2=r.pieces.length>2?bestSubset(r.pieces,2,r.slots):null;
+  const statLine=(lbl,v,slots)=>v?`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
       <b style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);min-width:54px">${lbl}</b>
-      ${(hexes||[]).map(x=>`<span class="sw" style="background:#${x}"></span>`).join('')}
+      ${(v.hexes||[]).map(x=>`<span class="sw" style="background:#${x}"></span>`).join('')}
+      <span style="font-size:11px;color:var(--text2)">${(slots||[]).map(s=>SHORT[s]||s).join(' + ')}</span>
       <span style="margin-left:auto;font-size:12px;font-variant-numeric:tabular-nums">&Delta;E <b>${v.dE.toFixed(3)}</b> &middot; Abs <b>${v.abs}</b></span>
     </div>`:'';
   document.getElementById('sdTitle').textContent=(r._name||r.slots.length+'-piece set')+'  \u00b7  \u0394E '+r.dE.toFixed(2);
@@ -1886,10 +1905,10 @@ function openSetDetail(i){
     `<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px">
        <div id="model-detail" style="width:150px;height:234px;background:var(--bg3);border:1px solid var(--border);border-radius:11px;flex-shrink:0"></div>
        <div style="flex:1;min-width:0">
-         <div style="margin-bottom:10px"><span class="tierpill ${tierClass(t)}">${tierLabel(t)}</span></div>
-         ${statLine('Full set',{dE:r.dE,abs:r.abs},r.pieces)}
-         ${statLine('Best 3',b3,b3&&b3.hexes)}
-         ${statLine('Best 2',b2,b2&&b2.hexes)}
+         <div style="margin-bottom:10px">${tierPill(r.dE,null)}</div>
+         ${statLine('Full set',{dE:r.dE,abs:r.abs,hexes:r.pieces},r.slots)}
+         ${statLine('Best 3',b3,b3&&b3.slots)}
+         ${statLine('Best 2',b2,b2&&b2.slots)}
        </div>
      </div>
      <div class="sec-l">Pieces</div>
@@ -1903,7 +1922,7 @@ function openSetDetail(i){
              <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">${s} &middot; ${esc(PIECE_OF[s])}</div>
              <div style="font-family:ui-monospace,monospace;font-size:12.5px;font-weight:600">#${hex}</div>
            </div>
-           ${c?`<span class="tierpill ${tierClass(tt)}">${tierLabel(tt)}</span>`:''}
+           ${c?tierPill(c.dE,c.name):''}
          </div>
          ${ms.length?`<div style="margin-top:6px;font-size:11px;color:var(--text2);line-height:1.7">
            ${ms.slice(0,6).map(m=>`<span style="display:inline-block;margin-right:10px"><span class="sw" style="display:inline-block;vertical-align:-2px;margin-right:4px;background:#${m.hex}"></span>${esc(m.name)} <span style="color:var(--text3)">${m.dE.toFixed(2)}</span></span>`).join('')}
@@ -1923,7 +1942,7 @@ function openFavDetail(id){
   const slots=SLOTS.filter(sl=>s.pieces[sl]);
   if(!slots.length) return;
   const hexes=slots.map(sl=>s.pieces[sl]);
-  const full=hexes.length>1?bestSubset(hexes,hexes.length):{dE:0,abs:0,hexes};
+  const full=hexes.length>1?bestSubset(hexes,hexes.length,slots):{dE:0,abs:0,hexes,slots};
   LAST_BEST[-1]={slots,pieces:hexes,dE:full.dE,abs:full.abs,_name:s.name};
   openSetDetail(-1);
 }
@@ -1947,7 +1966,7 @@ function mountModel(key,pieces){
 /* ===== AUTH CONFIG ===== */
 const MCID_CLIENT_ID = 'XIyZSAUOMSHFMdidQPdwGKKgvwisYGiE';
 const MCID_AUTH_URL  = 'https://mc-id.com/api/auth/oauth2/authorize';
-const REDIRECT_URI   = 'https://sb-vault.github.io/seymour.html';
+const REDIRECT_URI   = 'https://seyvault.github.io/';
 const SCOPE          = 'openid profile';
 const HEAD = uuid => `https://mc-heads.net/avatar/${uuid}/48`;
 
@@ -2025,15 +2044,30 @@ function setUser(u){
 
 /* ===== PUBLISH / SYNC ===== */
 async function publishCollection(quiet){
-  if(!getToken()){ toast('Sign in to publish'); return; }
+  if(!currentUser||!getToken()){ toast('Sign in first \u2014 click Login'); return; }
+  if(!PIECES.length){ if(!quiet) toast('Nothing to publish \u2014 import a collection first'); return; }
+  const btn=document.getElementById('pubBtn');
+  if(btn&&!quiet){ btn.disabled=true; btn.textContent='Publishing\u2026'; }
   try{
     const r=await fetch(`${API}/seymour/collection`,{method:'PUT',
       headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},
       body:JSON.stringify({pieces:PIECES,sets:FAVSETS})});
-    if(!r.ok){ if(!quiet) toast('Publish failed'); return; }
-    const d=await r.json();
+    let d={}; try{ d=await r.json(); }catch(e){}
+    if(!r.ok){
+      if(r.status===404) toast('Publish failed: worker not deployed yet (404)');
+      else if(r.status===401){ toast('Session expired \u2014 log in again'); logout(); }
+      else toast('Publish failed ('+r.status+'): '+(d.error||d.message||'unknown'));
+      console.error('publish failed',r.status,d);
+      return;
+    }
     if(!quiet) toast('Published '+d.count+' pieces');
-  }catch(e){ if(!quiet) toast('Network error'); }
+    loadBrowse();
+  }catch(e){
+    toast('Publish failed: network/CORS \u2014 check the worker URL');
+    console.error(e);
+  }finally{
+    if(btn&&!quiet){ btn.disabled=false; btn.textContent='Publish'; }
+  }
 }
 async function unpublishCollection(){
   if(!getToken()) return;

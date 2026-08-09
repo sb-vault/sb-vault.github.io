@@ -829,6 +829,54 @@ function tierPill(dE,colorName){
 }
 
 
+let _threeReady = null;
+
+const SKULL_HELMETS={
+  'abyssal':         '29c1fb923e363b02929de8207c8013ea3c7e4b3933047fc9ca2bb08b8dc07254',
+  'adaptive':        '16f0d34aaa714377983701c1bbe9b3f6e7b30cb38571bc0a2fd7541d7edb1637',
+  'arachne':         '10505f1e9765e47e7fb9208e2ad8f171668decf39465ec40d3a589f8cbeb9722',
+  'fig':             '531d3f448491a35d711b877973e5da5d0e72a2ecfdc98dede71bfa1b537bb4eb',
+  'wyld':            'fc8593b91058ff24a0f6845130ed3e449569ce9c6b22fa9cd1ed7360b5045ea3',
+  'divan':           '83f69ef27f3120a51050e6be66a0e3f8e89af888d4806716bf86f590da638317',
+  'diver':           'd8f11c2b1eb0568cac64f976e50e0e45f3c09a65801e7ed72734b1a99f1606ca',
+  'sniper':          'b18c071f080dba50a62a6263ff724edc157ce4fb4883cceff2491d5bbde830c1',
+  'canopy':          '93da8ca9a62856d5c0ee7808f12fa850594294a9755ca527dbc6679bacc3f7bb',
+  'shark scale':     'd38e3f1152b4855fea5865357e03ecb4d80c52889d641cc5f023e6d16996d8f1',
+  'primordial':      '307cefa20028878ef529d6b9208d2812010d086f961b964c328f09b3f6573d6',
+  'young dragon':    'a0e81ed07dfb0244d56f4d5f2b37553ec026fb4796f0fb0c57a8eb264983e1e0',
+  'protector dragon':'1f1a1ccbb024ed1d28471bc4b3c28d093277161a3871d2699d68e5d2c387964',
+  'snow suit':       '3d1119643cecfbe004141a1ea4062f8315ca78e503958ac50505e8592c44a601',
+  'snow':            '3d1119643cecfbe004141a1ea4062f8315ca78e503958ac50505e8592c44a601',
+  'blaze':           '531b2183392ebcffe217a983c96a573cf90dd58687d18fd63036ccc59eb2f47d',
+  'wise dragon':     '5797c77ccee3c04c3deed770595ea83ea1e84c9a4629b753af5d351c0cc11a74',
+  'mender':          '13301950a1e80cdfee82cfca4cb0d8aeea712fe3331ccd7e1e55722230bd43ff',
+  'spooky':          '121ebb2b36c1f5dde4fa665cd39a4895ef02d00fcb3eb3588b86a13f9ae7e9a8',
+  'mineral':         'a95280a7b21b06e3887f165c8ca7a03bfac96378acd96cdf5944bcd08a0b6587',
+  'shadow assassin': 'a1aa14de9c158d3513949c85cabb9e37848b984ec3fb5b44a3219f4fb58a00da',
+  'snorkeling':      '875478f91a51c281255545fd700d3155d9628ac7f6ecacb96110416cbc3849d3',
+  'old dragon':      '524c4da6ab27e9c93fbf49ea1b1fefaefbe2d4c0c8b222e2ff6b18179fb5addf',
+  'holy dragon':     '99cc8ba26793218f6f6491947a1837fd52878701f33f76bbe2883a45aba8ab8f',
+  'strong dragon':   '78bc6551beb2148d939b69925140d2379fe0fab6e7d31f65df50b59e9f77a0e4',
+  'superior dragon': '1e0329f42192ee7c1a0c704f82dbbbe7c00fbfa3f020c1067a208630b991b988',
+  'unstable dragon': '605fc4e2b68c45059afef3999e9a95aa3d8943597a7894e569397d6cf5d1672a',
+  'wither skeleton': '691129409789589ae1b43e1d828c06fc9a213b78348a68b7313bdd401d7485cc',
+  'goldor':          'd4923e28a187fe6af2278b7394ef253a96331fa2dc0731879c780bfee244228a',
+  'storm':           'f83159c5bb7d80454d2d646b15774b7116aabcb3af5b6777a27573fc45f7854f',
+  'maxor':           'dbfb0ed5959190d415e726a15f2984007a67a5fd4ea5671d0d676f9f641b5bac',
+  'necron':          '2bbb2fa7a6ca087280ea0cb564b41ef1ae404a19f7a8128d3d28c519a85e063f',
+  'ender':           'f715ca0f742544ae3ca104297578c2ed700ea3a54980413512f5e7a0bc06729a',
+};
+
+function getSkullUrl(at){
+  const al=(at||'').toLowerCase();
+  return Object.keys(SKULL_HELMETS).some(k=>al.includes(k));
+}
+
+function getSkinSettings(){
+  const u=(typeof currentUser!=='undefined'&&currentUser&&currentUser.username)||'_';
+  try{ return JSON.parse(localStorage.getItem('vault_skin_'+u)||'{}'); }catch(e){ return {}; }
+}
+
 function hashHex(x){const s=(x||"").replace("#","").trim().toUpperCase();return /^[0-9A-F]{6}$/.test(s)?"#"+s:null;}
 function getThree(){
   if(_threeReady) return _threeReady;

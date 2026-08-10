@@ -382,6 +382,14 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border-top:1px solid var(--border);margin-top:36px}
 @media(max-width:640px){.pgrid,.sgrid{grid-template-columns:1fr}}
 
+
+.bfbar{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:13px 15px;margin-bottom:14px}
+.bftrack{height:9px;background:var(--bg3);border-radius:6px;overflow:hidden;margin:9px 0 7px;border:1px solid var(--border)}
+.bffill{height:100%;background:linear-gradient(90deg,#5ab4ff,#8b9bf4);border-radius:6px;transition:width .6s ease}
+.bfrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.bfdot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+.bfdot.on{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+.bfdot.off{background:var(--text3)}
 </style>
 </head>
 <body>
@@ -391,6 +399,7 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
     <div class="logo" style="cursor:default">Seymour Vault <span class="logo-sub">Collection</span></div>
     <nav class="header-nav" style="margin-left:0">
       <button class="nav-btn" id="nav-browse" onclick="showView('browse')">Browse</button>
+      <button class="nav-btn" id="nav-all" onclick="showView('all')">All Pieces</button>
       <button class="nav-btn" id="nav-sales" onclick="showView('sales')">Sales</button>
       <button class="nav-btn active" id="nav-mine" onclick="openMine()">My Collection</button>
     </nav>
@@ -421,13 +430,51 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
     <div id="browseWrap"></div>
   </div>
 
+  <div id="view-all" style="display:none">
+    <div class="fbar">
+      <button class="dirbtn" onclick="aDir*=-1;this.textContent=aDir===1?'\u2191':'\u2193';aPage=1;renderAllPieces()">&uarr;</button>
+      <div class="selwrap">
+        <select class="fsel" onchange="aSort=this.value;aPage=1;renderAllPieces()">
+          <option value="deltaE">By &Delta;E</option><option value="abs">By Abs</option>
+          <option value="newest">Newest</option><option value="name">A&ndash;Z</option>
+          <option value="slot">By piece</option><option value="owner">By owner</option>
+        </select>
+      </div>
+      <input class="fin" style="width:160px" placeholder="Search hex / colour / player" oninput="aQuery=this.value;aPage=1;renderAllPieces()">
+      <div class="selwrap" style="position:relative">
+        <input class="fin" id="aTgtIn" style="width:180px" placeholder="Search colour / hex" autocomplete="off"
+               oninput="renderAllTargetList(this.value)" onfocus="renderAllTargetList(this.value)"
+               onblur="setTimeout(()=>document.getElementById('aTgtDD').style.display='none',200)">
+        <div class="dd" id="aTgtDD"></div>
+      </div>
+      <button class="btn" style="height:32px" onclick="aTarget=null;document.getElementById('aTgtIn').value='';aPage=1;renderAllPieces()">Clear</button>
+      <div class="selwrap">
+        <select class="fsel" onchange="aCat=this.value;aPage=1;renderAllPieces()">
+          <option value="">All categories</option><option value="Pure">Pure</option><option value="Exo Pure">Exo Pure</option><option value="1.12+">1.12+</option><option value="Dyes">Dyes</option><option value="Fairy">Fairy</option><option value="Crystal">Crystal</option><option value="Great Spook">Great Spook</option><option value="Ghostly Boots">Ghostly Boots</option><option value="Black-White">Black-White</option><option value="Farming">Farming</option><option value="Fishing">Fishing</option><option value="Mining">Mining</option><option value="Dragon">Dragon</option><option value="Crimson">Crimson</option><option value="Dungeon">Dungeon</option><option value="Rift Armour">Rift Armour</option><option value="Slayer">Slayer</option><option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="selwrap">
+        <select class="fsel" onchange="aSlot=this.value;aPage=1;renderAllPieces()">
+          <option value="">All pieces</option>
+          <option value="Helmet">Velvet Top Hat</option>
+          <option value="Chestplate">Cashmere Jacket</option>
+          <option value="Leggings">Satin Trousers</option>
+          <option value="Boots">Oxford Shoes</option>
+        </select>
+      </div>
+      <button class="btn" style="height:32px" onclick="loadAllPieces()">Refresh</button>
+      <span id="allCount" style="font-size:11.5px;color:var(--text3);margin-left:auto"></span>
+    </div>
+    <div id="allWrap"></div>
+  </div>
+
   <div id="view-sales" style="display:none">
     <div class="fbar">
       <button class="dirbtn" onclick="sDir*=-1;this.textContent=sDir===1?'\u2191':'\u2193';sPage=1;renderSales()">&uarr;</button>
       <div class="selwrap">
         <select class="fsel" onchange="sSort=this.value;sPage=1;renderSales()">
-          <option value="newest">Newest</option><option value="price">By price</option>
-          <option value="deltaE">By &Delta;E</option><option value="name">A&ndash;Z</option>
+          <option value="deltaE">By &Delta;E</option><option value="price">By price</option>
+          <option value="newest">Newest</option><option value="name">A&ndash;Z</option>
           <option value="slot">By piece</option>
         </select>
       </div>
@@ -456,6 +503,7 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
       <button class="btn" style="height:32px" onclick="loadSales()">Refresh</button>
       <span id="salesCount" style="font-size:11.5px;color:var(--text3);margin-left:auto"></span>
     </div>
+    <div class="bfbar" id="bfBar" style="display:none"></div>
     <div id="salesNote" style="font-size:11.5px;color:var(--text3);margin-bottom:12px;line-height:1.6"></div>
     <div id="salesWrap"></div>
   </div>
@@ -475,9 +523,9 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
       <button class="dirbtn" id="cDirBtn" onclick="cDir*=-1;this.textContent=cDir===1?'\u2191':'\u2193';cPage=1;renderCollection()">&uarr;</button>
       <div class="selwrap">
         <select class="fsel" onchange="cSort=this.value;cPage=1;renderCollection()">
-          <option value="newest">Newest</option>
           <option value="deltaE">By &Delta;E</option>
           <option value="abs">By Abs</option>
+          <option value="newest">Newest</option>
           <option value="name">A&ndash;Z</option>
           <option value="slot">By Slot</option>
         </select>
@@ -577,6 +625,14 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal-ov" id="dpModal" style="z-index:660" onclick="if(event.target===this)closeDupes()">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-h"><div class="modal-t" id="dpTitle">Duplicates</div>
+      <button class="btn btn-icon" onclick="closeDupes()">&times;</button></div>
+    <div class="modal-b" id="dpBody"></div>
   </div>
 </div>
 
@@ -1469,7 +1525,7 @@ let FAVSETS=[];          // {id,name,pieces:{Helmet:hex,...},ts}
 let view='collection';
 const PER_PAGE=100;
 let cPage=1;
-let cSort='newest', cDir=1, cCat='', cSlot='', cQuery='', cTarget=null;
+let cSort='deltaE', cDir=1, cCat='', cSlot='', cQuery='', cTarget=null;
 let bSlots=new Set(['Helmet','Chestplate','Leggings','Boots']);
 let bSort='deltaE', bLimit=60;
 let fbSet={Helmet:null,Chestplate:null,Leggings:null,Boots:null}, fbName='', fbEditId=null, fbActiveSlot=null;
@@ -1478,7 +1534,25 @@ const LS='seymourVault_v1';
 function save(){ if(!isOwn) return; try{ localStorage.setItem(LS,JSON.stringify({pieces:PIECES,favs:FAVSETS})); }catch(e){ toast('Storage full'); } }
 function load(){
   try{ const s=JSON.parse(localStorage.getItem(LS)||'{}');
-       PIECES=s.pieces||[]; FAVSETS=s.favs||[]; }catch(e){}
+       PIECES=refreshMatches(s.pieces||[]); FAVSETS=s.favs||[]; }catch(e){}
+  MY_PIECES=PIECES.slice();
+}
+/* your own pieces, kept aside so they stay available while viewing someone else */
+let MY_PIECES=[];
+function loadMine(){
+  try{ const s=JSON.parse(localStorage.getItem(LS)||'{}'); MY_PIECES=refreshMatches(s.pieces||[]); }
+  catch(e){ MY_PIECES=[]; }
+  return MY_PIECES;
+}
+function refreshMatches(list){
+  for(const p of (list||[])){
+    const hx=normHex(p.hex); if(!hx) continue;
+    p.hex=hx;
+    const c=classifySeymour(hx);
+    if(c){ p.best={name:c.label,hex:normHex(c.targetHex),dE:c.deltaE,abs:c.abs}; }
+    p.cat=catOf(p.best?p.best.name:'',hx);
+  }
+  return list;
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 let _tt;
@@ -1512,6 +1586,7 @@ function importCollection(raw){
     if(seen.has(id)){ const i=PIECES.findIndex(p=>p.id===id); PIECES[i]=rec; updated++; }
     else { PIECES.push(rec); seen.add(id); added++; }
   }
+  refreshMatches(PIECES); MY_PIECES=PIECES.slice();
   save();
   toast(added+' pieces added'+(updated?', '+updated+' updated':''));
   renderAll();
@@ -1536,14 +1611,20 @@ function clearCollection(){
 /* ===== VIEWS ===== */
 function showView(v){
   view=v;
-  const isBrowse = v==='browse', isSales = v==='sales';
+  const isBrowse = v==='browse', isSales = v==='sales', isAll = v==='all';
+  const aside = isBrowse||isSales||isAll;
   document.getElementById('view-browse').style.display = isBrowse?'block':'none';
   document.getElementById('view-sales').style.display  = isSales?'block':'none';
-  document.getElementById('mainTabs').style.display    = (isBrowse||isSales)?'none':'block';
+  document.getElementById('view-all').style.display    = isAll?'block':'none';
+  document.getElementById('mainTabs').style.display    = aside?'none':'block';
   document.getElementById('nav-browse').classList.toggle('active',isBrowse);
   document.getElementById('nav-sales').classList.toggle('active',isSales);
-  document.getElementById('nav-mine').classList.toggle('active',!isBrowse&&!isSales);
-  if(isSales){ document.getElementById('ownerBar').style.display='none'; if(!SALES.length) loadSales(); else renderSales(); return; }
+  document.getElementById('nav-all').classList.toggle('active',isAll);
+  document.getElementById('nav-mine').classList.toggle('active',!aside);
+  if(isAll){ document.getElementById('ownerBar').style.display='none'; if(!allLoaded) loadAllPieces(); else renderAllPieces(); return; }
+  if(isSales){ document.getElementById('ownerBar').style.display='none'; startBfPolling();
+               if(!SALES.length) loadSales(); else renderSales(); return; }
+  stopBfPolling();
   if(isBrowse){ document.getElementById('ownerBar').style.display='none'; if(!BROWSE.length) loadBrowse(); else renderBrowse(); return; }
   ['collection','favourites','best'].forEach(x=>{
     document.getElementById('view-'+x).style.display = x===v?'block':'none';
@@ -1562,6 +1643,7 @@ function renderAll(){
   renderStats();
   if(view==='browse'){ renderBrowse(); return; }
   if(view==='sales'){ renderSales(); return; }
+  if(view==='all'){ renderAllPieces(); return; }
   if(view==='collection') renderCollection();
   else if(view==='favourites') renderFavourites();
   else renderBest();
@@ -1585,37 +1667,37 @@ function renderStats(){
 
 
 /* ===== COLLECTION VIEW ===== */
-function filteredPieces(){
-  let ps=PIECES.slice();
-  if(cCat) ps=ps.filter(p=>p.cat===cCat);
-  if(cSlot) ps=ps.filter(p=>p.slot===cSlot);
-  const q=cQuery.trim();
-  const qHex=normHex(q);
-  if(q && !cTarget){
-    if(qHex){ /* full hex handled by sort-to-target below */ }
-    else{
-      const ql=q.toLowerCase();
-      ps=ps.filter(p=>p.hex.toLowerCase().includes(ql)
-        || (p.best&&p.best.name.toLowerCase().includes(ql))
-        || p.slot.toLowerCase().includes(ql)
-        || p.pieceName.toLowerCase().includes(ql)
-        || (p.matches||[]).some(m=>m.name.toLowerCase().includes(ql)));
-    }
+function filterPieceList(src,st){
+  let ps=src.slice();
+  if(st.cat)  ps=ps.filter(p=>p.cat===st.cat);
+  if(st.slot) ps=ps.filter(p=>p.slot===st.slot);
+  if(st.owner) ps=ps.filter(p=>p.owner===st.owner);
+  const q=(st.query||'').trim(), qHex=normHex(q);
+  if(q && !st.target && !qHex){
+    const ql=q.toLowerCase();
+    ps=ps.filter(p=>p.hex.toLowerCase().includes(ql)
+      || (p.best&&p.best.name.toLowerCase().includes(ql))
+      || p.slot.toLowerCase().includes(ql)
+      || (p.ign||'').toLowerCase().includes(ql)
+      || (p.pieceName||'').toLowerCase().includes(ql));
   }
-  const target = cTarget || qHex;
+  const target=st.target||qHex;
   if(target){
     const tl=hexToLab(target);
-    ps=ps.map(p=>({...p,_t:calculateDeltaEWithLab(hexToLab(p.hex),tl)}))
-         .sort((a,b)=>a._t-b._t);
-  } else {
-    if(cSort==='newest') ps.sort((a,b)=>b.ts-a.ts);
-    else if(cSort==='deltaE') ps.sort((a,b)=>(a.best?a.best.dE:99)-(b.best?b.best.dE:99));
-    else if(cSort==='abs') ps.sort((a,b)=>(a.best?a.best.abs:9999)-(b.best?b.best.abs:9999));
-    else if(cSort==='name') ps.sort((a,b)=>(a.best?a.best.name:'').localeCompare(b.best?b.best.name:''));
-    else if(cSort==='slot') ps.sort((a,b)=>SLOTS.indexOf(a.slot)-SLOTS.indexOf(b.slot));
-    if(cDir===-1) ps.reverse();
+    ps=ps.map(p=>({...p,_t:calculateDeltaEWithLab(hexToLab(p.hex),tl)})).sort((a,b)=>a._t-b._t);
+  }else{
+    if(st.sort==='newest')      ps.sort((a,b)=>b.ts-a.ts);
+    else if(st.sort==='deltaE') ps.sort((a,b)=>(a.best?a.best.dE:99)-(b.best?b.best.dE:99));
+    else if(st.sort==='abs')    ps.sort((a,b)=>(a.best?a.best.abs:9999)-(b.best?b.best.abs:9999));
+    else if(st.sort==='name')   ps.sort((a,b)=>(a.best?a.best.name:'').localeCompare(b.best?b.best.name:''));
+    else if(st.sort==='slot')   ps.sort((a,b)=>SLOTS.indexOf(a.slot)-SLOTS.indexOf(b.slot));
+    else if(st.sort==='owner')  ps.sort((a,b)=>(a.ign||'').localeCompare(b.ign||''));
+    if(st.dir===-1) ps.reverse();
   }
   return ps;
+}
+function filteredPieces(){
+  return filterPieceList(PIECES,{cat:cCat,slot:cSlot,query:cQuery,target:cTarget,sort:cSort,dir:cDir});
 }
 
 function pieceCard(p,opts={}){
@@ -2264,8 +2346,9 @@ async function openCollection(uuid,ign){
   try{
     const r=await fetch(`${API}/seymour/collection?uuid=${encodeURIComponent(uuid)}`);
     const d=await r.json();
-    PIECES=(d.pieces||[]).map(p=>({...p,pieceName:PIECE_OF[p.slot]||'',matches:[]}));
+    PIECES=refreshMatches((d.pieces||[]).map(p=>({...p,pieceName:PIECE_OF[p.slot]||'',matches:[]})));
     FAVSETS=d.sets||[];
+    loadMine();
     viewingIgn=d.ign||ign||'';
     viewingDiscord=d.discord||'';
     remoteLoaded=true;
@@ -2290,10 +2373,10 @@ async function syncFromCloud(force){
     const r=await fetch(`${API}/seymour/collection?uuid=${encodeURIComponent(currentUser.uuid)}`);
     if(!r.ok) return;
     const d=await r.json();
-    const remote=(d.pieces||[]).map(p=>({...p,pieceName:PIECE_OF[p.slot]||'',matches:[]}));
+    const remote=refreshMatches((d.pieces||[]).map(p=>({...p,pieceName:PIECE_OF[p.slot]||'',matches:[]})));
     if(!remote.length) return;
     if(force || remote.length>PIECES.length){
-      PIECES=remote;
+      PIECES=remote; MY_PIECES=remote.slice();
       if((d.sets||[]).length>=FAVSETS.length) FAVSETS=d.sets||[];
       if(d.discord!==undefined){ currentUser.discord=d.discord;
         try{localStorage.setItem('vault_user',JSON.stringify(currentUser));}catch(e){}
@@ -2320,6 +2403,7 @@ function renderOwnerBar(){
         ${!isOwn?`<span>&middot; read only</span>`:''}
       </div>
     </div>
+    ${!isOwn&&currentUser?`<button class="btn btn-p" onclick="openDupes()">Check dupes</button>`:''}
     ${!isOwn?`<button class="btn" onclick="openMine()">Back to mine</button>`:''}`;
 }
 
@@ -2350,7 +2434,7 @@ async function saveDiscord(){
 const SLOT_OF_TAG={VELVET_TOP_HAT:'Helmet',CASHMERE_JACKET:'Chestplate',SATIN_TROUSERS:'Leggings',OXFORD_SHOES:'Boots'};
 const TAG_OF_SLOT={Helmet:'VELVET_TOP_HAT',Chestplate:'CASHMERE_JACKET',Leggings:'SATIN_TROUSERS',Boots:'OXFORD_SHOES'};
 let SALES=[], salesTracked=0, salesStarted=null, salesEarliest=null;
-let sQuery='', sTarget=null, sCat='', sSlot='', sSort='newest', sDir=1, sPage=1;
+let sQuery='', sTarget=null, sCat='', sSlot='', sSort='deltaE', sDir=1, sPage=1;
 
 function fmtCoins(n){
   if(n>=1e9) return (n/1e9).toFixed(2).replace(/\.?0+$/,'')+'b';
@@ -2566,6 +2650,224 @@ function pickSalesTarget(hex,name){
 function salesForHex(hex){ sTarget=null; sQuery=hex; sPage=1; showView('sales');
   if(!SALES.length) loadSales(); else renderSales(); }
 
+
+/* ===== BACKFILL PROGRESS ===== */
+let BF=null, bfTimer=null;
+async function loadBackfill(){
+  try{
+    const r=await fetch(`${API}/seymour/backfill/status`);
+    if(!r.ok) return; BF=await r.json(); renderBackfill();
+  }catch(e){}
+}
+function renderBackfill(){
+  const el=document.getElementById('bfBar'); if(!el||!BF) return;
+  const pct=BF.percent||0;
+  const reached=BF.oldestReached?fmtUTC(BF.oldestReached):'\u2014';
+  const days=BF.oldestReached?Math.max(0,Math.round((Date.now()-BF.oldestReached)/864e5)):0;
+  const piece=BF.tag?(PIECE_OF[SLOT_OF_TAG[BF.tag]]||BF.tag):'\u2014';
+  el.style.display='block';
+  el.innerHTML=
+    `<div class="bfrow">
+       <div style="font-size:12.5px;font-weight:600">
+         <span class="bfdot ${BF.enabled&&!BF.done?'on':'off'}"></span>
+         ${BF.done?'Backfill complete':(BF.enabled?'Walking back through history':'Backfill paused')}
+       </div>
+       <div style="font-size:11.5px;color:var(--text3)">${BF.totalSales} sales archived</div>
+     </div>
+     <div class="bftrack"><div class="bffill" style="width:${pct}%"></div></div>
+     <div class="bfrow" style="font-size:11px;color:var(--text3)">
+       <span>Reached <b style="color:var(--text2)">${reached}</b> &middot; ${days} days of history</span>
+       <span>${pct.toFixed(1)}% back to Feb 2023${BF.budget?" &middot; "+BF.budget+"/min":""}</span>
+     </div>
+     <div class="bfrow" style="margin-top:8px">
+       <span style="font-size:11px;color:var(--text3)">
+         ${BF.done?'All four pieces done.':`Currently on <b>${esc(piece)}</b> (${BF.tagIndex+1}/${BF.tagCount}), page ${BF.page}`}
+         ${BF.lastRun?' &middot; last slice '+ago(BF.lastRun):''}
+       </span>
+       <span style="display:flex;gap:6px">
+         ${currentUser?`<button class="btn" style="height:26px;padding:0 10px;font-size:11px"
+            onclick="toggleBackfill(${BF.enabled?'false':'true'})">${BF.enabled?'Pause':'Start'}</button>`:''}
+         <button class="btn" style="height:26px;padding:0 10px;font-size:11px" onclick="loadBackfill()">Refresh</button>
+       </span>
+     </div>`;
+}
+async function toggleBackfill(on){
+  if(!getToken()){ toast('Sign in first'); return; }
+  try{
+    const r=await fetch(`${API}/seymour/backfill/toggle`,{method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},
+      body:JSON.stringify({enabled:on})});
+    if(!r.ok){ toast('Could not change backfill'); return; }
+    toast(on?'Backfill started \u2014 it advances every minute':'Backfill paused');
+    loadBackfill();
+  }catch(e){ toast('Network error'); }
+}
+function startBfPolling(){ stopBfPolling(); loadBackfill(); bfTimer=setInterval(loadBackfill,30000); }
+function stopBfPolling(){ if(bfTimer){ clearInterval(bfTimer); bfTimer=null; } }
+
+/* ===== DUPLICATE CHECKER ===== */
+function findDupes(mine,theirs){
+  const mineBy={};
+  for(const p of mine){ (mineBy[p.hex]=mineBy[p.hex]||[]).push(p); }
+  const out=[];
+  const seen=new Set();
+  for(const t of theirs){
+    if(!mineBy[t.hex]) continue;
+    const key=t.hex;
+    if(seen.has(key)) { out.find(o=>o.hex===key).theirs.push(t); continue; }
+    seen.add(key);
+    out.push({hex:key, mine:mineBy[key].slice(), theirs:[t]});
+  }
+  return out.sort((a,b)=>{
+    const ca=classifySeymour(a.hex), cb=classifySeymour(b.hex);
+    return (ca?ca.deltaE:99)-(cb?cb.deltaE:99);
+  });
+}
+function openDupes(){
+  if(!currentUser){ toast('Sign in to compare collections'); return; }
+  const mine=MY_PIECES.length?MY_PIECES:loadMine();
+  if(!mine.length){ toast('Import or sync your own collection first'); return; }
+  const dupes=findDupes(mine,PIECES);
+  const them=viewingIgn||'them';
+  document.getElementById('dpTitle').textContent='Duplicates \u00b7 you vs '+them;
+  document.getElementById('dpBody').innerHTML=
+    `<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+       <div class="stat"><div class="stat-v">${dupes.length}</div><div class="stat-l">Shared hexes</div></div>
+       <div class="stat"><div class="stat-v">${mine.length}</div><div class="stat-l">Your pieces</div></div>
+       <div class="stat"><div class="stat-v">${PIECES.length}</div><div class="stat-l">${esc(them)}'s pieces</div></div>
+     </div>`
+    + (dupes.length
+      ? `<div style="max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:11px">
+         ${dupes.map(d=>{
+           const c=classifySeymour(d.hex);
+           const slotList=a=>a.map(p=>SHORT[p.slot]||p.slot).join(', ');
+           const exactSlot=d.mine.some(m=>d.theirs.some(t=>t.slot===m.slot));
+           return `<div style="padding:11px 13px;border-bottom:1px solid var(--border)">
+             <div style="display:flex;align-items:center;gap:10px">
+               <span class="sw" style="width:26px;height:26px;border-radius:7px;background:#${d.hex}"></span>
+               <div style="flex:1;min-width:0">
+                 <div style="font-family:ui-monospace,monospace;font-size:13px;font-weight:700">#${d.hex}</div>
+                 <div style="font-size:11px;color:var(--text3)">${c?esc(c.label):''}</div>
+               </div>
+               ${c?tierPill(c.deltaE,c.label):''}
+               ${exactSlot?`<span class="tierpill" style="background:rgba(232,85,85,.14);color:var(--red);border:1px solid rgba(232,85,85,.3)">Same slot</span>`:''}
+             </div>
+             <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px">
+               <div style="padding:6px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:7px">
+                 <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3)">You \u00d7${d.mine.length}</div>
+                 <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${esc(slotList(d.mine))}</div>
+               </div>
+               <div style="padding:6px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:7px">
+                 <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3)">${esc(them)} \u00d7${d.theirs.length}</div>
+                 <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${esc(slotList(d.theirs))}</div>
+               </div>
+             </div>
+           </div>`;}).join('')}
+         </div>
+         <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6">
+           Matched on exact hex. <b>Same slot</b> means you both hold that colour in the same armour slot &mdash;
+           the rest are complementary and could complete a set.
+         </div>`
+      : `<div class="empty" style="padding:34px"><div class="empty-i">&#10003;</div>
+           <div class="empty-t">No shared hexes</div>
+           <div class="empty-s">Nothing in ${esc(them)}'s collection matches a colour you already own.</div></div>`);
+  document.getElementById('dpModal').classList.add('open');
+}
+function closeDupes(){ document.getElementById('dpModal').classList.remove('open'); }
+
+/* ===== ALL PIECES ===== */
+let ALLP=[], allOwners=0, allLoaded=false;
+let aQuery='', aTarget=null, aCat='', aSlot='', aSort='deltaE', aDir=1, aPage=1;
+
+async function loadAllPieces(){
+  const wrap=document.getElementById('allWrap');
+  wrap.innerHTML=`<div class="empty"><div class="empty-t">Loading every piece&hellip;</div></div>`;
+  try{
+    const r=await fetch(`${API}/seymour/allpieces`);
+    const d=await r.json();
+    ALLP=refreshMatches((d.pieces||[]).map(p=>({...p,pieceName:PIECE_OF[p.slot]||''})));
+    allOwners=d.owners||0; allLoaded=true;
+  }catch(e){ ALLP=[]; allOwners=0; }
+  aPage=1; renderAllPieces();
+}
+
+function renderAllPieces(){
+  const wrap=document.getElementById('allWrap'); if(!wrap) return;
+  if(!ALLP.length){
+    wrap.innerHTML=`<div class="empty"><div class="empty-i">&#128230;</div>
+      <div class="empty-t">No published pieces yet</div>
+      <div class="empty-s">Once people publish their collections they all show up here.</div></div>`;
+    return;
+  }
+  const ps=filterPieceList(ALLP,{cat:aCat,slot:aSlot,query:aQuery,target:aTarget,sort:aSort,dir:aDir});
+  document.getElementById('allCount').textContent=ps.length+' of '+ALLP.length+' \u00b7 '+allOwners+' collections';
+  if(!ps.length){ wrap.innerHTML=`<div class="empty"><div class="empty-t">No pieces match</div></div>`; return; }
+  const pages=Math.max(1,Math.ceil(ps.length/PER_PAGE));
+  if(aPage>pages) aPage=pages;
+  const from=(aPage-1)*PER_PAGE, to=Math.min(from+PER_PAGE,ps.length);
+  ALL_VIS=ps;
+  wrap.innerHTML=`<div class="pgrid">${ps.slice(from,to).map(p=>allCard(p)).join('')}</div>`
+    + (pages>1?allPagerHTML(aPage,pages):'')
+    + `<div class="pg-info">Showing ${from+1}\u2013${to} of ${ps.length}</div>`;
+}
+let ALL_VIS=[];
+function allCard(p){
+  const b=p.best;
+  return `<div class="pcard" style="cursor:pointer" onclick="openAllPiece('${esc(p.id)}','${esc(p.owner)}')">
+    <div class="pdot" style="background:#${p.hex}"></div>
+    <div class="pinfo">
+      <div class="pslot">${esc(p.slot)}</div>
+      <div class="phex">#${p.hex}</div>
+      ${b?`<div class="pmatch">${esc(b.name)}</div>`:''}
+      <div class="pstat">
+        ${b?tierPill(b.dE,b.name):''}
+        ${b?`<span>&Delta;E ${b.dE.toFixed(2)}</span>`:''}
+        ${p._t!==undefined?`<b style="color:var(--text)">&Delta;E ${p._t.toFixed(2)}</b>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;margin-top:6px;font-size:11px;color:var(--text2)">
+        <img src="${HEAD(p.owner)}" style="width:15px;height:15px;border-radius:3px;image-rendering:pixelated">
+        ${esc(p.ign||p.owner.slice(0,8))}
+      </div>
+    </div>
+  </div>`;
+}
+function allPagerHTML(cur,pages){
+  let out=`<div class="pager"><button class="pg" onclick="allPage(${cur-1})" ${cur<=1?'disabled':''}>\u2039</button>`;
+  const win=new Set([1,pages,cur,cur-1,cur+1]);
+  if(cur<=3)[2,3,4].forEach(n=>win.add(n));
+  if(cur>=pages-2)[pages-1,pages-2,pages-3].forEach(n=>win.add(n));
+  let prev=0;
+  for(const n of [...win].filter(n=>n>=1&&n<=pages).sort((a,b)=>a-b)){
+    if(n-prev>1) out+=`<span class="pg-gap">\u2026</span>`;
+    out+=`<button class="pg${n===cur?' on':''}" onclick="allPage(${n})">${n}</button>`; prev=n;
+  }
+  return out+`<button class="pg" onclick="allPage(${cur+1})" ${cur>=pages?'disabled':''}>\u203A</button></div>`;
+}
+function allPage(n){ aPage=n; renderAllPieces(); window.scrollTo({top:0,behavior:'smooth'}); }
+function openAllPiece(id,owner){
+  const p=ALL_VIS.find(x=>x.id===id&&x.owner===owner); if(!p) return;
+  const saved=PIECES; PIECES=[p]; openPiece(id); PIECES=saved;
+  const t=document.getElementById('pdTitle');
+  if(t) t.textContent=p.slot+'  \u00b7  #'+p.hex+'  \u00b7  '+(p.ign||owner.slice(0,8));
+}
+function renderAllTargetList(q){
+  const dd=document.getElementById('aTgtDD'); if(!dd) return;
+  const ql=(q||'').trim();
+  if(!ql){ dd.style.display='none'; if(aTarget){aTarget=null;renderAllPieces();} return; }
+  const hx=normHex(ql); let items=[];
+  if(hx) items.push({name:'Search hex #'+hx,hex:hx});
+  const low=ql.toLowerCase();
+  for(const n in SEYMOUR_COLORS){ if(n.toLowerCase().includes(low)){ items.push({name:n,hex:SEYMOUR_COLORS[n]}); if(items.length>=40) break; } }
+  if(!items.length){ dd.style.display='none'; return; }
+  dd.innerHTML=items.map(it=>`<div class="dd-item" onmousedown="pickAllTarget('${it.hex}','${esc(it.name).replace(/'/g,'&#39;')}')">`+
+    `<span class="sw" style="background:#${it.hex}"></span><span>${esc(it.name)}</span></div>`).join('');
+  dd.style.display='block';
+}
+function pickAllTarget(hex,name){
+  aTarget=hex; aPage=1;
+  const i=document.getElementById('aTgtIn'); if(i) i.value=name.replace(/^Search hex /,'');
+  document.getElementById('aTgtDD').style.display='none'; renderAllPieces();
+}
 
 /* ===== THEME + INIT ===== */
 function setTheme(t){

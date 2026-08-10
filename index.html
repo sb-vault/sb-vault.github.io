@@ -50,9 +50,9 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .disc-badge{background:rgba(232,85,85,.15);color:var(--red);border:1px solid rgba(232,85,85,.3);border-radius:4px;font-size:9px;font-weight:700;padding:1px 4px}
 .user-drop{position:absolute;right:0;top:calc(100% + 6px);background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:6px;width:190px;box-shadow:0 8px 32px rgba(0,0,0,.35);z-index:200;display:none}
 .user-pill.open .user-drop{display:block;animation:fadeIn .12s ease}
-.dd{display:block;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--text2);cursor:pointer;transition:background .12s;border:none;background:transparent;width:100%;text-align:left}
-.dd:hover{background:var(--bg3);color:var(--text)}
-.dd.red{color:var(--red)}
+.umi{display:block;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--text2);cursor:pointer;transition:background .12s;border:none;background:transparent;width:100%;text-align:left}
+.umi:hover{background:var(--bg3);color:var(--text)}
+.umi.red{color:var(--red)}
 .dd-sep{height:1px;background:var(--border);margin:4px 0}
 
 /* Chat badge */
@@ -462,6 +462,13 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
           <option value="Boots">Oxford Shoes</option>
         </select>
       </div>
+      <div class="selwrap">
+        <select class="fsel" onchange="aFade=this.value;aPage=1;renderAllPieces()">
+          <option value="">All types</option>
+          <option value="nonfade">Non-fade only</option>
+          <option value="fade">Fade only</option>
+        </select>
+      </div>
       <button class="btn" style="height:32px" onclick="loadAllPieces()">Refresh</button>
       <span id="allCount" style="font-size:11.5px;color:var(--text3);margin-left:auto"></span>
     </div>
@@ -478,9 +485,9 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
           <option value="slot">By piece</option>
         </select>
       </div>
-      <input class="fin" style="width:150px" placeholder="Search hex / player / uid" oninput="sQuery=this.value;sPage=1;renderSales()">
+      <input class="fin" style="width:150px" placeholder="Search hex (2x2x2x) / player" oninput="sQuery=this.value;sPage=1;renderSales()">
       <div class="selwrap" style="position:relative">
-        <input class="fin" id="sTgtIn" style="width:180px" placeholder="Search colour / hex" autocomplete="off"
+        <input class="fin" id="sTgtIn" style="width:180px" placeholder="Search colour" autocomplete="off"
                oninput="renderSalesTargetList(this.value)" onfocus="renderSalesTargetList(this.value)"
                onblur="setTimeout(()=>document.getElementById('sTgtDD').style.display='none',200)">
         <div class="dd" id="sTgtDD"></div>
@@ -530,9 +537,9 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
           <option value="slot">By Slot</option>
         </select>
       </div>
-      <input class="fin" style="width:150px" placeholder="Search" oninput="cQuery=this.value;cPage=1;renderCollection()">
+      <input class="fin" style="width:150px" placeholder="Search hex (2x2x2x)" oninput="cQuery=this.value;cPage=1;renderCollection()">
       <div class="selwrap" style="position:relative">
-        <input class="fin" id="tgtIn" style="width:190px" placeholder="Search colour / hex" autocomplete="off"
+        <input class="fin" id="tgtIn" style="width:190px" placeholder="Search colour" autocomplete="off"
                oninput="renderTargetList(this.value)" onfocus="renderTargetList(this.value)"
                onblur="setTimeout(()=>document.getElementById('tgtDD').style.display='none',200)">
         <div class="dd" id="tgtDD"></div>
@@ -1557,6 +1564,15 @@ function refreshMatches(list){
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 let _tt;
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('on'),2200);}
+/* Wildcard hex pattern: x (or *) matches any digit.  e.g. 2x2x2x, 333xxx, ffxx3a */
+function hexPattern(q){
+  const s=(q||'').replace('#','').trim().toUpperCase();
+  if(s.length!==6) return null;
+  if(!/^[0-9A-FX*]{6}$/.test(s)) return null;
+  if(!/[X*]/.test(s)) return null;                 // no wildcard -> not a pattern
+  return new RegExp('^'+s.replace(/[X*]/g,'[0-9A-F]')+'$');
+}
+function matchesPattern(hex,re){ return re.test((hex||'').toUpperCase()); }
 function normHex(h){ h=(h||'').replace('#','').trim().toUpperCase(); return /^[0-9A-F]{6}$/.test(h)?h:null; }
 function ago(ts){const d=Date.now()-ts;const m=6e4,h=36e5,dy=864e5;
   if(d<m)return'just now'; if(d<h)return Math.floor(d/m)+'m ago'; if(d<dy)return Math.floor(d/h)+'h ago';
@@ -1611,6 +1627,7 @@ function clearCollection(){
 /* ===== VIEWS ===== */
 function showView(v){
   view=v;
+  try{ localStorage.setItem('seyView',v); }catch(e){}
   const isBrowse = v==='browse', isSales = v==='sales', isAll = v==='all';
   const aside = isBrowse||isSales||isAll;
   document.getElementById('view-browse').style.display = isBrowse?'block':'none';
@@ -1672,8 +1689,15 @@ function filterPieceList(src,st){
   if(st.cat)  ps=ps.filter(p=>p.cat===st.cat);
   if(st.slot) ps=ps.filter(p=>p.slot===st.slot);
   if(st.owner) ps=ps.filter(p=>p.owner===st.owner);
+  if(st.fade==='fade')    ps=ps.filter(p=>p.best&&isFadeName(p.best.name));
+  if(st.fade==='nonfade') ps=ps.filter(p=>p.best&&!isFadeName(p.best.name));
   const q=(st.query||'').trim(), qHex=normHex(q);
-  if(q && !st.target && !qHex){
+  const qPat=hexPattern(q);
+  if(qPat){
+    ps=ps.filter(p=>matchesPattern(p.hex,qPat));
+    if(!st.target) return ps.sort((a,b)=>(a.best?a.best.dE:99)-(b.best?b.best.dE:99));
+  }
+  if(q && !st.target && !qHex && !qPat){
     const ql=q.toLowerCase();
     ps=ps.filter(p=>p.hex.toLowerCase().includes(ql)
       || (p.best&&p.best.name.toLowerCase().includes(ql))
@@ -1702,21 +1726,22 @@ function filteredPieces(){
 
 function pieceCard(p,opts={}){
   const b=p.best;
-  const t=b?tierOf(b.dE):3;
-  const tgt = opts.target;
-  let extra='';
-  if(tgt&&p._t!==undefined){
-    extra=`<span style="font-weight:700;color:var(--text);font-size:11px">&Delta;E ${p._t.toFixed(2)}</span>`;
-  }
+  const tgt=opts.target;
+  const searching = tgt && p._t!==undefined;
+  const showDE   = searching ? p._t : (b?b.dE:99);
+  const showName = searching ? (opts.targetName||('#'+tgt)) : (b?b.name:'');
+  const extra = searching && b
+    ? `<span style="color:var(--text3)">own &Delta;E ${b.dE.toFixed(2)}</span>` : '';
   return `<div class="pcard" style="cursor:pointer" onclick="openPiece('${esc(p.id)}')">
     <div class="pdot" style="background:#${p.hex}"></div>
     <div class="pinfo">
       <div class="pslot">${esc(p.slot)}</div>
       <div class="phex">#${p.hex}</div>
-      ${b?`<div class="pmatch">${esc(b.name)}</div>`:''}
+      ${showName?`<div class="pmatch">${esc(showName)}</div>`:''}
       <div class="pstat">
-        ${b?tierPill(b.dE,b.name):''}
-        ${b?`<span>&Delta;E ${b.dE.toFixed(2)}</span><span>Abs ${b.abs}</span>`:''}
+        ${tierPill(showDE,showName)}
+        <span>&Delta;E ${showDE.toFixed(2)}</span>
+        ${!searching&&b?`<span>Abs ${b.abs}</span>`:''}
         ${extra}
         <span style="margin-left:auto;opacity:.7">${esc(p.cat)}</span>
       </div>
@@ -1839,7 +1864,7 @@ function openPiece(id){
      ${ms.length?`<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;max-height:390px;overflow-y:auto">
        ${ms.map(m=>{const t=tierOf(m.dE);return `<div class="dd-item" style="cursor:default">
          <span class="sw" style="background:#${m.hex}"></span>
-         <span style="flex:1;min-width:0;font-size:12.5px">${esc(m.name)}</span>
+         <span style="flex:1;min-width:0;font-size:12.5px">${esc(m.name)} <span style="color:var(--text3);font-family:ui-monospace,monospace;font-size:10.5px">#${m.hex}</span></span>
          ${tierPill(m.dE,m.name)}
          <span style="font-size:11px;color:var(--text2);font-variant-numeric:tabular-nums;min-width:66px;text-align:right">&Delta;E ${m.dE.toFixed(3)}</span>
          <span style="font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums;min-width:52px;text-align:right">Abs ${m.abs}</span>
@@ -2253,12 +2278,12 @@ function setUser(u){
        <img class="user-avatar" src="${HEAD(u.uuid)}" alt="">
        <span class="user-ign">${esc(u.username)}</span>
        <div class="user-drop">
-         <button class="dd" onclick="openMine()">My Collection</button>
-         <button class="dd" onclick="openDiscord()">Edit Discord</button>
-         <button class="dd" onclick="publishCollection()">Publish collection</button>
-         <button class="dd red" onclick="unpublishCollection()">Unpublish</button>
+         <button class="umi" onclick="openMine()">My Collection</button>
+         <button class="umi" onclick="openDiscord()">Edit Discord</button>
+         <button class="umi" onclick="publishCollection()">Publish collection</button>
+         <button class="umi red" onclick="unpublishCollection()">Unpublish</button>
          <div class="dd-sep"></div>
-         <button class="dd red" onclick="logout()">Log out</button>
+         <button class="umi red" onclick="logout()">Log out</button>
        </div>
      </div>`;
   if(!viewingUuid) viewingUuid=u.uuid;
@@ -2323,14 +2348,16 @@ function renderBrowse(){
   }
   wrap.innerHTML=`<div class="pgrid" style="grid-template-columns:repeat(auto-fill,minmax(250px,1fr))">${
     list.map(c=>{
-      const top=Object.entries(c.cats||{}).sort((a,b)=>b[1]-a[1]).slice(0,4);
+      const ti=c.tiers||{t0:0,t1:0,t2:0};
+      const pill=(lbl,n,col)=>`<span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:5px;
+        background:${col}22;border:1px solid ${col}55;color:${col}">${n} ${lbl}</span>`;
       return `<div class="pcard" style="cursor:pointer;align-items:center" onclick="openCollection('${esc(c.uuid)}','${esc(c.ign)}')">
         <img src="${HEAD(c.uuid)}" style="width:40px;height:40px;border-radius:9px;image-rendering:pixelated;flex-shrink:0" alt="">
         <div class="pinfo">
           <div style="font-size:13.5px;font-weight:700;color:var(--text)">${esc(c.ign||c.uuid.slice(0,8))}</div>
           <div style="font-size:11px;color:var(--text3);margin-bottom:5px">${c.count} pieces &middot; ${c.sets} sets${c.discord?` &middot; <span style="color:#8b9bf4">@${esc(c.discord)}</span>`:''}</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">${
-            top.map(([k,v])=>`<span style="font-size:9.5px;padding:2px 6px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);color:var(--text3)">${v} ${esc(k)}</span>`).join('')}</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            ${pill('T0',ti.t0,'#4ecb71')}${pill('T1',ti.t1,'#5ab4ff')}${pill('T2',ti.t2,'#f0c060')}</div>
         </div>
       </div>`;}).join('')}</div>`;
 }
@@ -2404,6 +2431,7 @@ function renderOwnerBar(){
       </div>
     </div>
     ${!isOwn&&currentUser?`<button class="btn btn-p" onclick="openDupes()">Check dupes</button>`:''}
+    <button class="btn" onclick="exportCollection()" title="Download as collection.json">Download</button>
     ${!isOwn?`<button class="btn" onclick="openMine()">Back to mine</button>`:''}`;
 }
 
@@ -2467,8 +2495,9 @@ function filteredSales(){
   let ss=SALES.slice();
   if(sCat)  ss=ss.filter(s=>catOf((classifySeymour(s.hex)||{}).label||'',s.hex)===sCat);
   if(sSlot) ss=ss.filter(s=>SLOT_OF_TAG[s.item_id]===sSlot);
-  const q=sQuery.trim(), qHex=normHex(q);
-  if(q && !sTarget && !qHex){
+  const q=sQuery.trim(), qHex=normHex(q), qPat=hexPattern(q);
+  if(qPat) ss=ss.filter(s=>matchesPattern(s.hex,qPat));
+  if(q && !sTarget && !qHex && !qPat){
     const ql=q.toLowerCase();
     ss=ss.filter(s=>s.hex.toLowerCase().includes(ql)
       || (s.item_uid||'').toLowerCase().includes(ql)
@@ -2647,7 +2676,8 @@ function pickSalesTarget(hex,name){
   const i=document.getElementById('sTgtIn'); if(i) i.value=name.replace(/^Search hex /,'');
   document.getElementById('sTgtDD').style.display='none'; renderSales();
 }
-function salesForHex(hex){ sTarget=null; sQuery=hex; sPage=1; showView('sales');
+function salesForHex(hex){ sTarget=hex; sQuery=''; sPage=1; showView('sales');
+  const _i=document.getElementById('sTgtIn'); if(_i) _i.value='#'+hex;
   if(!SALES.length) loadSales(); else renderSales(); }
 
 
@@ -2702,8 +2732,39 @@ async function toggleBackfill(on){
     loadBackfill();
   }catch(e){ toast('Network error'); }
 }
-function startBfPolling(){ stopBfPolling(); loadBackfill(); bfTimer=setInterval(loadBackfill,30000); }
+function startBfPolling(){ stopBfPolling(); loadBackfill();
+  bfTimer=setInterval(()=>{ loadBackfill(); loadSales(); },30000); }
 function stopBfPolling(){ if(bfTimer){ clearInterval(bfTimer); bfTimer=null; } }
+
+/* ===== EXPORT ===== */
+function exportCollection(){
+  const src=PIECES;
+  if(!src.length){ toast('Nothing to export'); return; }
+  const out={};
+  for(const p of src){
+    const id=p.id||(p.hex+'-'+p.slot);
+    const ms=matchesFor(p.hex,999).slice(0,3);
+    out[id]={
+      uuid:id,
+      pieceName:p.pieceName||PIECE_OF[p.slot]||'',
+      hexcode:p.hex,
+      chestLocation:p.loc||null,
+      bestMatch: p.best?{colorName:p.best.name,targetHex:p.best.hex,
+        deltaE:p.best.dE,absoluteDistance:p.best.abs,tier:tierOf(p.best.dE)}:null,
+      allMatches: ms.map(m=>({colorName:m.name,targetHex:m.hex,deltaE:m.dE,
+        absoluteDistance:m.abs,tier:tierOf(m.dE),isCustom:false,isFade:isFadeName(m.name)})),
+      timestamp:p.ts||Date.now()
+    };
+  }
+  const who=isOwn?(currentUser?currentUser.username:'my'):(viewingIgn||'collection');
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=who.replace(/[^\w.-]/g,'')+'-collection.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+  toast('Downloaded '+src.length+' pieces');
+}
 
 /* ===== DUPLICATE CHECKER ===== */
 function findDupes(mine,theirs){
@@ -2777,6 +2838,7 @@ function closeDupes(){ document.getElementById('dpModal').classList.remove('open
 
 /* ===== ALL PIECES ===== */
 let ALLP=[], allOwners=0, allLoaded=false;
+let aFade='';
 let aQuery='', aTarget=null, aCat='', aSlot='', aSort='deltaE', aDir=1, aPage=1;
 
 async function loadAllPieces(){
@@ -2799,7 +2861,7 @@ function renderAllPieces(){
       <div class="empty-s">Once people publish their collections they all show up here.</div></div>`;
     return;
   }
-  const ps=filterPieceList(ALLP,{cat:aCat,slot:aSlot,query:aQuery,target:aTarget,sort:aSort,dir:aDir});
+  const ps=filterPieceList(ALLP,{cat:aCat,slot:aSlot,query:aQuery,target:aTarget,sort:aSort,dir:aDir,fade:aFade});
   document.getElementById('allCount').textContent=ps.length+' of '+ALLP.length+' \u00b7 '+allOwners+' collections';
   if(!ps.length){ wrap.innerHTML=`<div class="empty"><div class="empty-t">No pieces match</div></div>`; return; }
   const pages=Math.max(1,Math.ceil(ps.length/PER_PAGE));
@@ -2900,7 +2962,10 @@ if(_u && (!currentUser || currentUser.uuid!==_u)){
   if(currentUser){ viewingUuid=currentUser.uuid; viewingIgn=currentUser.username;
                    viewingDiscord=currentUser.discord||''; }
   isOwn=true;
-  showView('collection');
+  let startView='browse';
+  try{ startView=localStorage.getItem('seyView')||'browse'; }catch(e){}
+  if(!['browse','sales','allpieces','collection','favourites','best'].includes(startView)) startView='browse';
+  showView(startView);
   syncFromCloud();
 }
 loadBrowse();

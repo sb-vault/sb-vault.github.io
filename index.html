@@ -315,14 +315,14 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .chip.on{background:var(--text);border-color:var(--text);color:var(--bg);font-weight:600}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:10px}
 .pcard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;gap:11px;align-items:flex-start;transition:border-color .15s;position:relative}
-.pcard:hover{border-color:var(--text3)}
+.pcard:hover{border-color:var(--text3);background:var(--bg3)}
 .pdot{width:40px;height:40px;border-radius:9px;border:1px solid var(--border);flex-shrink:0}
 .pinfo{flex:1;min-width:0}
 .pslot{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:2px}
 .phex{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:5px}
 .pmatch{font-size:11.5px;color:var(--text2);line-height:1.35;margin-bottom:4px;overflow-wrap:anywhere}
 .pstat{display:flex;gap:7px;font-size:10.5px;color:var(--text3);font-variant-numeric:tabular-nums;flex-wrap:wrap;align-items:center}
-.tierpill{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:5px}
+.tierpill{font-size:8.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:5px;white-space:nowrap;flex-shrink:0}
 .tx{background:rgba(78,203,113,.28);color:var(--green);border:1px solid rgba(78,203,113,.55);font-weight:800}
 .t0{background:rgba(78,203,113,.16);color:var(--green);border:1px solid rgba(78,203,113,.3)}
 .t1{background:rgba(90,180,255,.16);color:#5ab4ff;border:1px solid rgba(90,180,255,.3)}
@@ -392,26 +392,37 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
 .bfdot.off{background:var(--text3)}
 
 /* ---- consistent piece card ---- */
-.pcard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:0;
-  display:flex;flex-direction:column;height:118px;overflow:hidden;transition:border-color .15s;position:relative}
-.pcard:hover{border-color:var(--text3)}
-.pc-top{display:flex;align-items:flex-start;gap:10px;padding:10px 11px 0;flex:1;min-height:0}
-.pc-dot{width:38px;height:38px;border-radius:9px;border:1px solid var(--border);flex-shrink:0}
+.pcard{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:0;
+  display:flex;flex-direction:column;height:96px;overflow:hidden;transition:border-color .15s,background .15s;position:relative}
+.pcard:hover{border-color:var(--text3);background:var(--bg3)}
+.pc-top{display:flex;align-items:center;gap:9px;padding:9px 10px 0;flex:1;min-height:0}
+.pc-dot{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);flex-shrink:0}
 .pc-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
-.pc-hex{font-family:ui-monospace,Menlo,monospace;font-size:13px;font-weight:700;color:var(--text);line-height:1.2}
+.pc-hex{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;font-weight:700;color:var(--text);line-height:1.15;letter-spacing:-.01em}
 .pc-slot{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)}
-.pc-match{font-size:11.5px;color:var(--text2);line-height:1.3;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;margin-top:2px}
+.pc-match{font-size:11px;color:var(--text2);line-height:1.25;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;margin-top:1px}
 .pc-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;max-width:42%}
 .pc-owner{font-size:10.5px;font-weight:600;color:var(--text2);overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;max-width:100%}
 .pc-cat{font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);
   background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:2px 6px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
-.pc-bot{display:flex;align-items:center;gap:7px;padding:7px 11px;border-top:1px solid var(--border);
-  background:var(--bg3);font-size:10.5px;color:var(--text3);font-variant-numeric:tabular-nums;flex-shrink:0}
+.pc-bot{display:flex;align-items:center;gap:6px;padding:5px 10px;border-top:1px solid var(--border);
+  font-size:10px;color:var(--text3);font-variant-numeric:tabular-nums;flex-shrink:0}
 .pc-bot .sp{margin-left:auto}
-.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(262px,1fr));gap:10px;align-items:start}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;align-items:start}
+
+/* ---- sales row ---- */
+.srow-g{display:grid;grid-template-columns:22px 74px 108px minmax(0,1fr) auto 108px 74px 62px;
+  gap:9px;align-items:center;padding:7px 11px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .12s;font-size:11.5px}
+.srow-g:last-child{border-bottom:none}
+.srow-g:hover{background:var(--bg3)}
+.srow-g .ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.srow-g .num{text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:900px){.srow-g{grid-template-columns:22px 70px minmax(0,1fr) auto 70px;}
+  .srow-g .hide-sm{display:none}}
 </style>
 </head>
 <body>
@@ -1677,9 +1688,8 @@ function renderCollection(){
       <button class="btn btn-p" onclick="syncFromCloud(true)">Or pull my collection from my account</button></div>`:'');
     wireDrop(); return; }
   const ps=filteredPieces();
-  const fb=document.getElementById('colFilters');
-  fb.style.display='';
-  fb.innerHTML=filterBar({p:'c',re:'cPage=1;renderCollection()',sort:cSort,dir:cDir,query:cQuery,
+  document.getElementById('colFilters').style.display='';
+  mountBar('colFilters',{p:'c',re:'cPage=1;renderCollection()',sort:cSort,dir:cDir,query:cQuery,
     cat:cCat,slot:cSlot,fade:cFade,count:ps.length+' of '+PIECES.length,
     extra:'<button class="btn btn-d owner-only" style="height:32px" onclick="clearCollection()">Clear all</button>'});
   applyOwnerVis();
@@ -1743,6 +1753,16 @@ function clearTarget(){ cTarget=null; const i=document.getElementById('tgtIn'); 
 
 /* ===== SHARED FILTER BAR =====
    Every browsing view uses this so the controls never drift apart. */
+function mountBar(id,o){
+  const el=document.getElementById(id); if(!el) return;
+  if(el.dataset.built==='1'){
+    const c=document.getElementById(o.p+'Count');
+    if(c) c.textContent=o.count||'';
+    return;                       // never re-innerHTML: that would kill input focus
+  }
+  el.innerHTML=filterBar(o);
+  el.dataset.built='1';
+}
 function filterBar(o){
   const sortOpts=(o.sorts||[['deltaE','By \u0394E'],['newest','Newest'],['name','A\u2013Z'],['slot','By piece']])
     .map(([v,l])=>`<option value="${v}"${o.sort===v?' selected':''}>${l}</option>`).join('');
@@ -2463,7 +2483,7 @@ async function saveDiscord(){
 const SLOT_OF_TAG={VELVET_TOP_HAT:'Helmet',CASHMERE_JACKET:'Chestplate',SATIN_TROUSERS:'Leggings',OXFORD_SHOES:'Boots'};
 const TAG_OF_SLOT={Helmet:'VELVET_TOP_HAT',Chestplate:'CASHMERE_JACKET',Leggings:'SATIN_TROUSERS',Boots:'OXFORD_SHOES'};
 let SALES=[], salesTracked=0, salesStarted=null, salesEarliest=null;
-let sQuery='', sTarget=null, sCat='', sSlot='', sSort='deltaE', sDir=1, sPage=1, sFade='';
+let sQuery='', sTarget=null, sCat='', sSlot='', sSort='newest', sDir=1, sPage=1, sFade='';
 
 function fmtCoins(n){
   if(n>=1e9) return (n/1e9).toFixed(2).replace(/\.?0+$/,'')+'b';
@@ -2529,19 +2549,22 @@ function saleRow(s,i){
   const c=classifySeymour(s.hex);
   const resold=(s.chain_len||0)>1;
   const isLatest=resold && s.sold_at===s.last_sold;
-  return `<div class="dd-item" style="cursor:pointer" onclick="openSale(${i})">
+  const seller=s.seller_name||nameOf(s.seller)||shortU(s.seller);
+  return `<div class="srow-g" onclick="openSale(${i})">
     <span class="sw" style="width:20px;height:20px;background:#${s.hex}"></span>
-    <span style="font-family:ui-monospace,monospace;font-size:12px;min-width:62px">#${s.hex}</span>
-    <span style="font-size:11.5px;color:var(--text2);min-width:98px">${esc(PIECE_OF[SLOT_OF_TAG[s.item_id]]||s.item_id)}</span>
-    <span style="font-size:11px;color:var(--text3);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-      ${c?tierPill(c.deltaE,c.label)+' '+esc(c.label):''}
-      ${s._t!==undefined?`<b style="color:var(--text)">&Delta;E ${s._t.toFixed(2)}</b>`:''}</span>
-    ${resold?`<span class="tierpill" style="background:rgba(139,155,244,.16);color:#8b9bf4;border:1px solid rgba(139,155,244,.35)">${isLatest?'Resold '+s.chain_len+'\u00d7':'Resold'}</span>`:''}
-    <span style="font-size:10.5px;color:var(--text3);min-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-      ${esc(s.seller_name||nameOf(s.seller)||shortU(s.seller))}</span>
-    <span style="font-size:10px;color:var(--text3);min-width:44px">${s.bin?'BIN':'Auction'}</span>
-    <span style="font-weight:700;font-size:12.5px;min-width:72px;text-align:right;font-variant-numeric:tabular-nums">${fmtCoins(s.price)}</span>
-    <span style="font-size:10.5px;color:var(--text3);min-width:62px;text-align:right">${ago(s.sold_at)}</span>
+    <span style="font-family:ui-monospace,monospace;font-weight:600">#${s.hex}</span>
+    <span class="ell hide-sm" style="color:var(--text2)">${esc(PIECE_OF[SLOT_OF_TAG[s.item_id]]||s.item_id)}</span>
+    <span class="ell" style="color:var(--text3)">${c?esc(c.label):''}${
+      s._t!==undefined?` <b style="color:var(--text)">\u0394E ${s._t.toFixed(2)}</b>`:
+      (c?` <span style="opacity:.7">\u0394E ${c.deltaE.toFixed(2)}</span>`:'')}</span>
+    <span style="display:flex;gap:5px;align-items:center">
+      ${c?tierPill(c.deltaE,c.label):''}
+      ${resold?`<span class="tierpill" style="background:rgba(139,155,244,.16);color:#8b9bf4;
+        border:1px solid rgba(139,155,244,.35)">${isLatest?'Resold '+s.chain_len+'\u00d7':'Resold'}</span>`:''}
+    </span>
+    <span class="ell hide-sm" style="color:var(--text3)">${esc(seller)}</span>
+    <span class="num" style="font-weight:700;font-size:12.5px;color:var(--text)">${fmtCoins(s.price)}</span>
+    <span class="num hide-sm" style="color:var(--text3);font-size:10.5px">${ago(s.sold_at)}</span>
   </div>`;
 }
 
@@ -2559,10 +2582,9 @@ function renderSales(){
     return;
   }
   const ss=filteredSales();
-  const sf=document.getElementById('salesFilters');
-  if(sf) sf.innerHTML=filterBar({p:'s',re:'sPage=1;renderSales()',sort:sSort,dir:sDir,query:sQuery,
+  mountBar('salesFilters',{p:'s',re:'sPage=1;renderSales()',sort:sSort,dir:sDir,query:sQuery,
     cat:sCat,slot:sSlot,fade:sFade,count:ss.length+' of '+SALES.length,
-    sorts:[['deltaE','By \u0394E'],['newest','Newest'],['price','By price'],['name','A\u2013Z'],['slot','By piece']],
+    sorts:[['newest','Newest'],['deltaE','By \u0394E'],['price','By price'],['name','A\u2013Z'],['slot','By piece']],
     extra:'<button class="btn" style="height:32px" onclick="loadSales()">Refresh</button>'});
   if(!ss.length){ wrap.innerHTML=`<div class="empty"><div class="empty-t">No sales match</div></div>`; return; }
   const prices=ss.map(x=>x.price).slice().sort((a,b)=>a-b);
@@ -2580,7 +2602,7 @@ function renderSales(){
       <div class="stat"><div class="stat-v">${fmtCoins(prices[prices.length-1])}</div><div class="stat-l">Highest</div></div>
       <div class="stat"><div class="stat-v">${fmtCoins(prices[0])}</div><div class="stat-l">Lowest</div></div>
      </div>
-     <div style="border:1px solid var(--border);border-radius:11px;overflow:hidden">
+     <div style="border:1px solid var(--border);border-radius:11px;overflow:hidden;background:var(--bg2)">
      ${ss.slice(from,to).map((s,j)=>saleRow(s,from+j)).join('')}</div>`
     + (pages>1?salesPagerHTML(sPage,pages):'')
     + `<div class="pg-info">Showing ${from+1}\u2013${to} of ${ss.length}</div>`;
@@ -2739,8 +2761,8 @@ function renderBackfill(){
   el.innerHTML=
     `<div class="bfrow">
        <div style="font-size:12.5px;font-weight:600">
-         <span class="bfdot ${BF.enabled&&!BF.done?'on':'off'}"></span>
-         ${BF.done?'Backfill complete':(BF.enabled?'Walking back through history':'Backfill paused')}
+         <span class="bfdot ${BF.done?'off':'on'}"></span>
+         ${BF.done?'Backfill complete':'Walking back through history'}
        </div>
        <div style="font-size:11.5px;color:var(--text3)">${BF.totalSales} sales archived</div>
      </div>
@@ -2753,10 +2775,11 @@ function renderBackfill(){
        <span style="font-size:11px;color:var(--text3)">
          ${BF.done?'All four pieces done.':`Currently on <b>${esc(piece)}</b> (${BF.tagIndex+1}/${BF.tagCount}), page ${BF.page}`}
          ${BF.lastRun?' &middot; last slice '+ago(BF.lastRun):''}
+         ${BF.lastResult?`<br><span style="opacity:.8">Last slice: listed ${BF.lastResult.listed??'?'},
+           fetched ${BF.lastResult.newFetched??0}, stored <b style="color:var(--text2)">${BF.lastResult.stored??0}</b>${
+           BF.lastResult.skippedNoColour?`, <span style="color:#f0c060">${BF.lastResult.skippedNoColour} unreadable</span>`:''}</span>`:''}
        </span>
        <span style="display:flex;gap:6px">
-         ${currentUser?`<button class="btn" style="height:26px;padding:0 10px;font-size:11px"
-            onclick="toggleBackfill(${BF.enabled?'false':'true'})">${BF.enabled?'Pause':'Start'}</button>`:''}
          <button class="btn" style="height:26px;padding:0 10px;font-size:11px" onclick="loadBackfill()">Refresh</button>
        </span>
      </div>`;
@@ -2917,8 +2940,7 @@ function renderAllPieces(){
     return;
   }
   const ps=filterPieceList(ALLP,{cat:aCat,slot:aSlot,query:aQuery,target:aTarget,sort:aSort,dir:aDir,fade:aFade});
-  const af=document.getElementById('allFilters');
-  if(af) af.innerHTML=filterBar({p:'a',re:'aPage=1;renderAllPieces()',sort:aSort,dir:aDir,query:aQuery,
+  mountBar('allFilters',{p:'a',re:'aPage=1;renderAllPieces()',sort:aSort,dir:aDir,query:aQuery,
     cat:aCat,slot:aSlot,fade:aFade,count:ps.length+' of '+ALLP.length,
     sorts:[['deltaE','By \u0394E'],['newest','Newest'],['name','A\u2013Z'],['slot','By piece'],['owner','By player']],
     extra:'<button class="btn" style="height:32px" onclick="loadAllPieces()">Refresh</button>'});

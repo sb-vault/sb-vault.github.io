@@ -2975,12 +2975,42 @@ let aQuery='', aTarget=null, aCat='', aSlot='', aSort='deltaE', aDir=1, aPage=1;
 async function loadAllPieces(){
   const wrap=document.getElementById('allWrap');
   wrap.innerHTML=`<div class="empty"><div class="empty-t">Loading every piece&hellip;</div></div>`;
+  let raw=[];
   try{
     const r=await fetch(`${API}/seymour/allpieces`);
+    if(!r.ok){
+      wrap.innerHTML=`<div class="empty"><div class="empty-i">&#9888;</div>
+        <div class="empty-t">Could not load pieces</div>
+        <div class="empty-s">Server said ${r.status}. If this is 404 the worker needs redeploying.</div></div>`;
+      return;
+    }
     const d=await r.json();
-    ALLP=refreshMatches((d.pieces||[]).map(p=>({...p,pieceName:PIECE_OF[p.slot]||''})));
-    allOwners=d.owners||0; allLoaded=true;
-  }catch(e){ ALLP=[]; allOwners=0; }
+    raw=(d.pieces||[]).map(p=>({...p,pieceName:PIECE_OF[p.slot]||''}));
+    allOwners=d.owners||0;
+  }catch(e){
+    wrap.innerHTML=`<div class="empty"><div class="empty-i">&#9888;</div>
+      <div class="empty-t">Could not reach the server</div>
+      <div class="empty-s">${esc(String(e.message||e))}</div></div>`;
+    return;
+  }
+  // Classify in chunks so the tab never locks up. The worker already stores a
+  // best match per piece, so only ones missing it need computing.
+  ALLP=[];
+  const CHUNK=400;
+  for(let i=0;i<raw.length;i+=CHUNK){
+    const part=raw.slice(i,i+CHUNK);
+    for(const p of part){
+      if(!p.best || typeof p.best.dE!=='number'){ refreshMatches([p]); }
+      else { p.hex=(p.hex||'').toUpperCase(); p.cat=p.cat||catOf(p.best.name,p.hex); }
+    }
+    ALLP.push(...part);
+    if(i+CHUNK<raw.length){
+      wrap.innerHTML=`<div class="empty"><div class="empty-t">Loading every piece&hellip;</div>
+        <div class="empty-s">${ALLP.length} of ${raw.length}</div></div>`;
+      await new Promise(r=>setTimeout(r,0));   // yield to the browser
+    }
+  }
+  allLoaded=true;
   aPage=1; renderAllPieces();
 }
 

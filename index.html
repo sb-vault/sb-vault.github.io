@@ -1456,6 +1456,7 @@ let PIECES=[];           // {id,slot,pieceName,hex,best,matches,ts,loc}
 let FAVSETS=[];          // {id,name,pieces:{Helmet:hex,...},ts}
 let view='collection';
 const PER_PAGE=100;
+const SALES_PER_PAGE=250;
 let cPage=1;
 let cSort='deltaE', cDir=1, cCat='', cSlot='', cQuery='', cTarget=null;
 let bSlots=new Set(['Helmet','Chestplate','Leggings','Boots']);
@@ -1883,7 +1884,7 @@ function matchesFor(hex,cutoff){
 function openPiece(id){
   const p=PIECES.find(x=>x.id===id); if(!p) return;
   const ms=matchesFor(p.hex,5);
-  document.getElementById('pdTitle').textContent=p.slot+'  \u00b7  #'+p.hex;
+  {const _e=document.getElementById('pdTitle'); if(_e) _e.textContent=p.slot+'  \u00b7  #'+p.hex;}
   document.getElementById('pdBody').innerHTML=
     `<div style="display:flex;gap:14px;align-items:center;margin-bottom:16px">
        <div style="width:64px;height:64px;border-radius:12px;border:1px solid var(--border);background:#${p.hex};flex-shrink:0"></div>
@@ -1979,7 +1980,7 @@ function openBuilder(id){
   if(id){ const s=FAVSETS.find(x=>x.id===id); fbSet={...{Helmet:null,Chestplate:null,Leggings:null,Boots:null},...(s?s.pieces:{})}; fbName=s?s.name:''; }
   else { fbSet={Helmet:null,Chestplate:null,Leggings:null,Boots:null}; fbName=''; }
   document.getElementById('fbName').value=fbName;
-  document.getElementById('fbTitle').textContent=id?'Edit set':'New set';
+  {const _e=document.getElementById('fbTitle'); if(_e) _e.textContent=id?'Edit set':'New set';}
   renderBuilderSlots();
   document.getElementById('fbModal').classList.add('open');
 }
@@ -2005,7 +2006,7 @@ function renderBuilderSlots(){
 
 function pickSlot(sl){
   fbActiveSlot=sl;
-  document.getElementById('psTitle').textContent='Choose '+sl;
+  {const _e=document.getElementById('psTitle'); if(_e) _e.textContent='Choose '+sl;}
   document.getElementById('psQ').value='';
   document.getElementById('psHex').value='';
   renderPickList('');
@@ -2116,7 +2117,7 @@ function renderBest(){
     if(!res.length){ wrap.innerHTML=`<div class="empty"><div class="empty-i">&#128533;</div><div class="empty-t">No sets under &Delta;E 5</div><div class="empty-s">None of your pieces for those slots are close enough to each other.</div></div>`; return; }
     LAST_BEST=res;
     const show=res.slice(0,bLimit);
-    document.getElementById('bestCount').textContent=res.length+' set'+(res.length===1?'':'s')+' found';
+    {const _e=document.getElementById('bestCount'); if(_e) _e.textContent=res.length+' set'+(res.length===1?'':'s')+' found';}
     wrap.innerHTML=`<div class="sgrid2">${show.map((r,i)=>bestCardHTML(r,i)).join('')}</div>`
       + (res.length>bLimit?`<div style="text-align:center;padding:16px"><button class="btn" onclick="bLimit+=60;renderBest()">Show more (${res.length-bLimit} left)</button></div>`:'');
     applyOwnerVis();
@@ -2174,7 +2175,7 @@ function openSetDetail(i){
       <span style="font-size:11px;color:var(--text2)">${(slots||[]).map(s=>SHORT[s]||s).join(' + ')}</span>
       <span style="margin-left:auto;font-size:12px;font-variant-numeric:tabular-nums">&Delta;E <b>${v.dE.toFixed(3)}</b> &middot; Abs <b>${v.abs}</b></span>
     </div>`:'';
-  document.getElementById('sdTitle').textContent=(r._name||r.slots.length+'-piece set')+'  \u00b7  \u0394E '+r.dE.toFixed(2);
+  {const _e=document.getElementById('sdTitle'); if(_e) _e.textContent=(r._name||r.slots.length+'-piece set')+'  \u00b7  \u0394E '+r.dE.toFixed(2);}
   document.getElementById('sdBody').innerHTML=
     `<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px">
        <div id="model-detail" style="width:150px;height:234px;background:var(--bg3);border:1px solid var(--border);border-radius:11px;flex-shrink:0"></div>
@@ -2542,6 +2543,14 @@ function fmtUTC(ts){
     'August','September','October','November','December'];
   return ordinal(d.getUTCDate())+' '+M[d.getUTCMonth()]+' '+d.getUTCFullYear()+' (UTC+0)';
 }
+/* Sales are historic: show the real sale date, not "x ago". */
+function saleDate(ts){
+  if(!ts) return '\u2013';
+  const d=new Date(ts);
+  const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const sameYear=d.getUTCFullYear()===new Date().getUTCFullYear();
+  return d.getUTCDate()+' '+M[d.getUTCMonth()]+(sameYear?'':" '"+String(d.getUTCFullYear()).slice(2));
+}
 function shortU(u){ return (u||'').replace(/-/g,'').slice(0,8)||'\u2013'; }
 
 async function loadSales(){
@@ -2617,7 +2626,7 @@ function saleRow(s,i){
     </span>
     <span class="ell hide-sm" style="color:var(--text3)">${esc(seller)}</span>
     <span class="num" style="font-weight:700;font-size:12.5px;color:var(--text)">${fmtCoins(s.price)}</span>
-    <span class="num hide-sm" style="color:var(--text3);font-size:10.5px">${ago(s.sold_at)}</span>
+    <span class="num hide-sm" style="color:var(--text3);font-size:10.5px" title="${fmtUTC(s.sold_at)}">${saleDate(s.sold_at)}</span>
   </div>`;
 }
 
@@ -2643,9 +2652,9 @@ function renderSales(){
   const prices=ss.map(x=>x.price).slice().sort((a,b)=>a-b);
   const median=prices[Math.floor(prices.length/2)];
   const avg=Math.round(prices.reduce((a,b)=>a+b,0)/prices.length);
-  const pages=Math.max(1,Math.ceil(ss.length/PER_PAGE));
+  const pages=Math.max(1,Math.ceil(ss.length/SALES_PER_PAGE));
   if(sPage>pages) sPage=pages;
-  const from=(sPage-1)*PER_PAGE, to=Math.min(from+PER_PAGE,ss.length);
+  const from=(sPage-1)*SALES_PER_PAGE, to=Math.min(from+SALES_PER_PAGE,ss.length);
   VIS_SALES=ss;
   wrap.innerHTML=
     `<div class="stat-row">
@@ -2679,7 +2688,7 @@ function salesPage(n){ sPage=n; renderSales(); window.scrollTo({top:0,behavior:'
 async function openSale(i){
   const s=VIS_SALES[i]; if(!s) return;
   const c=s._c||classifySeymour(s.hex);
-  document.getElementById('slTitle').textContent='#'+s.hex+'  \u00b7  '+fmtCoins(s.price);
+  {const _e=document.getElementById('slTitle'); if(_e) _e.textContent='#'+s.hex+'  \u00b7  '+fmtCoins(s.price);}
   const body=document.getElementById('slBody');
   body.innerHTML=
     `<div style="display:flex;gap:14px;align-items:center;margin-bottom:16px">
@@ -2739,7 +2748,7 @@ async function openSale(i){
 function closeSale(){ document.getElementById('slModal').classList.remove('open'); }
 function jumpToSale(auctionUuid){
   const idx=VIS_SALES.findIndex(x=>x.auction_uuid===auctionUuid);
-  if(idx>=0){ sPage=Math.floor(idx/PER_PAGE)+1; renderSales(); openSale(idx); }
+  if(idx>=0){ sPage=Math.floor(idx/SALES_PER_PAGE)+1; renderSales(); openSale(idx); }
   else toast('That sale is outside the current filter');
 }
 function renderSalesTargetList(q){
@@ -2817,7 +2826,9 @@ function renderBackfill(){
          <span class="bfdot ${BF.done?'off':'on'}"></span>
          ${BF.done?'Backfill complete':'Walking back through history'}
        </div>
-       <div style="font-size:11.5px;color:var(--text3)">${BF.totalSales} sales archived</div>
+       <div style="font-size:11.5px;color:var(--text3);display:flex;align-items:center;gap:6px">
+         <span id="liveDot" style="width:6px;height:6px;border-radius:50%;background:var(--green);opacity:.35;transition:opacity .3s"></span>
+         live &middot; ${BF.totalSales} sales archived</div>
      </div>
      <div class="bftrack"><div class="bffill" style="width:${pct}%"></div></div>
      <div class="bfrow" style="font-size:11px;color:var(--text3)">
@@ -2834,8 +2845,21 @@ function renderBackfill(){
        </span>
        <span style="display:flex;gap:6px">
          <button class="btn" style="height:26px;padding:0 10px;font-size:11px" onclick="loadBackfill()">Refresh</button>
+         ${currentUser?`<button class="btn btn-d" style="height:26px;padding:0 10px;font-size:11px" onclick="resetSales()">Reset archive</button>`:''}
        </span>
      </div>`;
+}
+async function resetSales(){
+  if(!getToken()){ toast('Sign in first'); return; }
+  if(!confirm('Delete every archived sale and restart from scratch? This cannot be undone.')) return;
+  try{
+    const r=await fetch(`${API}/seymour/sales/reset`,{method:'POST',
+      headers:{Authorization:`Bearer ${getToken()}`}});
+    if(!r.ok){ toast('Reset failed ('+r.status+')'); return; }
+    SALES=[]; salesTracked=0; lastVersion=null;
+    toast('Archive cleared \u2013 rebuilding');
+    loadSales(); loadBackfill();
+  }catch(e){ toast('Network error'); }
 }
 async function toggleBackfill(on){
   if(!getToken()){ toast('Sign in first'); return; }
@@ -2857,7 +2881,13 @@ async function pollVersion(){
     const v=await r.json();
     const key=v.sales+'/'+v.newest+'/'+v.lastRun;
     if(lastVersion===null){ lastVersion=key; return; }
-    if(key!==lastVersion){ lastVersion=key; loadSales(); loadBackfill(); }
+    if(key!==lastVersion){
+      lastVersion=key;
+      await loadSales();
+      loadBackfill();
+      const st=document.getElementById('liveDot');
+      if(st){ st.style.opacity='1'; setTimeout(()=>{ st.style.opacity='.35'; },900); }
+    }
   }catch(e){}
 }
 function startBfPolling(){
@@ -2920,7 +2950,7 @@ function openDupes(){
   if(!mine.length){ toast('Import or sync your own collection first'); return; }
   const dupes=findDupes(mine,PIECES);
   const them=viewingIgn||'them';
-  document.getElementById('dpTitle').textContent='Duplicates \u00b7 you vs '+them;
+  {const _e=document.getElementById('dpTitle'); if(_e) _e.textContent='Duplicates \u00b7 you vs '+them;}
   document.getElementById('dpBody').innerHTML=
     `<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
        <div class="stat"><div class="stat-v">${dupes.length}</div><div class="stat-l">Shared hexes</div></div>
@@ -3000,10 +3030,15 @@ async function loadAllPieces(){
   for(let i=0;i<raw.length;i+=CHUNK){
     const part=raw.slice(i,i+CHUNK);
     for(const p of part){
-      if(!p.best || typeof p.best.dE!=='number'){ refreshMatches([p]); }
-      else { p.hex=(p.hex||'').toUpperCase(); p.cat=p.cat||catOf(p.best.name,p.hex); }
+      try{
+        p.hex=(p.hex||'').replace('#','').toUpperCase();
+        if(!/^[0-9A-F]{6}$/.test(p.hex)) { p._bad=1; continue; }
+        if(!p.best || typeof p.best.dE!=='number') refreshMatches([p]);
+        else p.cat=p.cat||catOf(p.best.name,p.hex);
+        if(!p.best) p._bad=1;
+      }catch(e){ p._bad=1; }
     }
-    ALLP.push(...part);
+    ALLP.push(...part.filter(p=>!p._bad));
     if(i+CHUNK<raw.length){
       wrap.innerHTML=`<div class="empty"><div class="empty-t">Loading every piece&hellip;</div>
         <div class="empty-s">${ALLP.length} of ${raw.length}</div></div>`;
@@ -3011,7 +3046,14 @@ async function loadAllPieces(){
     }
   }
   allLoaded=true;
-  aPage=1; renderAllPieces();
+  aPage=1;
+  try{ renderAllPieces(); }
+  catch(e){
+    console.error('renderAllPieces failed',e);
+    wrap.innerHTML=`<div class="empty"><div class="empty-i">&#9888;</div>
+      <div class="empty-t">Loaded ${ALLP.length} pieces but could not draw them</div>
+      <div class="empty-s">${esc(String(e&&e.message||e))}</div></div>`;
+  }
 }
 
 function renderAllPieces(){
@@ -3027,7 +3069,8 @@ function renderAllPieces(){
     cat:aCat,slot:aSlot,fade:aFade,count:ps.length+' of '+ALLP.length,
     sorts:[['deltaE','By \u0394E'],['newest','Newest'],['name','A\u2013Z'],['slot','By piece'],['owner','By player']],
     extra:'<button class="btn" style="height:32px" onclick="loadAllPieces()">Refresh</button>'});
-  document.getElementById('allCount').textContent=ps.length+' of '+ALLP.length+' \u00b7 '+allOwners+' collections';
+  const ac=document.getElementById('aCount');
+  if(ac) ac.textContent=ps.length+' of '+ALLP.length+' \u00b7 '+allOwners+' collections';
   if(!ps.length){ wrap.innerHTML=`<div class="empty"><div class="empty-t">No pieces match</div></div>`; return; }
   const pages=Math.max(1,Math.ceil(ps.length/PER_PAGE));
   if(aPage>pages) aPage=pages;

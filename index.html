@@ -1657,7 +1657,8 @@ function pieceCard(p,opts={}){
   const showDE   = searching ? p._t : (b?b.dE:99);
   const showAbs  = searching ? seymourAbsDist(p.hex,tgt) : (b?b.abs:0);
   const showName = searching ? (opts.targetName||('#'+tgt)) : (b?b.name:'\u2013');
-  return `<div class="pcard" onclick="openPiece('${esc(p.id||p.hex+p.slot)}')">
+  const click = opts.onClick || `openPiece('${esc(p.id||p.hex+p.slot)}')`;
+  return `<div class="pcard" onclick="${click}">
     <div class="pc-dot" style="background:#${p.hex}"></div>
     <div class="pc-mid">
       <div class="pc-hex">#${p.hex}</div>
@@ -1670,7 +1671,10 @@ function pieceCard(p,opts={}){
       </div>
     </div>
     <div class="pc-right">
-      ${p.ign?`<div class="pc-owner">${esc(p.ign)}</div>`:''}
+      ${p.owner?`<div class="pc-owner" title="${esc(p.ign||'')}">
+        <img src="${HEAD(p.owner)}" style="width:14px;height:14px;border-radius:3px;image-rendering:pixelated;vertical-align:-2px;margin-right:4px">
+        ${esc(p.ign||p.owner.slice(0,8))}</div>`
+      : (p.ign?`<div class="pc-owner">${esc(p.ign)}</div>`:'')}
       <div class="pc-cat">${esc(p.slot)}</div>
       <div class="pc-cat">${esc(p.cat||'Other')}</div>
     </div>
@@ -3076,31 +3080,12 @@ function renderAllPieces(){
   if(aPage>pages) aPage=pages;
   const from=(aPage-1)*PER_PAGE, to=Math.min(from+PER_PAGE,ps.length);
   ALL_VIS=ps;
-  wrap.innerHTML=`<div class="pgrid">${ps.slice(from,to).map(p=>allCard(p)).join('')}</div>`
+  wrap.innerHTML=`<div class="pgrid">${ps.slice(from,to).map(p=>pieceCard(p,{target:aTarget,targetName:aTargetName,onClick:`openAllPiece('${esc(p.id||'')}','${esc(p.owner||'')}')`})).join('')}</div>`
     + (pages>1?allPagerHTML(aPage,pages):'')
     + `<div class="pg-info">Showing ${from+1}\u2013${to} of ${ps.length}</div>`;
 }
 let ALL_VIS=[];
-function allCard(p){
-  const b=p.best;
-  return `<div class="pcard" style="cursor:pointer" onclick="openAllPiece('${esc(p.id)}','${esc(p.owner)}')">
-    <div class="pdot" style="background:#${p.hex}"></div>
-    <div class="pinfo">
-      <div class="pslot">${esc(p.slot)}</div>
-      <div class="phex">#${p.hex}</div>
-      ${b?`<div class="pmatch">${esc(b.name)}</div>`:''}
-      <div class="pstat">
-        ${b?tierPill(b.dE,b.name):''}
-        ${b?`<span>&Delta;E ${b.dE.toFixed(2)}</span>`:''}
-        ${p._t!==undefined?`<b style="color:var(--text)">&Delta;E ${p._t.toFixed(2)}</b>`:''}
-      </div>
-      <div style="display:flex;align-items:center;gap:5px;margin-top:6px;font-size:11px;color:var(--text2)">
-        <img src="${HEAD(p.owner)}" style="width:15px;height:15px;border-radius:3px;image-rendering:pixelated">
-        ${esc(p.ign||p.owner.slice(0,8))}
-      </div>
-    </div>
-  </div>`;
-}
+
 function allPagerHTML(cur,pages){
   let out=`<div class="pager"><button class="pg" onclick="allPage(${cur-1})" ${cur<=1?'disabled':''}>\u2039</button>`;
   const win=new Set([1,pages,cur,cur-1,cur+1]);

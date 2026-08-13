@@ -2824,17 +2824,25 @@ function renderBackfill(){
   const days=BF.oldestReached?Math.max(0,Math.round((Date.now()-BF.oldestReached)/864e5)):0;
   const piece=BF.tag?(PIECE_OF[SLOT_OF_TAG[BF.tag]]||BF.tag):'\u2013';
   el.style.display='block';
+  const blocked = BF.blockedUntil && BF.blockedUntil>Date.now();
+  const mins = blocked?Math.ceil((BF.blockedUntil-Date.now())/60000):0;
   el.innerHTML=
     `<div class="bfrow">
        <div style="font-size:12.5px;font-weight:600">
-         <span class="bfdot ${BF.done?'off':'on'}"></span>
-         ${BF.done?'Backfill complete':'Walking back through history'}
+         <span class="bfdot ${blocked?'off':(BF.done?'off':'on')}"></span>
+         ${blocked?'<span style="color:#f0c060">Paused \u2013 SkyCofl rate limit</span>'
+           :(BF.done?'Backfill complete':'Walking back through history')}
        </div>
        <div style="font-size:11.5px;color:var(--text3);display:flex;align-items:center;gap:6px">
          <span id="liveDot" style="width:6px;height:6px;border-radius:50%;background:var(--green);opacity:.35;transition:opacity .3s"></span>
          live &middot; ${BF.totalSales} sales archived</div>
      </div>
      <div class="bftrack"><div class="bffill" style="width:${pct}%"></div></div>
+     ${blocked?`<div style="font-size:11px;color:#f0c060;background:rgba(240,192,96,.08);
+       border:1px solid rgba(240,192,96,.25);border-radius:8px;padding:8px 10px;margin-bottom:8px;line-height:1.55">
+       SkyCofl have rate-limited the server's IP address, so historic sales can't be fetched right now.
+       Retrying in about ${mins} minute${mins===1?'':'s'}. Live sales from the Auction House are unaffected
+       and still being recorded.</div>`:''}
      <div class="bfrow" style="font-size:11px;color:var(--text3)">
        <span>Reached <b style="color:var(--text2)">${reached}</b> &middot; ${days} days of history</span>
        <span>${pct.toFixed(1)}% back to Feb 2023${BF.budget?" &middot; "+BF.budget+"/min":""}</span>

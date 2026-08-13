@@ -470,6 +470,7 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
 
   <div id="view-sales" style="display:none">
     <div id="salesFilters"></div>
+    <div class="bfbar" id="scrapeBox"></div>
     <div class="bfbar" id="bfBar" style="display:none"></div>
     <div id="salesNote" style="font-size:11.5px;color:var(--text3);margin-bottom:12px;line-height:1.6"></div>
     <div id="salesWrap"></div>
@@ -1565,7 +1566,7 @@ function showView(v){
   document.getElementById('nav-all').classList.toggle('active',isAll);
   document.getElementById('nav-mine').classList.toggle('active',!aside);
   if(isAll){ document.getElementById('ownerBar').style.display='none'; if(!allLoaded) loadAllPieces(); else renderAllPieces(); return; }
-  if(isSales){ document.getElementById('ownerBar').style.display='none'; startBfPolling();
+  if(isSales){ document.getElementById('ownerBar').style.display='none'; startBfPolling(); scrapeUI();
                if(!SALES.length) loadSales(); else renderSales(); return; }
   stopBfPolling();
   if(isBrowse){ document.getElementById('ownerBar').style.display='none'; if(!BROWSE.length) loadBrowse(); else renderBrowse(); return; }
@@ -2809,6 +2810,147 @@ function playerChip(uuid,fallbackName){
               border-radius:5px;padding:1px 5px">SkyCrypt \u2197</a></span>`;
 }
 
+/* ===== BROWSER-SIDE HISTORY SCRAPER =====
+   SkyCofl rate-limit Cloudflare's shared egress IPs, so the worker can't
+   fetch history. Your browser can - it's on your own home IP. This walks
+   SkyCofl politely from the page and posts results back to the worker. */
+let SCRAPE={running:false,stop:false,tag:0,page:0,found:0,checked:0,errors:0,note:'',helpers:0,workers:1};
+const SC_TAGS=['VELVET_TOP_HAT','CASHMERE_JACKET','SATIN_TROUSERS','OXFORD_SHOES'];
+let SC_DELAY=1100;                       // ~0.9 req/s, inside their guidance
+
+function scrapeUI(){
+  const el=document.getElementById('scrapeBox'); if(!el) return;
+  const piece=PIECE_OF[SLOT_OF_TAG[SC_TAGS[SCRAPE.tag]]]||SC_TAGS[SCRAPE.tag];
+  el.innerHTML=`
+    <div class="bfrow">
+      <div style="font-size:12.5px;font-weight:600">
+        <span class="bfdot ${SCRAPE.running?'on':'off'}"></span>
+        ${SCRAPE.running?'Collecting history from your browser':'History collector idle'}
+      </div>
+      <div style="font-size:11.5px;color:var(--text3)">
+        ${SCRAPE.helpers>0?`<b style="color:var(--green)">${SCRAPE.helpers}</b> helping &middot; `:''}
+        ${SCRAPE.found} sent &middot; ${SCRAPE.checked} checked</div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);line-height:1.6;margin:7px 0">
+      The server's IP is rate-limited by SkyCofl, so historic sales are fetched by your own
+      browser instead and shared with everyone. Leave this tab open to keep it running.
+      ${SCRAPE.note?`<br><span style="color:#f0c060">${esc(SCRAPE.note)}</span>`:''}
+    </div>
+    <div class="bfrow">
+      <span style="font-size:11px;color:var(--text3)">
+        ${esc(piece)} (${SCRAPE.tag+1}/4) &middot; page ${SCRAPE.page}
+        ${SCRAPE.errors?` &middot; ${SCRAPE.errors} errors`:''}
+      </span>
+      <span style="display:flex;gap:6px">
+        ${currentUser?`<button class="btn ${SCRAPE.running?'btn-d':'btn-p'}" style="height:26px;padding:0 12px;font-size:11px"
+          onclick="${SCRAPE.running?'stopScrape()':'startScrape()'}">${SCRAPE.running?'Stop':'Collect history'}</button>`
+        :`<span style="font-size:11px;color:var(--text3)">Sign in to help collect</span>`}
+      </span>
+    </div>`;
+}
+
+/* Ask the server which page to work on. Two browsers never get the same one. */
+async function claimPage(){
+  const r=await fetch(`${API}/seymour/sales/claim`,{method:'POST',
+    headers:{Authorization:`Bearer ${getToken()}`}});
+  if(!r.ok) throw new Error('claim '+r.status);
+  const d=await r.json();
+  SCRAPE.tag=d.tagIndex; SCRAPE.page=d.page; SCRAPE.workers=d.workers||1;
+  return d;
+}
+async function releasePage(empty){
+  try{
+    await fetch(`${API}/seymour/sales/done`,{method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},
+      body:JSON.stringify({tagIndex:SCRAPE.tag,page:SCRAPE.page,empty:!!empty})});
+  }catch(e){}
+}
+async function loadHelpers(){
+  try{
+    const r=await fetch(`${API}/seymour/sales/helpers`);
+    if(r.ok){ const d=await r.json(); SCRAPE.helpers=d.helpers||0; scrapeUI(); }
+  }catch(e){}
+}
+
+function startScrape(){
+  if(!getToken()){ toast('Sign in first'); return; }
+  if(SCRAPE.running) return;
+  SCRAPE.running=true; SCRAPE.stop=false; SCRAPE.note='';
+  scrapeUI(); scrapeLoop();
+}
+function stopScrape(){ SCRAPE.stop=true; SCRAPE.running=false; SCRAPE.note='Stopped.'; scrapeUI(); }
+
+async function scrapeLoop(){
+  while(!SCRAPE.stop){
+    try{ await claimPage(); }
+    catch(e){ SCRAPE.note='Could not claim a page: '+e.message; scrapeUI();
+              await new Promise(s=>setTimeout(s,10000)); continue; }
+    const tag=SC_TAGS[SCRAPE.tag];
+    let list=[];
+    try{
+      const r=await fetch(`https://sky.coflnet.com/api/auctions/tag/${tag}/sold?page=${SCRAPE.page}&pageSize=100`);
+      if(r.status===403||r.status===429){
+        SCRAPE.note='SkyCofl rate-limited your connection too. Pausing 5 minutes.';
+        scrapeUI(); await new Promise(s=>setTimeout(s,300000)); continue;
+      }
+      if(!r.ok){ SCRAPE.errors++; SCRAPE.note='List error '+r.status; scrapeUI();
+                 await new Promise(s=>setTimeout(s,5000)); continue; }
+      list=await r.json();
+    }catch(e){ SCRAPE.errors++; await new Promise(s=>setTimeout(s,5000)); continue; }
+
+    if(!Array.isArray(list)||!list.length){          // tag exhausted
+      await releasePage(true); scrapeUI();
+      continue;
+    }
+
+    const batch=[];
+    for(const a of list){
+      if(SCRAPE.stop) break;
+      SCRAPE.checked++;
+      try{
+        const dr=await fetch(`https://sky.coflnet.com/api/auction/${a.uuid}`);
+        if(dr.status===403||dr.status===429){
+          SCRAPE.note='Rate-limited, pausing 5 minutes.'; scrapeUI();
+          await new Promise(s=>setTimeout(s,300000)); break;
+        }
+        if(!dr.ok){ SCRAPE.errors++; continue; }
+        const d=await dr.json();
+        const flat=d.flatNbt||d.flatNBT||{};
+        let hex=''; for(const k of ['color','Color','colour','Colour'])
+          if(flat[k]!==undefined&&flat[k]!==null){ hex=String(flat[k]); break; }
+        let uid=''; for(const k of ['uid','uId','uuid'])
+          if(flat[k]){ uid=String(flat[k]); break; }
+        const soldAt=Date.parse(d.end||a.end||'')||0;
+        hex=String(hex).replace('#','').trim().toUpperCase();
+        if(/^-?[0-9]{1,10}$/.test(hex)) hex=(parseInt(hex,10)>>>0).toString(16).toUpperCase();
+        hex=hex.padStart(6,'0').slice(-6);
+        if(!/^[0-9A-F]{6}$/.test(hex)||!soldAt) continue;
+        uid=uid.replace(/-/g,'').toLowerCase().slice(-12);
+        batch.push({auction_uuid:a.uuid,item_id:tag,item_uid:uid,hex,
+          price:d.highestBidAmount||a.highestBidAmount||0,bin:d.bin?1:0,
+          seller:d.auctioneerId||'',buyer:(d.bids&&d.bids.length)?d.bids[d.bids.length-1].bidder:'',
+          sold_at:soldAt});
+      }catch(e){ SCRAPE.errors++; }
+      if(SCRAPE.checked%10===0) scrapeUI();
+      await new Promise(s=>setTimeout(s,SC_DELAY));
+    }
+
+    if(batch.length){
+      try{
+        const r=await fetch(`${API}/seymour/sales/ingest`,{method:'POST',
+          headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},
+          body:JSON.stringify({sales:batch})});
+        if(r.ok){ const d=await r.json(); SCRAPE.found+=d.stored||0;
+                  salesTracked=d.total||salesTracked;
+                  if(view==='sales') loadSales(); }
+      }catch(e){}
+    }
+    await releasePage(false);
+    scrapeUI();
+  }
+  SCRAPE.running=false; scrapeUI();
+}
+
 /* ===== BACKFILL PROGRESS ===== */
 let BF=null, bfTimer=null;
 async function loadBackfill(){
@@ -2912,7 +3054,8 @@ function startGlobalPolling(){
 }
 function startBfPolling(){
   stopBfPolling(); loadBackfill(); lastVersion=null;
-  bfTimer=setInterval(pollVersion,5000);         // 5s, but only refetches when data changed
+  pollVersion(); loadHelpers();
+  bfTimer=setInterval(()=>{ pollVersion(); loadHelpers(); },5000);
 }
 function stopBfPolling(){ if(bfTimer){ clearInterval(bfTimer); bfTimer=null; } }
 

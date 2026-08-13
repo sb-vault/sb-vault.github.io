@@ -450,6 +450,40 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
 .sc-stats{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums}
 .sc-stats b{color:var(--text);font-size:12.5px;font-weight:700}
 .sc-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px;flex-wrap:wrap}
+
+/* ---- leaderboard ---- */
+.lb-head{display:grid;grid-template-columns:46px 34px minmax(0,1fr) 96px 84px;gap:12px;
+  align-items:center;padding:9px 14px;background:var(--bg3);border-bottom:1px solid var(--border);
+  font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3)}
+.lb-head span:nth-child(4),.lb-head span:nth-child(5){text-align:right}
+.lb-row{display:grid;grid-template-columns:46px 34px minmax(0,1fr) 96px 84px;gap:12px;
+  align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);
+  font-size:13px;transition:background .15s}
+.lb-row:last-child{border-bottom:none}
+.lb-row:hover{background:var(--bg3)}
+.lb-row.r1{background:linear-gradient(90deg,rgba(240,192,96,.18),rgba(240,192,96,.03))}
+.lb-row.r2{background:linear-gradient(90deg,rgba(196,206,220,.16),rgba(196,206,220,.03))}
+.lb-row.r3{background:linear-gradient(90deg,rgba(205,139,95,.16),rgba(205,139,95,.03))}
+.lb-row.r1:hover{background:linear-gradient(90deg,rgba(240,192,96,.26),rgba(240,192,96,.06))}
+.lb-row.r2:hover{background:linear-gradient(90deg,rgba(196,206,220,.24),rgba(196,206,220,.06))}
+.lb-row.r3:hover{background:linear-gradient(90deg,rgba(205,139,95,.24),rgba(205,139,95,.06))}
+.lb-row.me{box-shadow:inset 2px 0 0 var(--green)}
+.lb-rank{font-weight:800;font-size:14px;color:var(--text3);text-align:center;
+  font-variant-numeric:tabular-nums}
+.lb-row.r1 .lb-rank{color:#f0c060}
+.lb-row.r2 .lb-rank{color:#c4cedc}
+.lb-row.r3 .lb-rank{color:#cd8b5f}
+.lb-av{width:30px;height:30px;border-radius:7px;image-rendering:pixelated;display:block;
+  border:1px solid var(--border)}
+.lb-name{min-width:0;display:flex;flex-direction:column;gap:1px;overflow:hidden}
+.lb-ign{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-dc{color:#8b9bf4;font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-num{font-variant-numeric:tabular-nums;font-weight:700;text-align:right;font-size:13.5px}
+.lb-sub{font-size:10.5px;color:var(--text3);font-variant-numeric:tabular-nums;text-align:right}
+@media(max-width:620px){
+  .lb-head,.lb-row{grid-template-columns:38px 28px minmax(0,1fr) 78px}
+  .lb-head span:nth-child(5),.lb-row .lb-sub{display:none}
+}
 </style>
 </head>
 <body>
@@ -1493,7 +1527,7 @@ let PIECES=[];           // {id,slot,pieceName,hex,best,matches,ts,loc}
 let FAVSETS=[];          // {id,name,pieces:{Helmet:hex,...},ts}
 let view='collection';
 const PER_PAGE=100;
-const SALES_PER_PAGE=250;
+const SALES_PER_PAGE=150;
 let cPage=1;
 let cSort='deltaE', cDir=1, cCat='', cSlot='', cQuery='', cTarget=null;
 let bSlots=new Set(['Helmet','Chestplate','Leggings','Boots']);
@@ -2855,62 +2889,66 @@ function playerChip(uuid,fallbackName){
    SkyCofl rate-limit Cloudflare's shared egress IPs, so the worker can't
    fetch history. Your browser can - it's on your own home IP. This walks
    SkyCofl politely from the page and posts results back to the worker. */
-let SCRAPE={running:false,stop:false,tag:0,page:0,found:0,checked:0,errors:0,note:'',helpers:0,workers:1,phase:'idle',pageDone:0,pageTotal:0,dupes:0,dropNoColour:0,dropBadColour:0,dropNoDate:0,dropReq:0,sample:null,badSample:null};
+let SCRAPE={running:false,stop:false,tag:0,page:0,found:0,checked:0,errors:0,note:'',helpers:0,workers:1,phase:'idle',pageDone:0,pageTotal:0,day:null,dayFound:0,piece:'',act:'',dupes:0,dropNoColour:0,dropBadColour:0,dropNoDate:0,dropReq:0,sample:null,badSample:null};
 const SC_TAGS=['VELVET_TOP_HAT','CASHMERE_JACKET','SATIN_TROUSERS','OXFORD_SHOES'];
 let SC_DELAY=1100;                       // ~0.9 req/s, inside their guidance
 
 function scrapeUI(){
   const el=document.getElementById('scrapeBox'); if(!el) return;
-  const tag=SC_TAGS[SCRAPE.tag];
-  const piece=PIECE_OF[SLOT_OF_TAG[tag]]||tag;
-  const running=SCRAPE.running;
-  const phase=SCRAPE.phase||'idle';
+  const running=SCRAPE.running, phase=SCRAPE.phase||'idle';
   const orb = phase==='waiting'?'wait' : phase==='error'?'err' : running?'on':'';
   const pct = SCRAPE.pageTotal ? Math.round((SCRAPE.pageDone/SCRAPE.pageTotal)*100) : 0;
-  const label = !running ? 'History collector paused'
-    : phase==='uploading' ? 'Saving to the archive\u2026'
-    : phase==='waiting'   ? 'Waiting out a rate limit\u2026'
-    : phase==='error'     ? 'Collector stopped'
-    : `Scanning ${esc(piece)} \u00b7 page ${SCRAPE.page}${SCRAPE.pageTotal?` \u00b7 ${SCRAPE.pageDone}/${SCRAPE.pageTotal}`:''}`;
+  const cov = DAYP.daysTotal ? (DAYP.daysDone/DAYP.daysTotal)*100 : 0;
+
+  const title = !running ? 'History collector paused'
+    : phase==='done'  ? 'Archive complete'
+    : SCRAPE.day      ? `Collecting ${fmtDay(SCRAPE.day)}`
+                      : 'Getting a day to work on\u2026';
+
   el.className='sc-wrap'+(running&&phase==='scanning'?' live':'');
   el.innerHTML=`
     <div class="sc-head">
       <div class="sc-orb ${orb}"></div>
-      <div style="min-width:0">
-        <div class="sc-title">${label}</div>
-        <div class="sc-sub">${SCRAPE.pageTotal&&running?`Page ${SCRAPE.page} covers ~100 auctions \u00b7 `:''}${SCRAPE.helpers>1
-          ? `<b style="color:var(--green)">${SCRAPE.helpers} people</b> collecting together`
-          : (running?'Sharing what you find with everyone':'Runs in your browser, shared with everyone')}</div>
+      <div style="min-width:0;flex:1">
+        <div class="sc-title">${esc(title)}</div>
+        <div class="sc-sub">${running
+          ? esc(SCRAPE.act||'Working\u2026')
+          : 'Runs in your browser and adds to the shared archive'}</div>
       </div>
       <div class="sc-bars"><i></i><i></i><i></i><i></i><i></i></div>
     </div>
+
     ${running&&SCRAPE.pageTotal?`<div class="sc-track"><div class="sc-fill" style="width:${pct}%"></div></div>`:''}
+
     <div class="sc-stats">
-      <span><b>${SCRAPE.found}</b> new</span>
-      <span><b>${SCRAPE.dupes}</b> already had</span>
-      <span><b>${SCRAPE.checked}</b> checked</span>
-      <span><b>${salesTracked||0}</b> in archive</span>
+      <span><b>${SCRAPE.found}</b> you've found</span>
+      <span><b>${SCRAPE.dayFound||0}</b> this day</span>
+      <span><b>${(salesTracked||0).toLocaleString()}</b> in archive</span>
+      ${SCRAPE.helpers>1?`<span style="color:var(--green)"><b>${SCRAPE.helpers}</b> collecting now</span>`:''}
     </div>
+
+    <div style="margin-top:11px;padding-top:10px;border-top:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--text3);margin-bottom:5px">
+        <span>Archive coverage</span>
+        <span>${DAYP.daysDone}/${DAYP.daysTotal} days${DAYP.earliestDay?` \u00b7 back to ${fmtDay(DAYP.earliestDay)}`:''}</span>
+      </div>
+      <div class="sc-track" style="margin:0"><div class="sc-fill" style="width:${cov.toFixed(1)}%"></div></div>
+    </div>
+
     ${(SCRAPE.dropNoColour||SCRAPE.dropBadColour||SCRAPE.dropNoDate||SCRAPE.dropReq)?`
-      <div style="font-size:10.5px;color:var(--text3);margin-top:6px;display:flex;gap:12px;flex-wrap:wrap">
-        ${SCRAPE.dropNoColour?`<span title="SkyCofl returned no colour field for these">${SCRAPE.dropNoColour} no colour data</span>`:''}
-        ${SCRAPE.dropBadColour?`<span>${SCRAPE.dropBadColour} unreadable colour</span>`:''}
-        ${SCRAPE.dropNoDate?`<span>${SCRAPE.dropNoDate} no sale date</span>`:''}
-        ${SCRAPE.dropReq?`<span style="color:#f0c060">${SCRAPE.dropReq} request errors</span>`:''}
+      <div style="font-size:10.5px;color:var(--text3);margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
+        ${SCRAPE.dropNoColour?`<span>${SCRAPE.dropNoColour} no colour</span>`:''}
+        ${SCRAPE.dropBadColour?`<span>${SCRAPE.dropBadColour} bad colour</span>`:''}
+        ${SCRAPE.dropNoDate?`<span>${SCRAPE.dropNoDate} no date</span>`:''}
+        ${SCRAPE.dropReq?`<span style="color:#f0c060">${SCRAPE.dropReq} errors</span>`:''}
       </div>`:''}
+
     ${(SCRAPE.dropBadColour>5&&SCRAPE.found===0&&SCRAPE.badSample)?`
-      <div style="font-size:10.5px;color:#f0c060;margin-top:7px;line-height:1.55;
+      <div style="font-size:10.5px;color:#f0c060;margin-top:8px;line-height:1.55;
         background:rgba(240,192,96,.07);border:1px solid rgba(240,192,96,.22);border-radius:7px;padding:7px 9px">
-        Colour data is present but in an unexpected format, e.g.
-        <code>${esc(SCRAPE.badSample)}</code> &ndash; please report this.
+        Colour data is in an unexpected format, e.g. <code>${esc(SCRAPE.badSample)}</code>.
       </div>`:''}
-    ${(SCRAPE.dropNoColour>20&&SCRAPE.found===0&&SCRAPE.sample)?`
-      <div style="font-size:10.5px;color:#f0c060;margin-top:7px;line-height:1.55;
-        background:rgba(240,192,96,.07);border:1px solid rgba(240,192,96,.22);border-radius:7px;padding:7px 9px">
-        SkyCofl aren't returning colour data for these auctions, so nothing can be stored.
-        Fields seen: <code>${esc((SCRAPE.sample.flatKeys||SCRAPE.sample.keys||[]).join(', '))}</code>
-      </div>`:''}
-    ${SCRAPE.note?`<div style="font-size:11px;color:${phase==='error'?'var(--red)':'var(--text3)'};margin-top:7px;line-height:1.5">${esc(SCRAPE.note)}</div>`:''}
+
     <div class="sc-foot">
       <span style="font-size:10.5px;color:var(--text3)">Price history via SkyCofl</span>
       ${currentUser
@@ -2920,27 +2958,39 @@ function scrapeUI(){
     </div>`;
 }
 
-/* Ask the server which page to work on. Two browsers never get the same one. */
-async function claimPage(){
-  const r=await fetch(`${API}/seymour/sales/claim`,{method:'POST',
+/* Ask the server which DAY to scan. Days are stable, unlike page numbers,
+   and each browser gets its own so nobody duplicates work. */
+async function claimDay(){
+  const r=await fetch(`${API}/seymour/day/claim`,{method:'POST',
     headers:{Authorization:`Bearer ${getToken()}`}});
   if(!r.ok) throw new Error('claim '+r.status);
-  const d=await r.json();
-  SCRAPE.tag=d.tagIndex; SCRAPE.page=d.page; SCRAPE.workers=d.workers||1;
-  return d;
+  return await r.json();
 }
-async function releasePage(empty){
+async function finishDay(day,found){
   try{
-    await fetch(`${API}/seymour/sales/done`,{method:'POST',
+    await fetch(`${API}/seymour/day/done`,{method:'POST',
       headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},
-      body:JSON.stringify({tagIndex:SCRAPE.tag,page:SCRAPE.page,empty:!!empty})});
+      body:JSON.stringify({day,found})});
   }catch(e){}
 }
-async function loadHelpers(){
+async function loadDayProgress(){
   try{
-    const r=await fetch(`${API}/seymour/sales/helpers`);
-    if(r.ok){ const d=await r.json(); SCRAPE.helpers=d.helpers||0; scrapeUI(); }
+    const r=await fetch(`${API}/seymour/day/progress`);
+    if(!r.ok) return;
+    DAYP=await r.json();
+    SCRAPE.helpers=(DAYP.active||[]).length;
+    scrapeUI();
   }catch(e){}
+}
+let DAYP={daysDone:0,daysTotal:1,earliestDay:null,foundTotal:0,active:[]};
+
+function fmtDay(d){
+  if(!d) return '\u2013';
+  const [y,m,dd]=d.split('-').map(Number);
+  const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now=new Date();
+  const same=y===now.getUTCFullYear();
+  return dd+' '+M[m-1]+(same?'':' '+y);
 }
 
 function autoStartScrape(){
@@ -2965,107 +3015,107 @@ function stopScrape(){
 
 async function scrapeLoop(){
   while(!SCRAPE.stop){
-    try{ await claimPage(); }
-    catch(e){ SCRAPE.note='Waiting for a page to work on\u2026'; scrapeUI();
-              await new Promise(s=>setTimeout(s,10000)); continue; }
-    const tag=SC_TAGS[SCRAPE.tag];
-    let list=[];
-
-    const res=await coflGet(`https://sky.coflnet.com/api/auctions/tag/${tag}/sold?page=${SCRAPE.page}&pageSize=100`);
-    if(res.limited){
-      SCRAPE.note='SkyCofl are rate-limiting this connection \u2013 waiting 5 minutes.';
-      SCRAPE.phase='waiting'; scrapeUI();
-      await new Promise(s=>setTimeout(s,300000)); continue;
-    }
-    if(res.blocked){
-      SCRAPE.note='Your browser blocked the request to SkyCofl (CORS or an extension). '
-        +'Try disabling ad-blockers for this site.';
-      SCRAPE.phase='error'; SCRAPE.running=false; scrapeUI(); return;
-    }
-    if(!res.ok){
-      SCRAPE.errors++; SCRAPE.note='SkyCofl returned '+res.status+', retrying\u2026';
-      scrapeUI(); await new Promise(s=>setTimeout(s,8000)); continue;
-    }
-    list=res.data;
-
-    if(!Array.isArray(list)||!list.length){          // nothing left for this tag
-      SCRAPE.note='Finished '+(PIECE_OF[SLOT_OF_TAG[tag]]||tag)+' \u2013 moving on.';
-      await releasePage(true); scrapeUI();
-      continue;
+    let claim;
+    try{ claim=await claimDay(); }
+    catch(e){ SCRAPE.act='Waiting for a day to work on\u2026'; scrapeUI();
+              await new Promise(s=>setTimeout(s,8000)); continue; }
+    if(claim.complete){
+      SCRAPE.act='Every day has been collected.'; SCRAPE.phase='done';
+      SCRAPE.running=false; scrapeUI(); return;
     }
 
-    SCRAPE.phase='scanning'; SCRAPE.pageTotal=list.length; SCRAPE.pageDone=0;
-    const batch=[];
-    for(const a of list){
-      if(SCRAPE.stop) break;
-      SCRAPE.checked++; SCRAPE.pageDone++;
-      const dres=await coflGet(`https://sky.coflnet.com/api/auction/${a.uuid}`);
-      if(dres.limited){
-        SCRAPE.note='Rate-limited \u2013 waiting 5 minutes.'; SCRAPE.phase='waiting'; scrapeUI();
-        await new Promise(s=>setTimeout(s,300000)); break;
-      }
-      if(!dres.ok){ SCRAPE.errors++; SCRAPE.dropReq++; }
-      else{
-        const d=dres.data, flat=d.flatNbt||d.flatNBT||{};
-        let rawHex=null;
-        for(const k of ['color','Color','colour','Colour','displayColor','display.color']){
-          if(flat[k]!==undefined&&flat[k]!==null){ rawHex=flat[k]; break; }
+    SCRAPE.day=claim.day; SCRAPE.dayFound=0; SCRAPE.phase='scanning';
+    SCRAPE.act=`Claimed ${fmtDay(claim.day)} \u2013 nobody else is on this day`;
+    scrapeUI(); loadDayProgress();
+
+    // Walk every piece type, paging until we're past this day's window.
+    let dayTotal=0;
+    for(let ti=0; ti<SC_TAGS.length && !SCRAPE.stop; ti++){
+      const tag=SC_TAGS[ti];
+      SCRAPE.piece=PIECE_OF[SLOT_OF_TAG[tag]]||tag;
+      for(let page=0; page<60 && !SCRAPE.stop; page++){
+        SCRAPE.act=`Looking through ${SCRAPE.piece} listings`;
+        scrapeUI();
+        const res=await coflGet(`https://sky.coflnet.com/api/auctions/tag/${tag}/sold?page=${page}&pageSize=100`);
+        if(res.limited){
+          SCRAPE.phase='waiting'; SCRAPE.act='SkyCofl asked us to slow down \u2013 waiting 5 minutes';
+          scrapeUI(); await new Promise(s=>setTimeout(s,300000)); page--; continue;
         }
-        if(rawHex===null){                                  // scan any key mentioning colour
-          for(const k of Object.keys(flat)){
-            if(/colou?r/i.test(k) && flat[k]!==null && flat[k]!==''){ rawHex=flat[k]; break; }
+        if(res.blocked){
+          SCRAPE.phase='error'; SCRAPE.act='Your browser blocked the request (ad-blocker or CORS)';
+          SCRAPE.running=false; scrapeUI(); return;
+        }
+        if(!res.ok||!Array.isArray(res.data)||!res.data.length) break;
+
+        // Only auctions inside the claimed day matter.
+        const inDay=res.data.filter(a=>{
+          const t=Date.parse(a.end||''); return t>=claim.from && t<=claim.to;
+        });
+        const older=res.data.some(a=>{ const t=Date.parse(a.end||''); return t && t<claim.from; });
+
+        if(inDay.length){
+          SCRAPE.phase='scanning'; SCRAPE.pageTotal=inDay.length; SCRAPE.pageDone=0;
+          const batch=[];
+          for(const a of inDay){
+            if(SCRAPE.stop) break;
+            SCRAPE.checked++; SCRAPE.pageDone++;
+            SCRAPE.act=`Reading ${SCRAPE.piece} sale ${SCRAPE.pageDone} of ${inDay.length}`;
+            const dres=await coflGet(`https://sky.coflnet.com/api/auction/${a.uuid}`);
+            if(dres.limited){
+              SCRAPE.phase='waiting'; SCRAPE.act='Rate limited \u2013 waiting 5 minutes'; scrapeUI();
+              await new Promise(s=>setTimeout(s,300000)); break;
+            }
+            if(!dres.ok){ SCRAPE.errors++; SCRAPE.dropReq++; }
+            else{
+              const dd=dres.data, flat=dd.flatNbt||dd.flatNBT||{};
+              let rawHex=null;
+              for(const k of ['color','Color','colour','Colour','displayColor'])
+                if(flat[k]!==undefined&&flat[k]!==null){ rawHex=flat[k]; break; }
+              if(rawHex===null) for(const k of Object.keys(flat))
+                if(/colou?r/i.test(k)&&flat[k]!==null&&flat[k]!==''){ rawHex=flat[k]; break; }
+              let uid=''; for(const k of ['uid','uId','uuid']) if(flat[k]){ uid=String(flat[k]); break; }
+              const soldAt=Date.parse(dd.end||a.end||'')||0;
+              const hex=parseColour(rawHex);
+              if(hex&&soldAt){
+                batch.push({auction_uuid:a.uuid,item_id:tag,item_uid:uid.replace(/-/g,'').toLowerCase().slice(-12),
+                  hex,price:dd.highestBidAmount||a.highestBidAmount||0,bin:dd.bin?1:0,
+                  seller:dd.auctioneerId||'',buyer:(dd.bids&&dd.bids.length)?dd.bids[dd.bids.length-1].bidder:'',
+                  sold_at:soldAt});
+              }
+              else if(rawHex==null){ SCRAPE.dropNoColour++;
+                if(!SCRAPE.sample) SCRAPE.sample={flatKeys:Object.keys(flat).slice(0,16)}; }
+              else if(!hex){ SCRAPE.dropBadColour++;
+                if(!SCRAPE.badSample) SCRAPE.badSample=String(rawHex).slice(0,40); }
+              else SCRAPE.dropNoDate++;
+            }
+            if(SCRAPE.pageDone%4===0) scrapeUI();
+            await new Promise(s=>setTimeout(s,SC_DELAY));
           }
+
+          if(batch.length){
+            SCRAPE.phase='uploading';
+            SCRAPE.act=`Saving ${batch.length} sale${batch.length===1?'':'s'} to the archive`;
+            scrapeUI();
+            try{
+              const r=await fetch(`${API}/seymour/sales/ingest`,{method:'POST',
+                headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},
+                body:JSON.stringify({sales:batch,checked:SCRAPE.pageDone})});
+              if(r.ok){ const d=await r.json();
+                SCRAPE.found+=d.stored||0; SCRAPE.dayFound+=d.stored||0; dayTotal+=d.stored||0;
+                SCRAPE.dupes+=Math.max(0,batch.length-(d.stored||0));
+                salesTracked=d.total||salesTracked;
+                if(view==='sales'){ loadSales(); loadLeaderboard(); } }
+            }catch(e){}
+          }
+          SCRAPE.phase='scanning';
         }
-        if(rawHex===null && d.nbtData && d.nbtData.data){
-          const disp=d.nbtData.data.display||d.nbtData.data.Display;
-          if(disp && disp.color!==undefined) rawHex=disp.color;
-        }
-        let uid=''; for(const k of ['uid','uId','uuid'])
-          if(flat[k]){ uid=String(flat[k]); break; }
-        const soldAt=Date.parse(d.end||a.end||'')||0;
-        const hexParsed=parseColour(rawHex);
-        const hex=hexParsed||'';
-        const okHex=!!hexParsed;
-        if(okHex&&soldAt){
-          uid=uid.replace(/-/g,'').toLowerCase().slice(-12);
-          batch.push({auction_uuid:a.uuid,item_id:tag,item_uid:uid,hex,
-            price:d.highestBidAmount||a.highestBidAmount||0,bin:d.bin?1:0,
-            seller:d.auctioneerId||'',buyer:(d.bids&&d.bids.length)?d.bids[d.bids.length-1].bidder:'',
-            sold_at:soldAt});
-        } else if(rawHex===null||rawHex===undefined){
-          SCRAPE.dropNoColour++;
-          if(!SCRAPE.sample) SCRAPE.sample={uuid:a.uuid,keys:Object.keys(d).slice(0,14),
-            flatKeys:d.flatNbt?Object.keys(d.flatNbt).slice(0,16):null};
-        }
-        else if(!okHex){
-          SCRAPE.dropBadColour++;
-          if(!SCRAPE.badSample) SCRAPE.badSample=String(rawHex).slice(0,40);
-        }
-        else SCRAPE.dropNoDate++;
+        if(older) break;                       // past this day, next piece
       }
-      if(SCRAPE.pageDone%5===0) scrapeUI();
-      await new Promise(s=>setTimeout(s,SC_DELAY));
     }
 
-    if(batch.length){
-      SCRAPE.phase='uploading'; scrapeUI();
-      try{
-        const r=await fetch(`${API}/seymour/sales/ingest`,{method:'POST',
-          headers:{'Content-Type':'application/json',Authorization:`Bearer ${getToken()}`},
-          body:JSON.stringify({sales:batch})});
-        if(r.ok){ const d=await r.json();
-          SCRAPE.found+=d.stored||0;
-          SCRAPE.dupes+=Math.max(0,batch.length-(d.stored||0));
-          salesTracked=d.total||salesTracked;
-          SCRAPE.note=(d.stored||0)>0
-            ? 'Added '+d.stored+' new sales from that page.'
-            : 'That page was already in the archive.';
-          if(view==='sales') loadSales(); }
-      }catch(e){}
-    } else SCRAPE.note='Nothing usable on that page \u2013 see the breakdown below.';
-
-    SCRAPE.phase='idle';
-    await releasePage(false);
+    SCRAPE.act=`Finished ${fmtDay(SCRAPE.day)} \u2013 found ${dayTotal} sale${dayTotal===1?'':'s'}`;
+    await finishDay(SCRAPE.day,dayTotal);
+    await loadDayProgress();
     scrapeUI();
   }
   SCRAPE.running=false; SCRAPE.phase='idle'; scrapeUI();
@@ -3127,7 +3177,7 @@ async function loadLeaderboard(){
 function renderLeaderboard(){
   const el=document.getElementById('lbWrap'); if(!el) return;
   if(!LEADERS.length){
-    el.innerHTML=`<div class="empty" style="padding:30px">
+    el.innerHTML=`<div class="empty" style="padding:34px">
       <div class="empty-t">No contributors yet</div>
       <div class="empty-s">Start the history collector and you'll be first on the board.</div></div>`;
     return;
@@ -3138,21 +3188,24 @@ function renderLeaderboard(){
        <div class="stat"><div class="stat-v">${lbTotal.toLocaleString()}</div><div class="stat-l">Sales collected</div></div>
        <div class="stat"><div class="stat-v">${lbCount}</div><div class="stat-l">Contributors</div></div>
      </div>
-     <div style="border:1px solid var(--border);border-radius:11px;overflow:hidden;background:var(--bg2)">
-     ${LEADERS.map((l,i)=>{
-       const me=mine&&String(l.uuid).replace(/-/g,'')===mine;
-       const medal=i===0?'g':i===1?'s':i===2?'b':'';
-       const rank=i===0?'\u{1F947}':i===1?'\u{1F948}':i===2?'\u{1F949}':'#'+(i+1);
-       return `<div class="lb-row${me?' me':''}">
-         <span class="lb-rank ${medal}">${rank}</span>
-         <img src="${HEAD(l.uuid)}" style="width:26px;height:26px;border-radius:6px;image-rendering:pixelated">
-         <span class="lb-name">${esc(l.ign||String(l.uuid).slice(0,8))}${me?' <span style="color:var(--green);font-size:10px">you</span>':''}${
-           l.discord?` <span style="color:#8b9bf4;font-weight:400;font-size:10.5px">@${esc(l.discord)}</span>`:''}</span>
-         <span class="lb-num">${(l.sales||0).toLocaleString()}</span>
-         <span class="lb-sub">${ago(l.last_at||0)}</span>
-       </div>`;}).join('')}
+     <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg2)">
+       <div class="lb-head"><span>Rank</span><span></span><span>Player</span><span>Sales</span><span>Last active</span></div>
+       ${LEADERS.map((l,i)=>{
+         const me=mine&&String(l.uuid).replace(/-/g,'')===mine;
+         const rc=i<3?' r'+(i+1):'';
+         return `<div class="lb-row${rc}${me?' me':''}">
+           <span class="lb-rank">${i+1}</span>
+           <img class="lb-av" src="${HEAD(l.uuid)}" alt="">
+           <span class="lb-name">
+             <span class="lb-ign">${esc(l.ign||String(l.uuid).slice(0,8))}${
+               me?' <span style="color:var(--green);font-size:10px;font-weight:600">you</span>':''}</span>
+             ${l.discord?`<span class="lb-dc">@${esc(l.discord)}</span>`:''}
+           </span>
+           <span class="lb-num">${(l.sales||0).toLocaleString()}</span>
+           <span class="lb-sub">${ago(l.last_at||0)}</span>
+         </div>`;}).join('')}
      </div>
-     <div style="font-size:11px;color:var(--text3);text-align:center;padding:12px 0">
+     <div style="font-size:11px;color:var(--text3);text-align:center;padding:13px 0">
        Ranked by sales added to the shared archive.</div>`;
 }
 
@@ -3248,8 +3301,8 @@ function startGlobalPolling(){
 }
 function startBfPolling(){
   stopBfPolling(); loadBackfill(); lastVersion=null;
-  pollVersion(); loadHelpers();
-  bfTimer=setInterval(()=>{ pollVersion(); loadHelpers(); },5000);
+  pollVersion(); loadDayProgress();
+  bfTimer=setInterval(()=>{ pollVersion(); loadDayProgress(); },5000);
 }
 function stopBfPolling(){ if(bfTimer){ clearInterval(bfTimer); bfTimer=null; } }
 

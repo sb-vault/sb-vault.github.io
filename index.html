@@ -460,6 +460,7 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
     <nav class="header-nav" style="margin-left:0">
       <button class="nav-btn" id="nav-browse" onclick="showView('browse')">Browse</button>
       <button class="nav-btn" id="nav-all" onclick="showView('all')">All Pieces</button>
+      <button class="nav-btn" id="nav-lb" onclick="showView('leaderboard')">Leaderboard</button>
       <button class="nav-btn" id="nav-sales" onclick="showView('sales')">Sales</button>
       <button class="nav-btn active" id="nav-mine" onclick="openMine()">My Collection</button>
     </nav>
@@ -488,6 +489,14 @@ footer{text-align:center;padding:26px;color:var(--text3);font-size:11.5px;border
       <span style="font-size:12px;color:var(--text3)">Public Seymour collections</span>
     </div>
     <div id="browseWrap"></div>
+  </div>
+
+  <div id="view-leaderboard" style="display:none">
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6">
+      Everyone who runs the history collector helps build the shared sales archive.
+      Leave the site open to climb the board.
+    </div>
+    <div id="lbWrap"></div>
   </div>
 
   <div id="view-all" style="display:none">
@@ -1582,21 +1591,24 @@ function clearCollection(){
 function showView(v){
   view=v;
   try{ localStorage.setItem('seyView',v); }catch(e){}
-  const isBrowse = v==='browse', isSales = v==='sales', isAll = v==='all';
-  const aside = isBrowse||isSales||isAll;
-  document.getElementById('view-browse').style.display = isBrowse?'block':'none';
-  document.getElementById('view-sales').style.display  = isSales?'block':'none';
-  document.getElementById('view-all').style.display    = isAll?'block':'none';
-  document.getElementById('mainTabs').style.display    = aside?'none':'block';
+  const isBrowse = v==='browse', isSales = v==='sales', isAll = v==='all', isLb = v==='leaderboard';
+  const aside = isBrowse||isSales||isAll||isLb;
+  {const _d=document.getElementById('view-browse'); if(_d) _d.style.display=isBrowse?'block':'none';}
+  {const _d=document.getElementById('view-sales'); if(_d) _d.style.display=isSales?'block':'none';}
+  {const _d=document.getElementById('view-all'); if(_d) _d.style.display=isAll?'block':'none';}
+  {const _d=document.getElementById('view-leaderboard'); if(_d) _d.style.display=isLb?'block':'none';}
+  {const _d=document.getElementById('mainTabs'); if(_d) _d.style.display=aside?'none':'block';}
   document.getElementById('nav-browse').classList.toggle('active',isBrowse);
   document.getElementById('nav-sales').classList.toggle('active',isSales);
   document.getElementById('nav-all').classList.toggle('active',isAll);
+  document.getElementById('nav-lb').classList.toggle('active',isLb);
   document.getElementById('nav-mine').classList.toggle('active',!aside);
-  if(isAll){ document.getElementById('ownerBar').style.display='none'; if(!allLoaded) loadAllPieces(); else renderAllPieces(); return; }
-  if(isSales){ document.getElementById('ownerBar').style.display='none'; startBfPolling(); scrapeUI();
+  if(isLb){ {const _d=document.getElementById('ownerBar'); if(_d) _d.style.display='none';}; loadLeaderboard(); return; }
+  if(isAll){ {const _d=document.getElementById('ownerBar'); if(_d) _d.style.display='none';}; if(!allLoaded) loadAllPieces(); else renderAllPieces(); return; }
+  if(isSales){ {const _d=document.getElementById('ownerBar'); if(_d) _d.style.display='none';}; startBfPolling(); scrapeUI();
                if(!SALES.length) loadSales(); else renderSales(); return; }
   stopBfPolling();
-  if(isBrowse){ document.getElementById('ownerBar').style.display='none'; if(!BROWSE.length) loadBrowse(); else renderBrowse(); return; }
+  if(isBrowse){ {const _d=document.getElementById('ownerBar'); if(_d) _d.style.display='none';}; if(!BROWSE.length) loadBrowse(); else renderBrowse(); return; }
   ['collection','favourites','best'].forEach(x=>{
     document.getElementById('view-'+x).style.display = x===v?'block':'none';
     document.getElementById('tab-'+x).classList.toggle('active',x===v);
@@ -1712,14 +1724,14 @@ function pieceCard(p,opts={}){
 function renderCollection(){
   const wrap=document.getElementById('colWrap');
   if(!PIECES.length){
-    if(!isOwn){ document.getElementById('colFilters').style.display='none';
+    if(!isOwn){ {const _d=document.getElementById('colFilters'); if(_d) _d.style.display='none';};
       wrap.innerHTML=`<div class="empty"><div class="empty-i">&#128230;</div><div class="empty-t">Nothing published yet</div><div class="empty-s">This player hasn't published a collection.</div></div>`; return; }
-    document.getElementById('colFilters').style.display='none';
+    {const _d=document.getElementById('colFilters'); if(_d) _d.style.display='none';};
     wrap.innerHTML=dropZoneHTML()+(currentUser?`<div style="text-align:center;padding:14px">
       <button class="btn btn-p" onclick="syncFromCloud(true)">Or pull my collection from my account</button></div>`:'');
     wireDrop(); return; }
   const ps=filteredPieces();
-  document.getElementById('colFilters').style.display='';
+  {const _d=document.getElementById('colFilters'); if(_d) _d.style.display='';}
   mountBar('colFilters',{p:'c',re:'cPage=1;renderCollection()',sort:cSort,dir:cDir,query:cQuery,
     cat:cCat,slot:cSlot,fade:cFade,count:ps.length+' of '+PIECES.length,
     extra:'<button class="btn btn-d owner-only" style="height:32px" onclick="clearCollection()">Clear all</button>'});
@@ -1776,10 +1788,10 @@ function renderTargetList(q){
 function pickTarget(hex,name){
   cTarget=hex;
   const inp=document.getElementById('tgtIn'); if(inp) inp.value=name.replace(/^Search hex /,'');
-  document.getElementById('tgtDD').style.display='none';
+  {const _d=document.getElementById('tgtDD'); if(_d) _d.style.display='none';};
   cPage=1; renderCollection();
 }
-function clearTarget(){ cTarget=null; const i=document.getElementById('tgtIn'); if(i)i.value=''; document.getElementById('tgtDD').style.display='none'; renderCollection(); }
+function clearTarget(){ cTarget=null; const i=document.getElementById('tgtIn'); if(i)i.value=''; {const _d=document.getElementById('tgtDD'); if(_d) _d.style.display='none';}; renderCollection(); }
 
 
 /* ===== SHARED FILTER BAR =====
@@ -2801,7 +2813,7 @@ function renderSalesTargetList(q){
 function pickSalesTarget(hex,name){
   sTarget=hex; sPage=1;
   const i=document.getElementById('sTgtIn'); if(i) i.value=name.replace(/^Search hex /,'');
-  document.getElementById('sTgtDD').style.display='none'; renderSales();
+  {const _d=document.getElementById('sTgtDD'); if(_d) _d.style.display='none';}; renderSales();
 }
 function salesForHex(hex){ sTarget=hex; sQuery=''; sPage=1; showView('sales');
   const _i=document.getElementById('sTgtIn'); if(_i) _i.value='#'+hex;
@@ -2843,7 +2855,7 @@ function playerChip(uuid,fallbackName){
    SkyCofl rate-limit Cloudflare's shared egress IPs, so the worker can't
    fetch history. Your browser can - it's on your own home IP. This walks
    SkyCofl politely from the page and posts results back to the worker. */
-let SCRAPE={running:false,stop:false,tag:0,page:0,found:0,checked:0,errors:0,note:'',helpers:0,workers:1,phase:'idle',pageDone:0,pageTotal:0,dupes:0,dropNoColour:0,dropBadColour:0,dropNoDate:0,dropReq:0,sample:null};
+let SCRAPE={running:false,stop:false,tag:0,page:0,found:0,checked:0,errors:0,note:'',helpers:0,workers:1,phase:'idle',pageDone:0,pageTotal:0,dupes:0,dropNoColour:0,dropBadColour:0,dropNoDate:0,dropReq:0,sample:null,badSample:null};
 const SC_TAGS=['VELVET_TOP_HAT','CASHMERE_JACKET','SATIN_TROUSERS','OXFORD_SHOES'];
 let SC_DELAY=1100;                       // ~0.9 req/s, inside their guidance
 
@@ -2885,6 +2897,12 @@ function scrapeUI(){
         ${SCRAPE.dropBadColour?`<span>${SCRAPE.dropBadColour} unreadable colour</span>`:''}
         ${SCRAPE.dropNoDate?`<span>${SCRAPE.dropNoDate} no sale date</span>`:''}
         ${SCRAPE.dropReq?`<span style="color:#f0c060">${SCRAPE.dropReq} request errors</span>`:''}
+      </div>`:''}
+    ${(SCRAPE.dropBadColour>5&&SCRAPE.found===0&&SCRAPE.badSample)?`
+      <div style="font-size:10.5px;color:#f0c060;margin-top:7px;line-height:1.55;
+        background:rgba(240,192,96,.07);border:1px solid rgba(240,192,96,.22);border-radius:7px;padding:7px 9px">
+        Colour data is present but in an unexpected format, e.g.
+        <code>${esc(SCRAPE.badSample)}</code> &ndash; please report this.
       </div>`:''}
     ${(SCRAPE.dropNoColour>20&&SCRAPE.found===0&&SCRAPE.sample)?`
       <div style="font-size:10.5px;color:#f0c060;margin-top:7px;line-height:1.55;
@@ -2989,30 +3007,40 @@ async function scrapeLoop(){
       if(!dres.ok){ SCRAPE.errors++; SCRAPE.dropReq++; }
       else{
         const d=dres.data, flat=d.flatNbt||d.flatNBT||{};
-        let hex=''; for(const k of ['color','Color','colour','Colour'])
-          if(flat[k]!==undefined&&flat[k]!==null){ hex=String(flat[k]); break; }
+        let rawHex=null;
+        for(const k of ['color','Color','colour','Colour','displayColor','display.color']){
+          if(flat[k]!==undefined&&flat[k]!==null){ rawHex=flat[k]; break; }
+        }
+        if(rawHex===null){                                  // scan any key mentioning colour
+          for(const k of Object.keys(flat)){
+            if(/colou?r/i.test(k) && flat[k]!==null && flat[k]!==''){ rawHex=flat[k]; break; }
+          }
+        }
+        if(rawHex===null && d.nbtData && d.nbtData.data){
+          const disp=d.nbtData.data.display||d.nbtData.data.Display;
+          if(disp && disp.color!==undefined) rawHex=disp.color;
+        }
         let uid=''; for(const k of ['uid','uId','uuid'])
           if(flat[k]){ uid=String(flat[k]); break; }
         const soldAt=Date.parse(d.end||a.end||'')||0;
-        const rawHex=hex;
-        hex=String(hex).replace('#','').trim().toUpperCase();
-        if(/^-?[0-9]{1,10}$/.test(hex)) hex=(parseInt(hex,10)>>>0).toString(16).toUpperCase();
-        hex=hex.padStart(6,'0').slice(-6);
-        const okHex=/^[0-9A-F]{6}$/.test(hex);
+        const hexParsed=parseColour(rawHex);
+        const hex=hexParsed||'';
+        const okHex=!!hexParsed;
         if(okHex&&soldAt){
           uid=uid.replace(/-/g,'').toLowerCase().slice(-12);
           batch.push({auction_uuid:a.uuid,item_id:tag,item_uid:uid,hex,
             price:d.highestBidAmount||a.highestBidAmount||0,bin:d.bin?1:0,
             seller:d.auctioneerId||'',buyer:(d.bids&&d.bids.length)?d.bids[d.bids.length-1].bidder:'',
             sold_at:soldAt});
-        } else if(!rawHex){
+        } else if(rawHex===null||rawHex===undefined){
           SCRAPE.dropNoColour++;
-          if(!SCRAPE.sample){                       // keep one example to show the user
-            SCRAPE.sample={uuid:a.uuid,keys:Object.keys(d).slice(0,14),
-              flatKeys:d.flatNbt?Object.keys(d.flatNbt).slice(0,14):null};
-          }
+          if(!SCRAPE.sample) SCRAPE.sample={uuid:a.uuid,keys:Object.keys(d).slice(0,14),
+            flatKeys:d.flatNbt?Object.keys(d.flatNbt).slice(0,16):null};
         }
-        else if(!okHex) SCRAPE.dropBadColour++;
+        else if(!okHex){
+          SCRAPE.dropBadColour++;
+          if(!SCRAPE.badSample) SCRAPE.badSample=String(rawHex).slice(0,40);
+        }
         else SCRAPE.dropNoDate++;
       }
       if(SCRAPE.pageDone%5===0) scrapeUI();
@@ -3045,6 +3073,30 @@ async function scrapeLoop(){
 
 /* One place that knows how to talk to SkyCofl and tell apart:
    a real rate limit, a browser/CORS block, and an ordinary error. */
+/* SkyCofl store leather colour in several shapes:
+   "255,0,0" (rgb), "16711680" (int), "FF0000"/"#FF0000" (hex). Handle all. */
+function parseColour(v){
+  if(v===undefined||v===null) return null;
+  let s=String(v).trim();
+  if(!s) return null;
+  // R,G,B  or  R:G:B  or  R G B
+  const parts=s.split(/[,;:\s]+/).filter(x=>x!=='');
+  if(parts.length===3 && parts.every(x=>/^\d{1,3}$/.test(x))){
+    const [r,g,b]=parts.map(Number);
+    if([r,g,b].every(n=>n>=0&&n<=255)){
+      return [r,g,b].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase();
+    }
+  }
+  s=s.replace('#','').toUpperCase();
+  if(/^[0-9A-F]{6}$/.test(s)) return s;
+  if(/^[0-9A-F]{3}$/.test(s)) return s.split('').map(c=>c+c).join('');
+  if(/^-?\d{1,10}$/.test(s)){
+    const n=parseInt(s,10)>>>0;
+    if(n<=0xFFFFFF) return n.toString(16).padStart(6,'0').toUpperCase();
+  }
+  return null;
+}
+
 async function coflGet(url){
   try{
     const r=await fetch(url,{mode:'cors',credentials:'omit',cache:'no-store'});
@@ -3059,6 +3111,49 @@ async function coflGet(url){
     // TypeError with no status = the browser refused it (CORS, offline, blocker)
     return {blocked:true,error:String(e&&e.message||e)};
   }
+}
+
+/* ===== LEADERBOARD ===== */
+let LEADERS=[], lbTotal=0, lbCount=0;
+async function loadLeaderboard(){
+  try{
+    const r=await fetch(`${API}/seymour/leaderboard`);
+    if(!r.ok) return;
+    const d=await r.json();
+    LEADERS=d.leaders||[]; lbTotal=d.totalContributed||0; lbCount=d.contributors||0;
+    renderLeaderboard();
+  }catch(e){}
+}
+function renderLeaderboard(){
+  const el=document.getElementById('lbWrap'); if(!el) return;
+  if(!LEADERS.length){
+    el.innerHTML=`<div class="empty" style="padding:30px">
+      <div class="empty-t">No contributors yet</div>
+      <div class="empty-s">Start the history collector and you'll be first on the board.</div></div>`;
+    return;
+  }
+  const mine=currentUser?String(currentUser.uuid).replace(/-/g,''):'';
+  el.innerHTML=
+    `<div class="stat-row">
+       <div class="stat"><div class="stat-v">${lbTotal.toLocaleString()}</div><div class="stat-l">Sales collected</div></div>
+       <div class="stat"><div class="stat-v">${lbCount}</div><div class="stat-l">Contributors</div></div>
+     </div>
+     <div style="border:1px solid var(--border);border-radius:11px;overflow:hidden;background:var(--bg2)">
+     ${LEADERS.map((l,i)=>{
+       const me=mine&&String(l.uuid).replace(/-/g,'')===mine;
+       const medal=i===0?'g':i===1?'s':i===2?'b':'';
+       const rank=i===0?'\u{1F947}':i===1?'\u{1F948}':i===2?'\u{1F949}':'#'+(i+1);
+       return `<div class="lb-row${me?' me':''}">
+         <span class="lb-rank ${medal}">${rank}</span>
+         <img src="${HEAD(l.uuid)}" style="width:26px;height:26px;border-radius:6px;image-rendering:pixelated">
+         <span class="lb-name">${esc(l.ign||String(l.uuid).slice(0,8))}${me?' <span style="color:var(--green);font-size:10px">you</span>':''}${
+           l.discord?` <span style="color:#8b9bf4;font-weight:400;font-size:10.5px">@${esc(l.discord)}</span>`:''}</span>
+         <span class="lb-num">${(l.sales||0).toLocaleString()}</span>
+         <span class="lb-sub">${ago(l.last_at||0)}</span>
+       </div>`;}).join('')}
+     </div>
+     <div style="font-size:11px;color:var(--text3);text-align:center;padding:12px 0">
+       Ranked by sales added to the shared archive.</div>`;
 }
 
 /* ===== BACKFILL PROGRESS ===== */
@@ -3380,7 +3475,7 @@ function renderAllTargetList(q){
 function pickAllTarget(hex,name){
   aTarget=hex; aPage=1;
   const i=document.getElementById('aTgtIn'); if(i) i.value=name.replace(/^Search hex /,'');
-  document.getElementById('aTgtDD').style.display='none'; renderAllPieces();
+  {const _d=document.getElementById('aTgtDD'); if(_d) _d.style.display='none';}; renderAllPieces();
 }
 
 /* ===== THEME + INIT ===== */
@@ -3418,7 +3513,7 @@ if(_u && (!currentUser || currentUser.uuid!==_u)){
   isOwn=true;
   let startView='browse';
   try{ startView=localStorage.getItem('seyView')||'browse'; }catch(e){}
-  if(!['browse','sales','allpieces','collection','favourites','best'].includes(startView)) startView='browse';
+  if(!['browse','sales','leaderboard','all','collection','favourites','best'].includes(startView)) startView='browse';
   showView(startView);
   syncFromCloud();
 }

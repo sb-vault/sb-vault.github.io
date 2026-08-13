@@ -2848,7 +2848,7 @@ function renderBackfill(){
            BF.lastResult.skippedNoColour?`, <span style="color:#f0c060">${BF.lastResult.skippedNoColour} unreadable</span>`:''}</span>`:''}
        </span>
        <span style="display:flex;gap:6px">
-         <button class="btn" style="height:26px;padding:0 10px;font-size:11px" onclick="loadBackfill()">Refresh</button>
+         <button class="btn" style="height:26px;padding:0 10px;font-size:11px" onclick="lastVersion=null;loadSales();loadBackfill();">Refresh</button>
          ${currentUser?`<button class="btn btn-d" style="height:26px;padding:0 10px;font-size:11px" onclick="resetSales()">Reset archive</button>`:''}
        </span>
      </div>`;
@@ -2887,12 +2887,20 @@ async function pollVersion(){
     if(lastVersion===null){ lastVersion=key; return; }
     if(key!==lastVersion){
       lastVersion=key;
-      await loadSales();
-      loadBackfill();
+      salesTracked=v.sales;
+      if(view==='sales'){ await loadSales(); loadBackfill(); }
       const st=document.getElementById('liveDot');
       if(st){ st.style.opacity='1'; setTimeout(()=>{ st.style.opacity='.35'; },900); }
     }
   }catch(e){}
+}
+/* Polls for the whole session so the archive stays live on every tab. */
+let globalTimer=null;
+function startGlobalPolling(){
+  if(globalTimer) return;
+  pollVersion();
+  globalTimer=setInterval(pollVersion,5000);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) pollVersion(); });
 }
 function startBfPolling(){
   stopBfPolling(); loadBackfill(); lastVersion=null;
@@ -3069,6 +3077,7 @@ function renderAllPieces(){
     return;
   }
   const ps=filterPieceList(ALLP,{cat:aCat,slot:aSlot,query:aQuery,target:aTarget,sort:aSort,dir:aDir,fade:aFade});
+  const atgt=aTarget||normHex(aQuery);
   mountBar('allFilters',{p:'a',re:'aPage=1;renderAllPieces()',sort:aSort,dir:aDir,query:aQuery,
     cat:aCat,slot:aSlot,fade:aFade,count:ps.length+' of '+ALLP.length,
     sorts:[['deltaE','By \u0394E'],['newest','Newest'],['name','A\u2013Z'],['slot','By piece'],['owner','By player']],
@@ -3080,7 +3089,7 @@ function renderAllPieces(){
   if(aPage>pages) aPage=pages;
   const from=(aPage-1)*PER_PAGE, to=Math.min(from+PER_PAGE,ps.length);
   ALL_VIS=ps;
-  wrap.innerHTML=`<div class="pgrid">${ps.slice(from,to).map(p=>pieceCard(p,{target:aTarget,targetName:aTargetName,onClick:`openAllPiece('${esc(p.id||'')}','${esc(p.owner||'')}')`})).join('')}</div>`
+  wrap.innerHTML=`<div class="pgrid">${ps.slice(from,to).map(p=>pieceCard(p,{target:atgt,targetName:aTargetName||(atgt?'#'+atgt:''),onClick:`openAllPiece('${esc(p.id||'')}','${esc(p.owner||'')}')`})).join('')}</div>`
     + (pages>1?allPagerHTML(aPage,pages):'')
     + `<div class="pg-info">Showing ${from+1}\u2013${to} of ${ps.length}</div>`;
 }
@@ -3147,6 +3156,7 @@ try{const t=localStorage.getItem('vaultTheme');if(t)setTheme(t);}catch(e){}
 load();
 loadStoredUser();
 handleCallback();
+startGlobalPolling();
 
 const _u=new URLSearchParams(location.search).get('u');
 if(_u && (!currentUser || currentUser.uuid!==_u)){

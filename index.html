@@ -2470,15 +2470,31 @@ async function unpublishCollection(){
        toast('Unpublished'); }catch(e){ toast('Network error'); }
 }
 
+/* Shown whenever the worker can't be reached, instead of a stuck spinner. */
+function apiError(what,status,e){
+  const why = status===404 ? 'The worker is deployed but has no <code>/seymour/'+esc(what)+'</code> route \u2013 redeploy index.js.'
+    : status===0 || !status ? 'Could not reach the worker at all (network, CORS, or wrong API URL).'
+    : 'The worker replied with HTTP '+status+'.';
+  return `<div class="empty"><div class="empty-i">&#9888;</div>
+    <div class="empty-t">Couldn't load ${esc(what)}</div>
+    <div class="empty-s" style="max-width:520px;margin:6px auto 0">${why}
+      <br><span style="opacity:.7">${esc(API)}</span>
+      ${e?`<br><span style="opacity:.7">${esc(String(e.message||e))}</span>`:''}
+    </div>
+    <div style="margin-top:12px"><button class="btn" onclick="location.reload()">Retry</button></div>
+  </div>`;
+}
+
 /* ===== BROWSE ===== */
 async function loadBrowse(){
   const wrap=document.getElementById('browseWrap');
   wrap.innerHTML=`<div class="empty"><div class="empty-t">Loading collections&hellip;</div></div>`;
   try{
     const r=await fetch(`${API}/seymour/collections`);
+    if(!r.ok){ wrap.innerHTML=apiError('collections',r.status); return; }
     const d=await r.json();
     BROWSE=d.collections||[];
-  }catch(e){ BROWSE=[]; }
+  }catch(e){ wrap.innerHTML=apiError('collections',0,e); return; }
   renderBrowse();
 }
 
@@ -2638,6 +2654,7 @@ async function loadSales(){
   wrap.innerHTML=`<div class="empty"><div class="empty-t">Loading sales&hellip;</div></div>`;
   try{
     const r=await fetch(`${API}/seymour/sales?limit=1000`);
+    if(!r.ok){ wrap.innerHTML=apiError('sales',r.status); return; }
     const d=await r.json();
     SALES=(d.sales||[]).map(s=>{
       const c=classifySeymour(s.hex);           // once per sale, never in a comparator
@@ -2651,7 +2668,7 @@ async function loadSales(){
     });
     salesTracked=d.tracked||0;
     salesStarted=d.tracking_started||null; salesEarliest=d.earliest_sale||null;
-  }catch(e){ SALES=[]; salesTracked=0; }
+  }catch(e){ wrap.innerHTML=apiError('sales',0,e); return; }
   sPage=1; renderSales();
   await resolveNames(SALES.flatMap(s=>[s.seller,s.buyer]));
   renderSales();
@@ -3166,13 +3183,14 @@ async function coflGet(url){
 /* ===== LEADERBOARD ===== */
 let LEADERS=[], lbTotal=0, lbCount=0;
 async function loadLeaderboard(){
+  const w=document.getElementById('lbWrap');
   try{
     const r=await fetch(`${API}/seymour/leaderboard`);
-    if(!r.ok) return;
+    if(!r.ok){ if(w) w.innerHTML=apiError('leaderboard',r.status); return; }
     const d=await r.json();
     LEADERS=d.leaders||[]; lbTotal=d.totalContributed||0; lbCount=d.contributors||0;
     renderLeaderboard();
-  }catch(e){}
+  }catch(e){ if(w) w.innerHTML=apiError('leaderboard',0,e); }
 }
 function renderLeaderboard(){
   const el=document.getElementById('lbWrap'); if(!el) return;
